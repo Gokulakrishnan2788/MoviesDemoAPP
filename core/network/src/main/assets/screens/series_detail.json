@@ -1,0 +1,263 @@
+{
+  "screenId": "series_detail",
+  "dataSource": {
+    "type": "remote",
+    "method": "GET",
+    "url": "https://www.omdbapi.com/?i={{seriesId}}&apikey=8170cd9d"
+  },
+  "type": "scroll",
+  "children": [
+    {
+      "id": "detailColumn",
+      "type": "column",
+      "style": {
+        "padding": 20,
+        "spacing": 18,
+        "backgroundColor": "screenBackground"
+      },
+      "children": [
+        {
+          "id": "detailHeader",
+          "type": "header",
+          "titleTemplate": "{{title}}",
+          "subtitleTemplate": "{{year}} • {{genre}}",
+          "style": {
+            "spacing": 6,
+            "foregroundColor": "primaryText"
+          }
+        },
+        {
+          "id": "heroRow",
+          "type": "row",
+          "style": {
+            "spacing": 16,
+            "padding": 16,
+            "backgroundColor": "cardBackground",
+            "cornerRadius": 24
+          },
+          "children": [
+            {
+              "id": "detailPoster",
+              "type": "image",
+              "dataBinding": "posterURL",
+              "style": {
+                "frameWidth": 132,
+                "frameHeight": 190,
+                "cornerRadius": 18
+              }
+            },
+            {
+              "id": "heroMeta",
+              "type": "column",
+              "style": {
+                "spacing": 10
+              },
+              "children": [
+                {
+                  "id": "ratingMetaRow",
+                  "type": "row",
+                  "style": {
+                    "spacing": 8
+                  },
+                  "children": [
+                    {
+                      "id": "detailRatingIcon",
+                      "type": "icon",
+                      "icon": "star.fill",
+                      "style": {
+                        "fontSize": 12,
+                        "foregroundColor": "accent"
+                      }
+                    },
+                    {
+                      "id": "detailRating",
+                      "type": "text",
+                      "template": "IMDb {{rating}}",
+                      "style": {
+                        "fontSize": 15,
+                        "fontWeight": "semibold",
+                        "foregroundColor": "primaryText"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "runtime",
+                  "type": "text",
+                  "template": "Runtime: {{runtime}}",
+                  "style": {
+                    "fontSize": 14,
+                    "foregroundColor": "secondaryText"
+                  }
+                },
+                {
+                  "id": "seasons",
+                  "type": "text",
+                  "template": "Seasons: {{totalSeasons}}",
+                  "style": {
+                    "fontSize": 14,
+                    "foregroundColor": "secondaryText"
+                  }
+                },
+                {
+                  "id": "awards",
+                  "type": "text",
+                  "template": "Awards: {{awards}}",
+                  "style": {
+                    "fontSize": 14,
+                    "foregroundColor": "secondaryText",
+                    "lineLimit": 3
+                  },
+                  "visibility": {
+                    "dataBinding": "awards",
+                    "isNotEmpty": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "plotSection",
+          "type": "column",
+          "style": {
+            "padding": 16,
+            "spacing": 10,
+            "backgroundColor": "surface",
+            "cornerRadius": 22
+          },
+          "children": [
+            {
+              "id": "plotTitle",
+              "type": "text",
+              "text": "Synopsis",
+              "style": {
+                "fontSize": 18,
+                "fontWeight": "bold",
+                "foregroundColor": "primaryText"
+              }
+            },
+            {
+              "id": "plotText",
+              "type": "text",
+              "dataBinding": "plot",
+              "style": {
+                "fontSize": 15,
+                "foregroundColor": "secondaryText"
+              }
+            }
+          ]
+        },
+        {
+          "id": "creditsSection",
+          "type": "column",
+          "style": {
+            "padding": 16,
+            "spacing": 10,
+            "backgroundColor": "surface",
+            "cornerRadius": 22
+          },
+          "children": [
+            {
+              "id": "creditsTitle",
+              "type": "text",
+              "text": "Credits",
+              "style": {
+                "fontSize": 18,
+                "fontWeight": "bold",
+                "foregroundColor": "primaryText"
+              }
+            },
+            {
+              "id": "actors",
+              "type": "text",
+              "template": "Cast: {{actors}}",
+              "style": {
+                "fontSize": 15,
+                "foregroundColor": "secondaryText"
+              }
+            },
+            {
+              "id": "writer",
+              "type": "text",
+              "template": "Writer: {{writer}}",
+              "style": {
+                "fontSize": 15,
+                "foregroundColor": "secondaryText"
+              }
+            },
+            {
+              "id": "director",
+              "type": "text",
+              "template": "Director: {{director}}",
+              "style": {
+                "fontSize": 15,
+                "foregroundColor": "secondaryText"
+              }
+            }
+          ]
+        },
+        {
+          "id": "seasonSection",
+          "type": "column",
+          "style": {
+            "spacing": 12
+          },
+          "children": [
+            {
+              "id": "seasonTitle",
+              "type": "text",
+              "text": "Seasons",
+              "style": {
+                "fontSize": 18,
+                "fontWeight": "bold",
+                "foregroundColor": "primaryText"
+              }
+            },
+            {
+              "id": "generatedSeasonList",
+              "type": "generatedList",
+              "countBinding": "totalSeasons",
+              "style": {
+                "spacing": 10
+              },
+              "itemLayout": {
+                "id": "seasonRow",
+                "type": "row",
+                "style": {
+                  "spacing": 10,
+                  "padding": 14,
+                  "backgroundColor": "cardBackground",
+                  "cornerRadius": 18
+                },
+                "children": [
+                  {
+                    "id": "seasonBadge",
+                    "type": "icon",
+                    "icon": "play.tv.fill",
+                    "style": {
+                      "fontSize": 14,
+                      "foregroundColor": "accent",
+                      "frameWidth": 18,
+                      "frameHeight": 18
+                    }
+                  },
+                  {
+                    "id": "seasonLabel",
+                    "type": "text",
+                    "template": "Season {{seasonNumber}}",
+                    "style": {
+                      "fontSize": 15,
+                      "fontWeight": "semibold",
+                      "foregroundColor": "primaryText"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

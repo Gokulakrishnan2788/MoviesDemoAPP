@@ -1,0 +1,137 @@
+{
+  "screenId": "tv_series_list",
+  "dataSource": {
+    "type": "remote",
+    "method": "GET",
+    "url": "https://www.omdbapi.com/?s=game&type=series&apikey=8170cd9d",
+    "responseRoot": "Search",
+    "enrichmentDataSource": {
+      "type": "remote",
+      "method": "GET",
+      "url": "https://www.omdbapi.com/?i={{seriesId}}&apikey=8170cd9d"
+    }
+  },
+  "type": "scroll",
+  "children": [
+    {
+      "id": "listColumn",
+      "type": "column",
+      "style": {
+        "padding": 20,
+        "spacing": 18,
+        "backgroundColor": "screenBackground"
+      },
+      "children": [
+        {
+          "id": "listHeader",
+          "type": "header",
+          "titleTemplate": "{{headerTitle}}",
+          "subtitleTemplate": "{{headerSubtitle}}",
+          "style": {
+            "spacing": 6,
+            "foregroundColor": "primaryText"
+          }
+        },
+        {
+          "id": "seriesList",
+          "type": "list",
+          "listDataBinding": "series",
+          "action": "seriesTapped",
+          "style": {
+            "spacing": 16
+          },
+          "itemLayout": {
+            "id": "seriesRow",
+            "type": "row",
+            "style": {
+              "spacing": 14,
+              "padding": 14,
+              "backgroundColor": "cardBackground",
+              "cornerRadius": 22
+            },
+            "children": [
+              {
+                "id": "poster",
+                "type": "image",
+                "dataBinding": "posterURL",
+                "style": {
+                  "frameWidth": 88,
+                  "frameHeight": 128,
+                  "cornerRadius": 16
+                }
+              },
+              {
+                "id": "metaColumn",
+                "type": "column",
+                "style": {
+                  "spacing": 8
+                },
+                "children": [
+                  {
+                    "id": "title",
+                    "type": "text",
+                    "dataBinding": "title",
+                    "style": {
+                      "fontSize": 22,
+                      "fontWeight": "bold",
+                      "foregroundColor": "primaryText",
+                      "lineLimit": 2
+                    }
+                  },
+                  {
+                    "id": "year",
+                    "type": "text",
+                    "template": "{{year}} • {{type}}",
+                    "style": {
+                      "fontSize": 14,
+                      "fontWeight": "medium",
+                      "foregroundColor": "secondaryText"
+                    }
+                  },
+                  {
+                    "id": "genre",
+                    "type": "text",
+                    "dataBinding": "genre",
+                    "style": {
+                      "fontSize": 15,
+                      "foregroundColor": "primaryText",
+                      "lineLimit": 2
+                    }
+                  },
+                  {
+                    "id": "ratingRow",
+                    "type": "row",
+                    "style": {
+                      "spacing": 8
+                    },
+                    "children": [
+                      {
+                        "id": "ratingIcon",
+                        "type": "icon",
+                        "icon": "star.fill",
+                        "style": {
+                          "fontSize": 12,
+                          "foregroundColor": "accent"
+                        }
+                      },
+                      {
+                        "id": "ratingText",
+                        "type": "text",
+                        "template": "IMDb {{rating}}",
+                        "style": {
+                          "fontSize": 14,
+                          "fontWeight": "semibold",
+                          "foregroundColor": "primaryText"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

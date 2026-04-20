@@ -1,0 +1,172 @@
+{
+  "screenId": "tv_series_list",
+  "dataSource": {
+    "type": "remote",
+    "request": {
+      "method": "GET",
+      "url": "https://www.omdbapi.com/?s=game&type=series&apikey=8170cd9d",
+      "headers": {},
+      "queryParams": {},
+      "timeout": 10
+    },
+    "response": {
+      "root": "Search",
+      "type": "collection",
+      "fieldMapping": {
+        "id": "imdbID",
+        "title": "Title",
+        "year": "Year",
+        "type": "Type",
+        "posterURL": "Poster"
+      }
+    },
+    "enrichmentDataSource": {
+      "type": "remote",
+      "request": {
+        "method": "GET",
+        "url": "https://www.omdbapi.com/?i={{id}}&apikey=8170cd9d",
+        "headers": {},
+        "queryParams": {},
+        "timeout": 10
+      },
+      "response": {
+        "type": "object",
+        "fieldMapping": {
+          "rating": "imdbRating",
+          "genre": "Genre"
+        }
+      }
+    }
+  },
+  "type": "scroll",
+  "children": [
+    {
+      "id": "listColumn",
+      "type": "column",
+      "style": {
+        "padding": 20,
+        "spacing": 18,
+        "backgroundColor": "screenBackground"
+      },
+      "children": [
+        {
+          "id": "listHeader",
+          "type": "header",
+          "titleTemplate": "{{headerTitle}}",
+          "subtitleTemplate": "{{headerSubtitle}}",
+          "style": {
+            "spacing": 6,
+            "foregroundColor": "primaryText"
+          },
+          "action": {
+            "type": "search"
+          }
+        },
+        {
+          "id": "seriesList",
+          "type": "list",
+          "listDataBinding": "series",
+          "style": {
+            "spacing": 16
+          },
+          "itemLayout": {
+            "id": "seriesRow",
+            "type": "row",
+            "action": {
+              "type": "navigate",
+              "routeTemplate": "series_detail/{{id}}"
+            },
+            "style": {
+              "spacing": 14,
+              "padding": 14,
+              "backgroundColor": "cardBackground",
+              "cornerRadius": 22
+            },
+            "children": [
+              {
+                "id": "poster",
+                "type": "image",
+                "dataBinding": "posterURL",
+                "style": {
+                  "frameWidth": 88,
+                  "frameHeight": 128,
+                  "cornerRadius": 16
+                }
+              },
+              {
+                "id": "metaColumn",
+                "type": "column",
+                "style": {
+                  "spacing": 8
+                },
+                "children": [
+                  {
+                    "id": "title",
+                    "type": "text",
+                    "dataBinding": "title",
+                    "style": {
+                      "fontSize": 22,
+                      "fontWeight": "bold",
+                      "foregroundColor": "primaryText",
+                      "lineLimit": 2
+                    }
+                  },
+                  {
+                    "id": "year",
+                    "type": "text",
+                    "template": "{{year}} • {{type}}",
+                    "style": {
+                      "fontSize": 14,
+                      "fontWeight": "medium",
+                      "foregroundColor": "secondaryText"
+                    }
+                  },
+                  {
+                    "id": "genre",
+                    "type": "text",
+                    "dataBinding": "genre",
+                    "style": {
+                      "fontSize": 15,
+                      "foregroundColor": "primaryText",
+                      "lineLimit": 2
+                    }
+                  },
+                  {
+                    "id": "ratingRow",
+                    "type": "row",
+                    "style": {
+                      "spacing": 8
+                    },
+                    "children": [
+                      {
+                        "id": "ratingIcon",
+                        "type": "icon",
+                        "props": {
+                          "icon": "star"
+                        },
+                        "style": {
+                          "fontSize": 12,
+                          "foregroundColor": "accent"
+                        }
+                      },
+                      {
+                        "id": "ratingText",
+                        "type": "text",
+                        "template": "IMDb {{rating}}",
+                        "style": {
+                          "fontSize": 14,
+                          "fontWeight": "semibold",
+                          "foregroundColor": "primaryText"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

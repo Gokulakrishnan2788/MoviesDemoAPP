@@ -1,0 +1,38 @@
+{
+  "screenId": "banking_home",
+  "type": "scroll",
+  "children": [
+    {
+      "type": "header",
+      "props": {
+        "title": "Banking",
+        "subtitle": "Your financial overview"
+      }
+    },
+    {
+      "type": "card",
+      "style": { "backgroundColor": "cardBackground" },
+      "children": [
+        {
+          "type": "text",
+          "props": { "text": "Balance" },
+          "style": { "textColor": "secondaryText", "fontSize": 12 }
+        },
+        {
+          "type": "text",
+          "props": { "text": "$12,450.00" },
+          "style": { "textColor": "primaryText", "fontSize": 24 }
+        }
+      ]
+    },
+    {
+      "type": "spacer",
+      "props": { "height": "16" }
+    },
+    {
+      "type": "text",
+      "props": { "text": "Recent Transactions" },
+      "style": { "textColor": "primaryText", "fontSize": 16 }
+    }
+  ]
+}

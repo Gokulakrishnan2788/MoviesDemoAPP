@@ -1,0 +1,9 @@
+{
+  "balance": "12,450.00",
+  "currency": "USD",
+  "transactions": [
+    { "id": "1", "label": "Netflix", "amount": "-15.99", "date": "2026-04-19" },
+    { "id": "2", "label": "Salary", "amount": "+5,000.00", "date": "2026-04-18" },
+    { "id": "3", "label": "Groceries", "amount": "-82.40", "date": "2026-04-17" }
+  ]
+}

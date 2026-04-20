@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew :app:checkDebugAarMetadata --no-daemon)",
+      "Bash(./gradlew :app:compileDebugKotlin --no-daemon)",
+      "Bash(grep -v \"^$\")",
+      "Bash(wait)",
+      "Bash(./gradlew assembleDebug --no-daemon)",
+      "Bash(./gradlew :engine:sdui:compileDebugKotlin --no-daemon)",
+      "Bash(./gradlew :core:domain:compileDebugKotlin --no-daemon)",
+      "Bash(./gradlew :engine:navigation:compileDebugKotlin --no-daemon)",
+      "Bash(./gradlew :core:network:compileDebugKotlin --no-daemon)",
+      "Bash(xxd /Users/gokulakrishnanmani/AndroidStudioProjects/MoviesDemoAPP/core/network/src/main/java/com/example/moviesdemoapp/core/network/MockInterceptor.kt)",
+      "Bash(./gradlew :core:network:clean --no-daemon)",
+      "Bash(./gradlew :core:network:compileDebugKotlin --no-daemon --stacktrace)",
+      "Bash(./gradlew :core:network:clean :core:network:compileDebugKotlin)",
+      "Bash(./gradlew :core:data:clean :core:data:compileDebugKotlin)",
+      "Bash(./gradlew :app:compileDebugKotlin)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(./gradlew :core:domain:compileDebugKotlin)",
+      "Bash(./gradlew :core:domain:compileDebugKotlin --info)",
+      "Bash(./gradlew :core:data:compileDebugKotlin)",
+      "Bash(./gradlew :engine:sdui:compileDebugKotlin)",
+      "Bash(./gradlew :feature:movies:compileDebugKotlin)",
+      "Bash(./gradlew :app:kspDebugKotlin)"
+    ]
+  }
+}
