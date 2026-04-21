@@ -1,6 +1,7 @@
 package com.example.moviesdemoapp.engine.sdui
 
 import androidx.compose.runtime.Composable
+import com.example.moviesdemoapp.core.network.model.ComponentNode
 import javax.inject.Inject
 import javax.inject.Singleton
 

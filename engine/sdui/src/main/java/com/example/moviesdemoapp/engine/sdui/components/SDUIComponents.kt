@@ -48,10 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
+import com.example.moviesdemoapp.core.network.model.ActionModel
+import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
-import com.example.moviesdemoapp.engine.sdui.ActionModel
-import com.example.moviesdemoapp.engine.sdui.ComponentNode
 import com.example.moviesdemoapp.engine.sdui.TemplateResolver
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -211,7 +211,8 @@ class SDUIComponents @Inject constructor(private val resolver: TemplateResolver)
         var mod: Modifier = Modifier.fillMaxWidth()
         if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
         if (pad > 0.dp) mod = mod.padding(pad)
-        if (node.action != null) mod = mod.clickable { node.action.dispatch(data, onAction) }
+        val rowAction = node.action
+        if (rowAction != null) mod = mod.clickable { rowAction.dispatch(data, onAction) }
         Row(modifier = mod, horizontalArrangement = Arrangement.spacedBy(spacing)) {
             node.children.forEach { renderNode(it, data, listData, onAction) }
         }
@@ -231,7 +232,8 @@ class SDUIComponents @Inject constructor(private val resolver: TemplateResolver)
         var mod = Modifier
             .fillMaxWidth()
             .padding(horizontal = DesignTokens.SpacingMd, vertical = DesignTokens.SpacingSm)
-        if (node.action != null) mod = mod.clickable { node.action.dispatch(data, onAction) }
+        val cardAction = node.action
+        if (cardAction != null) mod = mod.clickable { cardAction.dispatch(data, onAction) }
         Card(
             modifier = mod,
             shape = RoundedCornerShape(radius),

@@ -1,5 +1,7 @@
 package com.example.moviesdemoapp.engine.sdui
 
+import com.example.moviesdemoapp.core.network.model.ComponentNode
+import com.example.moviesdemoapp.core.network.model.VisibilityModel
 import javax.inject.Inject
 import javax.inject.Singleton
 

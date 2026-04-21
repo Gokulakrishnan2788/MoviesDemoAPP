@@ -1,12 +1,11 @@
-package com.example.moviesdemoapp.engine.sdui
+package com.example.moviesdemoapp.core.network.model
 
-import com.example.moviesdemoapp.core.network.model.DataSourceModel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 // Root model for a server-driven UI screen.
-// DataSourceModel is imported from core:network — the engine only uses it to
-// hand off to DataSourceExecutor; it never executes it directly.
+// Lives in core:network so both core:data (parsing) and engine:sdui (rendering) can use it
+// without any circular dependency.
 @Serializable
 data class ScreenModel(
     val screenId: String,
