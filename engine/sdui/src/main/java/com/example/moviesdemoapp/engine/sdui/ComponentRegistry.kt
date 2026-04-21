@@ -8,24 +8,59 @@ import javax.inject.Singleton
 /**
  * Factory type for a custom SDUI component composable.
  *
- * @param node the component node to render
- * @param data flat key-value map of bound data for the current item
- * @param onAction (actionId, params) callback when the component is tapped
+ * @param node      the component node carrying style/props/action from JSON
+ * @param data      flat key-value map of bound data for the current item
+ * @param onAction  (actionId, params) callback when the component is tapped
  */
 typealias ComponentFactory =
     @Composable (node: ComponentNode, data: Map<String, String>, onAction: (String, Map<String, String>) -> Unit) -> Unit
 
 /**
- * Registry mapping SDUI type strings to custom [ComponentFactory] composables.
+ * Singleton registry mapping SDUI type strings to custom [ComponentFactory] composables.
  *
- * Follows Open/Closed — add new components via [register] without touching [SDUIRenderEngine].
+ * HOW IT WORKS:
+ *   Hilt collects every [SduiComponentProvider] contributed via @IntoSet across all
+ *   feature modules and injects them here as a Set. The [init] block calls each
+ *   provider once, populating the registry before any screen is rendered.
+ *
+ * HOW TO ADD A CUSTOM COMPONENT (from a feature module):
+ *   1. Create your Composable in the feature module.
+ *   2. Add a Hilt @Module in the feature module and provide a [SduiComponentProvider]:
+ *
+ *        @Module @InstallIn(SingletonComponent::class)
+ *        object MoviesComponentModule {
+ *            @Provides @IntoSet
+ *            fun provideMovieCard(): SduiComponentProvider = SduiComponentProvider { registry ->
+ *                registry.register("movieCard") { node, data, onAction ->
+ *                    MovieCardComponent(node = node, data = data, onAction = onAction)
+ *                }
+ *            }
+ *        }
+ *
+ *   3. In your SDUI JSON use the same type string:  { "type": "movieCard", ... }
+ *
+ *   That is all. No changes to the engine, no changes to MovieApp.
+ *
+ * Built-in types (text, image, column, row, card, topBar, list, etc.) are handled
+ * by [com.example.moviesdemoapp.engine.sdui.SDUIComponentsDispatcher].
+ * Registered custom factories are checked FIRST in [SDUIRenderEngine.RenderNode].
  */
 @Singleton
-class ComponentRegistry @Inject constructor() {
-
+class ComponentRegistry @Inject constructor(
+    providers: Set<@JvmSuppressWildcards SduiComponentProvider>,
+) {
     private val registry = mutableMapOf<String, ComponentFactory>()
 
-    /** Register a custom composable [factory] for [componentType]. */
+    init {
+        // Each feature module's SduiComponentProvider contributes to this set via
+        // Hilt @IntoSet multibinding. They are all called once here at construction.
+        providers.forEach { it.registerInto(this) }
+    }
+
+    /**
+     * Register a custom composable [factory] for [componentType].
+     * Called by [SduiComponentProvider.registerInto] implementations — not called directly.
+     */
     fun register(componentType: String, factory: ComponentFactory) {
         registry[componentType] = factory
     }
