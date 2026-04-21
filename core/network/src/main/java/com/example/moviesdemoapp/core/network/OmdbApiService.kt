@@ -1,5 +1,7 @@
 package com.example.moviesdemoapp.core.network
 
+import com.example.moviesdemoapp.core.network.model.OmdbListResponseDto
+import com.example.moviesdemoapp.core.network.model.SeriesDetailDto
 import retrofit2.http.GET
 import retrofit2.http.Query
 

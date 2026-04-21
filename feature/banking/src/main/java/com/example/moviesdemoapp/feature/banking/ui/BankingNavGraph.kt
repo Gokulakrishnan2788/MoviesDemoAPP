@@ -9,7 +9,7 @@ import com.example.moviesdemoapp.engine.navigation.Routes
 fun NavGraphBuilder.bankingGraph(navController: NavController) {
     navigation(startDestination = Routes.BANKING, route = "banking_graph") {
         composable(Routes.BANKING) {
-            BankingScreen(navController = navController)
+            BankingScreen()
         }
     }
 }

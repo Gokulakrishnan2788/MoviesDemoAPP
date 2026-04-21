@@ -2,8 +2,31 @@
   "screenId": "series_detail",
   "dataSource": {
     "type": "remote",
-    "method": "GET",
-    "url": "https://www.omdbapi.com/?i={{seriesId}}&apikey=8170cd9d"
+    "request": {
+      "method": "GET",
+      "url": "https://www.omdbapi.com/?i={{seriesId}}&apikey=8170cd9d",
+      "headers": {},
+      "queryParams": {},
+      "timeout": 10
+    },
+    "response": {
+      "type": "object",
+      "fieldMapping": {
+        "id": "imdbID",
+        "title": "Title",
+        "year": "Year",
+        "genre": "Genre",
+        "posterURL": "Poster",
+        "rating": "imdbRating",
+        "runtime": "Runtime",
+        "awards": "Awards",
+        "plot": "Plot",
+        "actors": "Actors",
+        "writer": "Writer",
+        "director": "Director",
+        "totalSeasons": "totalSeasons"
+      }
+    }
   },
   "type": "scroll",
   "children": [
@@ -11,18 +34,36 @@
       "id": "detailColumn",
       "type": "column",
       "style": {
-        "padding": 20,
-        "spacing": 18,
+        "padding": 16,
+        "spacing": 14,
         "backgroundColor": "screenBackground"
       },
       "children": [
+        {
+          "id": "backBar",
+          "type": "topBar",
+          "props": {
+            "leadingIcon": "back"
+          },
+          "style": {
+            "padding": 0,
+            "paddingTop": 4,
+            "paddingBottom": 0
+          },
+          "action": {
+            "type": "back"
+          }
+        },
         {
           "id": "detailHeader",
           "type": "header",
           "titleTemplate": "{{title}}",
           "subtitleTemplate": "{{year}} • {{genre}}",
           "style": {
-            "spacing": 6,
+            "spacing": 4,
+            "padding": 0,
+            "paddingTop": 0,
+            "paddingBottom": 4,
             "foregroundColor": "primaryText"
           }
         },

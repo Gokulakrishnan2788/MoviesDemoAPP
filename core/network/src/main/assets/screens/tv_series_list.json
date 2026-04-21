@@ -52,8 +52,8 @@
         {
           "id": "listHeader",
           "type": "header",
-          "titleTemplate": "{{headerTitle}}",
-          "subtitleTemplate": "{{headerSubtitle}}",
+          "titleTemplate": "Series Hub",
+          "subtitleTemplate": "Live OMDB data for the game franchise",
           "style": {
             "spacing": 6,
             "foregroundColor": "primaryText"

@@ -1,5 +1,6 @@
 package com.example.moviesdemoapp.core.network
 
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import okhttp3.MediaType.Companion.toMediaType
@@ -14,6 +15,7 @@ import java.lang.reflect.Type
  * Retrofit [Converter.Factory] backed by Kotlinx Serialization [Json].
  * Replaces the Jake Wharton adapter without adding an extra dependency.
  */
+@OptIn(InternalSerializationApi::class)
 class KotlinxSerializationConverterFactory private constructor(
     private val json: Json,
 ) : Converter.Factory() {
