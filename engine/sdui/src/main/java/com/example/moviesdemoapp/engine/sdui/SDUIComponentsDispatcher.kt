@@ -1,5 +1,7 @@
 package com.example.moviesdemoapp.engine.sdui
 
+import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -63,6 +65,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -81,6 +84,7 @@ import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
 import com.example.moviesdemoapp.engine.sdui.components.NodeRenderer
+import com.example.moviesdemoapp.engine.sdui.model.AdaptiveConfig
 import com.google.type.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -115,6 +119,60 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private val formDataStoreAndValidation = FormDataStorage.formDataStoreAndValidation
     fun readAndSetValue(key: String?) = FormDataStorage.readAndSetValue(key)
     private fun validateForm() = FormDataStorage.validateForm()
+
+    @SuppressLint("ConfigurationScreenWidthHeight")
+    @Composable
+    fun rememberAdaptiveConfig(): AdaptiveConfig {
+
+        val density = LocalDensity.current
+        val configuration = LocalConfiguration.current
+
+        val fontScale = density.fontScale
+        val isTablet = configuration.screenWidthDp >= 600
+        val isLandscape =
+            configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+        return AdaptiveConfig(
+            fontScale = fontScale,
+            isLargeFont = fontScale > 1.3f,
+            isTablet = isTablet,
+            isLandscape = isLandscape
+        )
+    }
+
+    @Composable
+    fun AdaptiveLayout(
+        config: AdaptiveConfig,
+        rowContent: @Composable () -> Unit,
+        columnContent: @Composable () -> Unit
+    ) {
+
+        when {
+            config.isLargeFont -> {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    columnContent()
+                }
+            }
+
+            config.isTablet || config.isLandscape -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    rowContent()
+                }
+            }
+
+            else -> {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    columnContent()
+                }
+            }
+        }
+    }
 
     @Composable
     fun RenderBuiltIn(
