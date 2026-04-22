@@ -1,8 +1,8 @@
 package com.example.moviesdemoapp.feature.banking.ui
 
+import com.example.moviesdemoapp.core.data.ScreenRepository
 import com.example.moviesdemoapp.core.data.remote.DataSourceExecutor
 import com.example.moviesdemoapp.core.domain.BaseViewModel
-import com.example.moviesdemoapp.engine.sdui.usecase.LoadSDUIScreenUseCase
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageEffect
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageIntent
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageState
@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BankingViewModel @Inject constructor(
-    private val loadSDUIScreen: LoadSDUIScreenUseCase,
+    private val screenRepository: ScreenRepository,
     private val executeDataSource: DataSourceExecutor,
 ) : BaseViewModel<BankingPageState, BankingPageIntent, BankingPageEffect>() {
 
@@ -31,7 +31,7 @@ class BankingViewModel @Inject constructor(
     }
 
     private suspend fun loadScreen(screenName:String) {
-        val screenModel = loadSDUIScreen(screenName)
+        val screenModel = screenRepository.loadScreen(screenName)
             ?: run { setState { copy(error = "Screen config not found") }; return }
 
         setState { copy(screenModel = screenModel, isLoading = true, error = null) }
@@ -51,7 +51,7 @@ class BankingViewModel @Inject constructor(
     // ─── Intent handlers ─────────────────────────────────────────────────────
 
     private suspend fun loadScreen() {
-        val screenModel = loadSDUIScreen("personal_details")
+        val screenModel = screenRepository.loadScreen("personal_details")
             ?: run { setState { copy(error = "Screen config not found") }; return }
 
         setState { copy(screenModel = screenModel, isLoading = true, error = null) }

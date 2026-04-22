@@ -3,7 +3,7 @@ package com.example.moviesdemoapp.feature.banking.ui.model
 import com.example.moviesdemoapp.core.domain.UiEffect
 import com.example.moviesdemoapp.core.domain.UiIntent
 import com.example.moviesdemoapp.core.domain.UiState
-import com.example.moviesdemoapp.engine.sdui.ScreenModel
+import com.example.moviesdemoapp.core.network.model.ScreenModel
 
 
 data class BankingPageState(
