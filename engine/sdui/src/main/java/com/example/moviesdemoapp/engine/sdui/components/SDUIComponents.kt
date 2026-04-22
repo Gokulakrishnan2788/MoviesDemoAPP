@@ -79,6 +79,7 @@ import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
 import com.example.moviesdemoapp.engine.sdui.ActionModel
 import com.example.moviesdemoapp.engine.sdui.ComponentNode
+import com.example.moviesdemoapp.engine.sdui.FormDataStorage
 import com.example.moviesdemoapp.engine.sdui.TemplateResolver
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -99,20 +100,9 @@ typealias NodeRenderer =
  */
 @Singleton
 class SDUIComponents @Inject constructor(private val resolver: TemplateResolver) {
-
-    private val formDataStoreAndValidation = mutableStateMapOf<String, String>()
-    fun clearFormData() = formDataStoreAndValidation.clear()
-    fun getFormData(): Map<String, String> = formDataStoreAndValidation
-
-    fun readAndSetValue(key: String?): String {
-        return formDataStoreAndValidation[key] ?: ""
-    }
-    private fun validateForm(): Boolean {
-        if(formDataStoreAndValidation.isEmpty()){
-            return true
-        }
-        return formDataStoreAndValidation.values.all { it.isNotEmpty() && it.isNotBlank() }
-    }
+    private val formDataStoreAndValidation = FormDataStorage.formDataStoreAndValidation
+    fun readAndSetValue(key: String?) = FormDataStorage.readAndSetValue(key)
+    private fun validateForm() = FormDataStorage.validateForm()
 
 
     @Composable
@@ -165,7 +155,7 @@ class SDUIComponents @Inject constructor(private val resolver: TemplateResolver)
         val formState = remember {mutableStateMapOf<String, String>() }
         val min = component.validation?.min as? Int ?: 0
         var rawValue by remember {
-            mutableStateOf(formState.getOrDefault(component.dataBinding, "$min").replace("$", ""))
+            mutableStateOf(formState.getOrDefault(component.dataBinding, "").replace("$", ""))
         }
 
         val formattedValue = formatCurrency(rawValue)
@@ -211,8 +201,8 @@ class SDUIComponents @Inject constructor(private val resolver: TemplateResolver)
                     rawValue = clean
                     component.dataBinding?.let {
                         formState[it] = clean
-                        if(component.validation?.required == true){
-                            formDataStoreAndValidation[component.dataBinding ?: ""] = clean
+                        if (component.validation?.required == true) {
+                            formDataStoreAndValidation[component.dataBinding] = "$$clean"
                         }
                     }
 
@@ -579,12 +569,16 @@ class SDUIComponents @Inject constructor(private val resolver: TemplateResolver)
 
 
     fun resolveValue(template: String, formState: SnapshotStateMap<String, Any>): String {
-        val regex = "\\{\\{(.+?)}}".toRegex()
-        val match = regex.find(template)
+        try {
+            val regex = "\\{\\{(.+?)}}".toRegex()
+            val match = regex.find(template)
 
-        val key = match?.groupValues?.get(1) ?: return ""
+            val key = match?.groupValues?.get(1) ?: return ""
 
-        return formState.getValue(key).toString() ?: ""
+            return formState.getValue(key).toString() ?: ""
+        } catch (e: Exception) {
+            return ""
+        }
     }
 
     @Composable
@@ -604,7 +598,7 @@ class SDUIComponents @Inject constructor(private val resolver: TemplateResolver)
         if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
         if (pad > 0.dp) mod = mod.padding(pad)
         if (node.action != null) mod = mod.clickable { node.action.dispatch(data, onAction) }
-        val value = formDataStoreAndValidation[node.valueTemplate]?.replace("{{", "")?.replace("}}", "") ?: resolveValue(node.valueTemplate?: "", formState)
+        val value = formDataStoreAndValidation[node.valueTemplate?.replace("{{", "")?.replace("}}", "")] ?: resolveValue(node.valueTemplate?: "", formState)
 
         Row(
             modifier = Modifier
@@ -626,7 +620,7 @@ class SDUIComponents @Inject constructor(private val resolver: TemplateResolver)
                 text = value,
                 modifier = Modifier.weight(1f),
                 fontSize = 14.sp,
-                color = Color.Black,
+                color = Color.White,
                 textAlign = TextAlign.End
             )
         }
