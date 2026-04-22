@@ -86,6 +86,9 @@
               {
                 "id": "poster",
                 "type": "image",
+                "props": {
+                  "contentDescription": "Movie Poster Image"
+                },
                 "dataBinding": "posterURL",
                 "style": {
                   "frameWidth": 88,

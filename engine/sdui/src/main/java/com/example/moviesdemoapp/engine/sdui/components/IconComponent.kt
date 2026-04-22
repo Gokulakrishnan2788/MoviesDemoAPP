@@ -25,9 +25,15 @@ internal fun RenderIcon(node: ComponentNode) {
         else                                           -> Icons.Default.Star
     }
 
+    val description = node.props["contentDescription"] ?: when {
+        name.contains("search")                       -> "Search"
+        name.contains("play") || name.contains("tv")  -> "Play"
+        else                                           -> "Rating"
+    }
+
     Icon(
         imageVector = icon,
-        contentDescription = null,
+        contentDescription = description,
         tint = color,
         modifier = Modifier.size(size),
     )

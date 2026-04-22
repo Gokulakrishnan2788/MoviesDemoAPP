@@ -24,6 +24,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.moviesdemoapp.core.network.model.ComponentNode
@@ -77,9 +80,13 @@ internal fun RenderList(
             // key() ensures Compose tracks each item by identity, not position,
             // so composable state stays correct when the list reorders.
             key(itemData["id"] ?: index.toString()) {
+                val itemTitle = itemData["title"] ?: itemData["name"] ?: "Item ${index + 1}"
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = "$itemTitle, long press to reorder"
+                        }
                         .onGloballyPositioned { itemHeights[index] = it.size.height.toFloat() }
                         .zIndex(if (isDragging) 1f else 0f)
                         .graphicsLayer {
@@ -121,12 +128,13 @@ internal fun RenderList(
                     // Subtle drag handle hint at the trailing edge
                     Icon(
                         imageVector = Icons.Default.DragHandle,
-                        contentDescription = null,
+                        contentDescription = "Drag to reorder",
                         tint = DesignTokens.SecondaryText.copy(alpha = 0.35f),
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .padding(end = 12.dp)
-                            .size(18.dp),
+                            .size(18.dp)
+                            .clearAndSetSemantics {},
                     )
                 }
             }

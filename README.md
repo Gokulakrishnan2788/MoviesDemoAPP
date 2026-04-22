@@ -19,8 +19,9 @@ A production-grade Android application built on a fully **Server-Driven UI (SDUI
 11. [Data Binding to View](#11-data-binding-to-view)
 12. [Features in Detail](#12-features-in-detail)
 13. [Drag-to-Reorder](#13-drag-to-reorder)
-14. [Libraries & Versions](#14-libraries--versions)
-15. [Project File Tree](#15-project-file-tree)
+14. [TalkBack & Accessibility](#14-talkback--accessibility)
+15. [Libraries & Versions](#15-libraries--versions)
+16. [Project File Tree](#16-project-file-tree)
 
 ---
 
@@ -413,10 +414,10 @@ assets/screens/{screenId}.json
         ├── "row"           → Row(spacedBy) + clickable(action)
         ├── "topBar"        → Row: back icon (Box+clickable) | title | search icon
         ├── "header"        → Row: title Text + optional subtitle
-        ├── "text"          → Text (dataBinding or {{template}} or literal)
-        ├── "image"         → AsyncImage(url from data[dataBinding])
-        ├── "icon"          → Icon (star / search / playCircle by name)
-        ├── "list"          → Column with drag-to-reorder over listData[binding]
+        ├── "text"          → Text (dataBinding or {{template}} or literal; native TalkBack)
+        ├── "image"         → AsyncImage(url from data[dataBinding]; contentDescription from props or "Movie poster")
+        ├── "icon"          → Icon (star/search/playCircle; contentDescription "Rating"/"Search"/"Play")
+        ├── "list"          → Column with drag-to-reorder; items: mergeDescendants + "long press to reorder"
         ├── "generatedList" → repeat(data[countBinding].toInt()) { i → renderNode(itemLayout) }
         └── unknown         → visible placeholder "[unknown: type]"
 ```
@@ -427,22 +428,22 @@ assets/screens/{screenId}.json
 
 ### Component Types
 
-| Type | Description | Key props/bindings |
-|---|---|---|
-| `scroll` | Root scrollable container | `children` |
-| `column` | Vertical stack | `style.spacing`, `style.padding`, `style.backgroundColor` |
-| `row` | Horizontal stack, tappable | `action`, `style.cornerRadius` |
-| `topBar` | App bar with optional back/search | `props.leadingIcon="back"`, `props.trailingIcon="search"` |
-| `header` | Title + subtitle row | `titleTemplate`, `subtitleTemplate` |
-| `text` | Single text label | `dataBinding`, `template`, `text` |
-| `image` | Async image | `dataBinding` → URL string |
-| `icon` | System icon | `icon` name: `"star"`, `"search"`, `"play.tv.fill"` |
-| `list` | Data-bound list with drag-to-reorder | `listDataBinding`, `itemLayout` |
-| `generatedList` | Count-driven repeated layout | `countBinding`, `itemLayout` |
-| `card` | Elevated container | `style.cornerRadius`, `action` |
-| `spacer` | Vertical gap | `style.spacing` or `props.height` |
-| `divider` | Horizontal rule | — |
-| `button` | Tappable text button | `template`, `action` |
+| Type | Description | Key props/bindings | TalkBack |
+|---|---|---|---|
+| `scroll` | Root scrollable container | `children` | transparent (structural) |
+| `column` | Vertical stack | `style.spacing`, `style.padding`, `style.backgroundColor` | transparent (structural) |
+| `row` | Horizontal stack, tappable | `action`, `style.cornerRadius` | `mergeDescendants=true`, `role=Button` when tappable |
+| `topBar` | App bar with optional back/search | `props.leadingIcon="back"`, `props.trailingIcon="search"` | Back: `role=Button`, `contentDescription="Navigate back"`; Search: `contentDescription="Search"` |
+| `header` | Title + subtitle row | `titleTemplate`, `subtitleTemplate` | title/subtitle `Text` announced natively |
+| `text` | Single text label | `dataBinding`, `template`, `text` | announced natively by TalkBack |
+| `image` | Async image | `dataBinding` → URL string | `props.contentDescription` or `"Movie poster"` fallback |
+| `icon` | System icon | `icon` name: `"star"`, `"search"`, `"play.tv.fill"` | `"Rating"` / `"Search"` / `"Play"`, overridable via `props.contentDescription` |
+| `list` | Data-bound list with drag-to-reorder | `listDataBinding`, `itemLayout` | item: `mergeDescendants=true`, `"<title>, long press to reorder"`; drag handle: `"Drag to reorder"` (excluded from merge) |
+| `generatedList` | Count-driven repeated layout | `countBinding`, `itemLayout` | reads children normally |
+| `card` | Elevated container | `style.cornerRadius`, `action` | `mergeDescendants=true`, `role=Button` when tappable |
+| `spacer` | Vertical gap | `style.spacing` or `props.height` | transparent (decorative) |
+| `divider` | Horizontal rule | — | transparent (decorative) |
+| `button` | Tappable text button | `template`, `action` | `role=Button`, `contentDescription=<label>` |
 
 ### Style System
 
@@ -814,7 +815,182 @@ Non-dragged items that should make room for the dragged item are visually shifte
 
 ---
 
-## 14. Libraries & Versions
+## 14. TalkBack & Accessibility
+
+Both the list and detail screens are fully compatible with Android TalkBack (screen reader) and with other accessibility services that rely on the Compose semantics tree.
+
+### Approach
+
+Accessibility is implemented entirely inside the **SDUI engine layer** — no feature module code was touched. Every built-in component renderer sets its own semantics, so any screen defined in JSON automatically benefits without extra work from the screen author.
+
+### No permissions required
+
+TalkBack is a system accessibility service activated from the device's **Accessibility settings**. No `<uses-permission>` declaration is needed; `android.permission.INTERNET` (already declared) is the only manifest permission in this project.
+
+### Component-by-component breakdown
+
+#### `image` (`ImageComponent.kt`)
+
+```kotlin
+val description = node.props["contentDescription"]
+    ?: if (url.isNotEmpty()) "Movie poster" else null
+
+AsyncImage(
+    model = url,
+    contentDescription = description,
+    ...
+)
+```
+
+- Falls back to `"Movie poster"` for every non-empty image URL.
+- Screen authors can supply a precise description in JSON via `"props": { "contentDescription": "Breaking Bad poster" }`.
+- Empty-URL images get `null` (treated as decorative).
+
+#### `icon` (`IconComponent.kt`)
+
+```kotlin
+val description = node.props["contentDescription"] ?: when {
+    name.contains("search")                        -> "Search"
+    name.contains("play") || name.contains("tv")   -> "Play"
+    else                                           -> "Rating"
+}
+Icon(imageVector = icon, contentDescription = description, ...)
+```
+
+Icons are **never decorative** in this app:
+- Star icon → `"Rating"` (used next to IMDb score)
+- PlayCircle icon → `"Play"`
+- Search icon → `"Search"`
+
+All three can be overridden per-node via `props.contentDescription` in JSON.
+
+#### `list` (`ListComponent.kt`)
+
+Each draggable list item merges all its descendant text/image nodes into a single accessibility node, then appends a drag hint:
+
+```kotlin
+Box(
+    modifier = Modifier
+        .semantics(mergeDescendants = true) {
+            contentDescription = "$itemTitle, long press to reorder"
+        }
+        ...
+)
+```
+
+The drag-handle icon is annotated with `contentDescription = "Drag to reorder"` but also carries `clearAndSetSemantics {}` so it is **excluded from the merged parent node** — preventing double-announcement.
+
+```
+TalkBack focus order on a list item:
+  ┌───────────────────────────────────────────────────────┐
+  │  "Breaking Bad, 2008, Drama, Rating 9.5,              │  ← merged node
+  │   long press to reorder"                              │
+  └───────────────────────────────────────────────────────┘
+  (drag handle icon is excluded — not a separate stop)
+```
+
+#### `card` (`CardComponent.kt`)
+
+```kotlin
+.semantics(mergeDescendants = true) {
+    if (action != null) role = Role.Button
+}
+```
+
+- Cards with a tap action are announced as `Button`, so TalkBack says "double-tap to activate."
+- All child text (title, rating, year) is merged into one accessibility node — one swipe = one card.
+- Non-interactive cards merge descendants for cleaner readability but carry no role.
+
+#### `button` (`ButtonComponent.kt`)
+
+```kotlin
+.semantics {
+    role = Role.Button
+    contentDescription = label
+}
+```
+
+The resolved label (after `{{template}}` substitution) becomes the content description so TalkBack announces the actual button text rather than traversing into the inner `Text`.
+
+#### `row` (`RowComponent.kt`)
+
+```kotlin
+if (action != null) mod = mod.semantics(mergeDescendants = true) { role = Role.Button }
+```
+
+Clickable rows (e.g. season rows in the detail screen) are announced as buttons with all child text merged. Non-clickable rows are transparent to the semantics tree.
+
+#### `topBar` (`TopBarComponent.kt`)
+
+| Element | Semantics |
+|---|---|
+| Back button `Box` | `role = Role.Button`, `contentDescription = "Navigate back"` |
+| Arrow icon (inside Back) | `contentDescription = null` — suppressed to avoid duplication |
+| Search `IconButton` | `contentDescription = "Search"` (Material `IconButton` sets role automatically) |
+| Title `Text` | announced natively |
+| Subtitle `Text` | announced natively |
+
+#### `header` / `text`
+
+Both use standard Compose `Text`, which is announced natively. No manual semantics needed.
+
+### Overriding content descriptions from JSON
+
+Any component that exposes a `contentDescription` override reads it from `node.props["contentDescription"]`. This means screen authors can set precise labels directly in JSON without touching Kotlin:
+
+```json
+{
+  "type": "image",
+  "dataBinding": "posterURL",
+  "props": {
+    "contentDescription": "Game of Thrones season poster"
+  }
+}
+```
+
+```json
+{
+  "type": "icon",
+  "icon": "star",
+  "props": {
+    "contentDescription": "IMDb rating star"
+  }
+}
+```
+
+### Focus traversal — List screen
+
+```
+TalkBack swipe-right order:
+  1. "Series Hub"  (header title)
+  2. "Top rated series"  (header subtitle)
+  3. "Search" button
+  4. "Breaking Bad, 2008, Drama, Rating 9.5, long press to reorder"  (item 1)
+  5. "Game of Thrones, 2011, Action, Rating 9.3, long press to reorder"  (item 2)
+  ...
+```
+
+### Focus traversal — Detail screen
+
+```
+TalkBack swipe-right order:
+  1. "Navigate back" button
+  2. "Game of Thrones"  (header title)
+  3. "2011–2019 • Action, Adventure, Drama"  (header subtitle)
+  4. "Movie poster"  (hero poster image — merged into card)
+  5. "Rating 9.3"  (merged into hero card)
+  6. "57 min"  (runtime, merged)
+  7. "8 Seasons"  (merged)
+  8. "Won 59 Primetime Emmys"  (conditional — skipped if empty)
+  9. "Synopsis"  (section title)
+  10. <plot text>
+  11. "Cast: Emilia Clarke, Peter Dinklage …"
+  12–19. "Season 1" … "Season 8"  (Play button role each)
+```
+
+---
+
+## 15. Libraries & Versions
 
 | Library | Version | Purpose |
 |---|---|---|
@@ -834,7 +1010,7 @@ Non-dragged items that should make room for the dragged item are visually shifte
 
 ---
 
-## 15. Project File Tree
+## 16. Project File Tree
 
 ```
 MoviesDemoAPP/
@@ -882,14 +1058,25 @@ MoviesDemoAPP/
 │
 ├── engine/
 │   ├── sdui/src/main/java/.../engine/sdui/
-│   │   ├── ScreenModel.kt               ← ComponentNode, StyleModel, ActionModel, VisibilityModel
-│   │   ├── SDUIRepository.kt            ← asset loader
-│   │   ├── SDUIParser.kt
 │   │   ├── SDUIRenderer.kt              ← public Composable + SDUIRenderEngine
+│   │   ├── SDUIComponentsDispatcher.kt  ← routes type → built-in renderer
 │   │   ├── TemplateResolver.kt          ← {{key}} resolution + visibility evaluation
 │   │   ├── ComponentRegistry.kt         ← extensible custom component registry
 │   │   ├── usecase/LoadSDUIScreenUseCase.kt
-│   │   └── components/SDUIComponents.kt ← all built-in renderers
+│   │   └── components/
+│   │       ├── TopBarComponent.kt       ← back (role=Button) + search icon
+│   │       ├── HeaderComponent.kt       ← title + subtitle + optional search
+│   │       ├── ColumnComponent.kt       ← vertical stack
+│   │       ├── RowComponent.kt          ← horizontal stack, role=Button when tappable
+│   │       ├── CardComponent.kt         ← mergeDescendants, role=Button when tappable
+│   │       ├── ListComponent.kt         ← drag-to-reorder, item mergeDescendants
+│   │       ├── GeneratedListComponent.kt← count-driven repeated layout
+│   │       ├── TextComponent.kt         ← text (native TalkBack)
+│   │       ├── ImageComponent.kt        ← contentDescription from props or "Movie poster"
+│   │       ├── IconComponent.kt         ← "Rating" / "Search" / "Play" descriptions
+│   │       ├── ButtonComponent.kt       ← role=Button + label contentDescription
+│   │       ├── SpacerComponent.kt       ← decorative gap (no semantics)
+│   │       └── DividerComponent.kt      ← decorative rule (no semantics)
 │   │
 │   └── navigation/src/main/java/.../engine/navigation/
 │       ├── Routes.kt

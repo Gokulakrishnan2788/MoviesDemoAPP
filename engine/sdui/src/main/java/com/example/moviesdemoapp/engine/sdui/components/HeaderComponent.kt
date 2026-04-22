@@ -51,7 +51,9 @@ internal fun RenderHeader(
         }
         if (hasSearch) {
             IconButton(onClick = { node.action?.dispatch(data, onAction) }) {
-                Icon(Icons.Default.Search, contentDescription = "Search", tint = DesignTokens.PrimaryText)
+                Icon(Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = DesignTokens.PrimaryText)
             }
         }
     }

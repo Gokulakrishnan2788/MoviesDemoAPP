@@ -7,6 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -52,12 +56,16 @@ internal fun RenderTopBar(
                     Box(
                         modifier = Modifier
                             .size(36.dp)
+                            .semantics {
+                                role = Role.Button
+                                contentDescription = "Navigate back"
+                            }
                             .clickable { node.action?.dispatch(data, onAction) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = null,
                             tint = DesignTokens.PrimaryText,
                             modifier = Modifier.size(24.dp),
                         )

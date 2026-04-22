@@ -23,9 +23,12 @@ internal fun RenderImage(node: ComponentNode, data: Map<String, String>) {
                else Modifier.fillMaxWidth().height(height))
         .clip(RoundedCornerShape(radius))
 
+    val description = node.props["contentDescription"]
+        ?: if (url.isNotEmpty()) "Movie poster" else null
+
     AsyncImage(
         model = url,
-        contentDescription = null,
+        contentDescription = description,
         contentScale = ContentScale.Crop,
         modifier = mod,
     )

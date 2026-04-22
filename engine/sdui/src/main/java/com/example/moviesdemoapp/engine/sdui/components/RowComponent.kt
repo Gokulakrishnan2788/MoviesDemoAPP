@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
@@ -27,10 +30,11 @@ internal fun RenderRow(
     val spacing = node.style?.spacing?.dp ?: DesignTokens.SpacingSm
     val radius  = node.style?.cornerRadius?.dp ?: 0.dp
 
+    val action = node.action
     var mod: Modifier = Modifier.fillMaxWidth()
+    if (action != null) mod = mod.semantics(mergeDescendants = true) { role = Role.Button }
     if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
     if (pad > 0.dp) mod = mod.padding(pad)
-    val action = node.action
     if (action != null) mod = mod.clickable { action.dispatch(data, onAction) }
 
     Row(modifier = mod, horizontalArrangement = Arrangement.spacedBy(spacing)) {
