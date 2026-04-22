@@ -86,14 +86,15 @@
               {
                 "id": "poster",
                 "type": "image",
-                "props": {
-                  "contentDescription": "Movie Poster Image"
-                },
                 "dataBinding": "posterURL",
                 "style": {
                   "frameWidth": 88,
                   "frameHeight": 128,
                   "cornerRadius": 16
+                },
+                "accessibility": {
+                  "label": "{{title}} poster",
+                  "role": "image"
                 }
               },
               {

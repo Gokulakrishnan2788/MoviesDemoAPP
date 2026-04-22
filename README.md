@@ -428,22 +428,22 @@ assets/screens/{screenId}.json
 
 ### Component Types
 
-| Type | Description | Key props/bindings | TalkBack |
+| Type | Description | Key props/bindings | Accessibility (`AccessibilityModel`) |
 |---|---|---|---|
-| `scroll` | Root scrollable container | `children` | transparent (structural) |
-| `column` | Vertical stack | `style.spacing`, `style.padding`, `style.backgroundColor` | transparent (structural) |
-| `row` | Horizontal stack, tappable | `action`, `style.cornerRadius` | `mergeDescendants=true`, `role=Button` when tappable |
-| `topBar` | App bar with optional back/search | `props.leadingIcon="back"`, `props.trailingIcon="search"` | Back: `role=Button`, `contentDescription="Navigate back"`; Search: `contentDescription="Search"` |
-| `header` | Title + subtitle row | `titleTemplate`, `subtitleTemplate` | title/subtitle `Text` announced natively |
-| `text` | Single text label | `dataBinding`, `template`, `text` | announced natively by TalkBack |
-| `image` | Async image | `dataBinding` → URL string | `props.contentDescription` or `"Movie poster"` fallback |
-| `icon` | System icon | `icon` name: `"star"`, `"search"`, `"play.tv.fill"` | `"Rating"` / `"Search"` / `"Play"`, overridable via `props.contentDescription` |
-| `list` | Data-bound list with drag-to-reorder | `listDataBinding`, `itemLayout` | item: `mergeDescendants=true`, `"<title>, long press to reorder"`; drag handle: `"Drag to reorder"` (excluded from merge) |
-| `generatedList` | Count-driven repeated layout | `countBinding`, `itemLayout` | reads children normally |
-| `card` | Elevated container | `style.cornerRadius`, `action` | `mergeDescendants=true`, `role=Button` when tappable |
-| `spacer` | Vertical gap | `style.spacing` or `props.height` | transparent (decorative) |
-| `divider` | Horizontal rule | — | transparent (decorative) |
-| `button` | Tappable text button | `template`, `action` | `role=Button`, `contentDescription=<label>` |
+| `scroll` | Root scrollable container | `children` | transparent — no model needed |
+| `column` | Vertical stack | `style.spacing`, `style.padding`, `style.backgroundColor` | transparent — no model needed |
+| `row` | Horizontal stack, tappable | `action`, `style.cornerRadius` | `{ mergeDescendants: true, role: "button" }` when tappable |
+| `topBar` | App bar with optional back/search | `props.leadingIcon="back"`, `props.trailingIcon="search"` | Back + Search hardcoded (internal elements); outer bar uses node's model |
+| `header` | Title + subtitle row | `titleTemplate`, `subtitleTemplate` | `{ role: "header" }` to mark as heading for screen-reader navigation |
+| `text` | Single text label | `dataBinding`, `template`, `text` | announced natively; no model needed |
+| `image` | Async image | `dataBinding` → URL string | `{ label: "…", role: "image" }` — no built-in fallback |
+| `icon` | System icon | `icon` name: `"star"`, `"search"`, `"play.tv.fill"` | `{ label: "…" }` or `{ importantForAccessibility: false }` for decorative |
+| `list` | Data-bound list with drag-to-reorder | `listDataBinding`, `itemLayout` | `{ mergeDescendants: true, hint: "long press to reorder" }` — applied to every item |
+| `generatedList` | Count-driven repeated layout | `countBinding`, `itemLayout` | delegates to item layout's own model |
+| `card` | Elevated container | `style.cornerRadius`, `action` | `{ mergeDescendants: true, role: "button", hint: "open detail" }` when tappable |
+| `spacer` | Vertical gap | `style.spacing` or `props.height` | transparent — decorative |
+| `divider` | Horizontal rule | — | transparent — decorative |
+| `button` | Tappable text button | `template`, `action` | `{ role: "button" }` — label from child `Text` via merge |
 
 ### Style System
 
@@ -817,175 +817,283 @@ Non-dragged items that should make room for the dragged item are visually shifte
 
 ## 14. TalkBack & Accessibility
 
-Both the list and detail screens are fully compatible with Android TalkBack (screen reader) and with other accessibility services that rely on the Compose semantics tree.
+Both the list and detail screens are fully compatible with Android TalkBack (screen reader) and all other accessibility services that consume the Compose semantics tree.
 
-### Approach
+### Design principle
 
-Accessibility is implemented entirely inside the **SDUI engine layer** — no feature module code was touched. Every built-in component renderer sets its own semantics, so any screen defined in JSON automatically benefits without extra work from the screen author.
+Accessibility is a **first-class field on every `ComponentNode`**, not a side-channel through `props`. Every component renderer calls a single extension function; the JSON screen definition drives what TalkBack announces.
+
+```
+JSON screen definition
+  └── ComponentNode.accessibility: AccessibilityModel
+        └── Modifier.applyAccessibility(model)   ← single utility
+              └── Compose semantics tree
+                    └── TalkBack / a11y services
+```
 
 ### No permissions required
 
-TalkBack is a system accessibility service activated from the device's **Accessibility settings**. No `<uses-permission>` declaration is needed; `android.permission.INTERNET` (already declared) is the only manifest permission in this project.
+TalkBack is a system service toggled from **Settings → Accessibility**. No `<uses-permission>` entry is needed; `android.permission.INTERNET` (already declared) remains the only manifest permission.
+
+---
+
+### Data model — `AccessibilityModel`
+
+Defined in `core/network/src/main/java/.../model/ScreenModel.kt` alongside all other node models:
+
+```kotlin
+@Serializable
+data class AccessibilityModel(
+    // Overrides what TalkBack announces.
+    // Omit when child Text nodes already carry the full meaning.
+    val label: String? = null,
+
+    // Action label — TalkBack says "double-tap to <hint>".
+    val hint: String? = null,
+
+    // Semantic role: "button" | "image" | "checkbox" | "switch" | "tab" | "header"
+    val role: String? = null,
+
+    // Collapse all descendant nodes into one focus stop.
+    val mergeDescendants: Boolean? = null,
+
+    // false → node is removed from the accessibility tree entirely.
+    val importantForAccessibility: Boolean? = null,
+)
+```
+
+`ComponentNode` carries it as an optional field:
+
+```kotlin
+data class ComponentNode(
+    ...
+    val accessibility: AccessibilityModel? = null,
+)
+```
+
+---
+
+### The utility — `Modifier.applyAccessibility`
+
+`engine/sdui/src/main/java/.../engine/sdui/AccessibilityUtils.kt`
+
+```kotlin
+fun Modifier.applyAccessibility(model: AccessibilityModel?): Modifier {
+    model ?: return this                                          // null → no-op
+
+    if (model.importantForAccessibility == false)
+        return clearAndSetSemantics {}                           // remove from tree
+
+    return semantics(mergeDescendants = model.mergeDescendants == true) {
+        model.label?.let { contentDescription = it }
+
+        model.role?.let { r ->
+            when (r.lowercase()) {
+                "button"   -> role = Role.Button
+                "image"    -> role = Role.Image
+                "checkbox" -> role = Role.Checkbox
+                "switch"   -> role = Role.Switch
+                "tab"      -> role = Role.Tab
+                "header"   -> heading()                         // no Role.Header in Compose
+            }
+        }
+
+        model.hint?.let { hint -> onClick(label = hint) { false } }
+    }
+}
+```
+
+**Decision table:**
+
+| `AccessibilityModel` state | Result |
+|---|---|
+| `null` | No-op — component is transparent to the semantics tree |
+| `importantForAccessibility = false` | `clearAndSetSemantics {}` — node removed from tree; short-circuits everything else |
+| `mergeDescendants = true` | All descendant semantics collapse into one focus stop |
+| `label` present | Sets `contentDescription`; omit when visible `Text` children are already sufficient |
+| `role` present | Maps string → `Role.*`; `"header"` maps to `heading()` (Compose has no `Role.Header`) |
+| `hint` present | Registers `onClick(label = hint)` — TalkBack announces "double-tap to `<hint>`" |
+
+**label vs. visible text:**
+Set `label` only when there is no visible text (image, icon-only button). For containers whose child `Text` nodes already carry the full meaning, set `mergeDescendants = true` and omit `label` — TalkBack merges and reads the visible text without duplication.
+
+---
 
 ### Component-by-component breakdown
+
+Every built-in component calls `.applyAccessibility(node.accessibility)` on its root modifier. Accessibility is fully driven by the JSON; no Kotlin change is needed when labels or roles change.
 
 #### `image` (`ImageComponent.kt`)
 
 ```kotlin
-val description = node.props["contentDescription"]
-    ?: if (url.isNotEmpty()) "Movie poster" else null
+val mod = ...clip(...).applyAccessibility(node.accessibility)
 
 AsyncImage(
     model = url,
-    contentDescription = description,
-    ...
+    contentDescription = null,  // semantics come from applyAccessibility via modifier
+    modifier = mod,
 )
 ```
 
-- Falls back to `"Movie poster"` for every non-empty image URL.
-- Screen authors can supply a precise description in JSON via `"props": { "contentDescription": "Breaking Bad poster" }`.
-- Empty-URL images get `null` (treated as decorative).
+`contentDescription = null` is intentional — the `AsyncImage` parameter is bypassed; semantics are owned exclusively by `applyAccessibility`.
 
 #### `icon` (`IconComponent.kt`)
 
 ```kotlin
-val description = node.props["contentDescription"] ?: when {
-    name.contains("search")                        -> "Search"
-    name.contains("play") || name.contains("tv")   -> "Play"
-    else                                           -> "Rating"
-}
-Icon(imageVector = icon, contentDescription = description, ...)
+Icon(
+    imageVector = icon,
+    contentDescription = null,  // semantics come from applyAccessibility via modifier
+    modifier = Modifier.size(size).applyAccessibility(node.accessibility),
+)
 ```
-
-Icons are **never decorative** in this app:
-- Star icon → `"Rating"` (used next to IMDb score)
-- PlayCircle icon → `"Play"`
-- Search icon → `"Search"`
-
-All three can be overridden per-node via `props.contentDescription` in JSON.
 
 #### `list` (`ListComponent.kt`)
 
-Each draggable list item merges all its descendant text/image nodes into a single accessibility node, then appends a drag hint:
+The item `Box` applies the list node's `AccessibilityModel` (set once in JSON, applied to every item):
 
 ```kotlin
 Box(
     modifier = Modifier
-        .semantics(mergeDescendants = true) {
-            contentDescription = "$itemTitle, long press to reorder"
-        }
+        .fillMaxWidth()
+        .applyAccessibility(node.accessibility)   // e.g. mergeDescendants=true, hint="long press to reorder"
         ...
 )
 ```
 
-The drag-handle icon is annotated with `contentDescription = "Drag to reorder"` but also carries `clearAndSetSemantics {}` so it is **excluded from the merged parent node** — preventing double-announcement.
+The drag-handle icon retains a hardcoded `clearAndSetSemantics {}` — it is a structural element, not a `ComponentNode`, and must always be excluded from the merged item node:
 
-```
-TalkBack focus order on a list item:
-  ┌───────────────────────────────────────────────────────┐
-  │  "Breaking Bad, 2008, Drama, Rating 9.5,              │  ← merged node
-  │   long press to reorder"                              │
-  └───────────────────────────────────────────────────────┘
-  (drag handle icon is excluded — not a separate stop)
+```kotlin
+Icon(
+    imageVector = Icons.Default.DragHandle,
+    contentDescription = "Drag to reorder",
+    modifier = Modifier...clearAndSetSemantics {},   // excluded from merged parent
+)
 ```
 
 #### `card` (`CardComponent.kt`)
 
 ```kotlin
-.semantics(mergeDescendants = true) {
-    if (action != null) role = Role.Button
-}
+var mod = Modifier
+    .fillMaxWidth()
+    .padding(...)
+    .applyAccessibility(node.accessibility)
+if (action != null) mod = mod.clickable { ... }
 ```
 
-- Cards with a tap action are announced as `Button`, so TalkBack says "double-tap to activate."
-- All child text (title, rating, year) is merged into one accessibility node — one swipe = one card.
-- Non-interactive cards merge descendants for cleaner readability but carry no role.
+JSON for a tappable card:
+```json
+"accessibility": { "mergeDescendants": true, "role": "button", "hint": "open detail" }
+```
 
 #### `button` (`ButtonComponent.kt`)
 
 ```kotlin
-.semantics {
-    role = Role.Button
-    contentDescription = label
-}
+Box(
+    modifier = Modifier
+        .padding(...)
+        .applyAccessibility(node.accessibility)
+        .clickable { ... },
+) { Text(label) }
 ```
 
-The resolved label (after `{{template}}` substitution) becomes the content description so TalkBack announces the actual button text rather than traversing into the inner `Text`.
+JSON: `"accessibility": { "role": "button" }` — `label` can be omitted because the child `Text` carries the announcement text.
 
 #### `row` (`RowComponent.kt`)
 
 ```kotlin
-if (action != null) mod = mod.semantics(mergeDescendants = true) { role = Role.Button }
+var mod = Modifier.fillMaxWidth().applyAccessibility(node.accessibility)
+if (action != null) mod = mod.clickable { ... }
 ```
 
-Clickable rows (e.g. season rows in the detail screen) are announced as buttons with all child text merged. Non-clickable rows are transparent to the semantics tree.
+JSON for a tappable season row:
+```json
+"accessibility": { "mergeDescendants": true, "role": "button" }
+```
 
 #### `topBar` (`TopBarComponent.kt`)
 
-| Element | Semantics |
+The outer `Column` receives the node's `AccessibilityModel` via `applyAccessibility`. The **back button** and **search icon** are internal hardcoded elements (not separate `ComponentNode`s), so their semantics are hardcoded directly — not via `props`:
+
+| Element | How semantics are set |
 |---|---|
-| Back button `Box` | `role = Role.Button`, `contentDescription = "Navigate back"` |
-| Arrow icon (inside Back) | `contentDescription = null` — suppressed to avoid duplication |
-| Search `IconButton` | `contentDescription = "Search"` (Material `IconButton` sets role automatically) |
-| Title `Text` | announced natively |
-| Subtitle `Text` | announced natively |
+| Outer `Column` | `applyAccessibility(node.accessibility)` |
+| Back button `Box` | Hardcoded: `role = Role.Button`, `contentDescription = "Navigate back"` |
+| Arrow `Icon` inside back | `contentDescription = null` — suppressed to prevent double-announcement |
+| Search `IconButton` | Hardcoded: `contentDescription = "Search"` (Material sets role automatically) |
+| Title `Text` | Announced natively |
+| Subtitle `Text` | Announced natively |
 
 #### `header` / `text`
 
-Both use standard Compose `Text`, which is announced natively. No manual semantics needed.
+Both render standard Compose `Text`. TalkBack announces visible text natively. Set `"accessibility": { "role": "header" }` on a `header` node to mark section headings for screen reader navigation.
 
-### Overriding content descriptions from JSON
+---
 
-Any component that exposes a `contentDescription` override reads it from `node.props["contentDescription"]`. This means screen authors can set precise labels directly in JSON without touching Kotlin:
+### JSON authoring guide
 
 ```json
+// Image with explicit label
 {
   "type": "image",
   "dataBinding": "posterURL",
-  "props": {
-    "contentDescription": "Game of Thrones season poster"
-  }
+  "accessibility": { "label": "Series poster", "role": "image" }
 }
-```
 
-```json
+// Tappable card — merge all child text into one focus stop
+{
+  "type": "card",
+  "action": { "type": "navigate", "routeTemplate": "series_detail/{{id}}" },
+  "accessibility": { "mergeDescendants": true, "role": "button", "hint": "open detail" }
+}
+
+// Icon that decorates a rating — excluded from accessibility tree
 {
   "type": "icon",
   "icon": "star",
-  "props": {
-    "contentDescription": "IMDb rating star"
-  }
+  "accessibility": { "importantForAccessibility": false }
+}
+
+// Draggable list — each item merges descendants + announces drag hint
+{
+  "type": "list",
+  "listDataBinding": "series",
+  "accessibility": { "mergeDescendants": true, "hint": "long press to reorder" }
+}
+
+// Section header — navigable via TalkBack headings shortcut
+{
+  "type": "header",
+  "titleTemplate": "Synopsis",
+  "accessibility": { "role": "header" }
 }
 ```
+
+---
 
 ### Focus traversal — List screen
 
 ```
 TalkBack swipe-right order:
-  1. "Series Hub"  (header title)
-  2. "Top rated series"  (header subtitle)
-  3. "Search" button
-  4. "Breaking Bad, 2008, Drama, Rating 9.5, long press to reorder"  (item 1)
-  5. "Game of Thrones, 2011, Action, Rating 9.3, long press to reorder"  (item 2)
-  ...
+  1. "Series Hub"                    ← header title (native Text)
+  2. "Top rated series"              ← header subtitle (native Text)
+  3. "Search" button                 ← IconButton, hardcoded contentDescription
+  4–N. Each series item              ← merged node: all child text + "double-tap to open detail"
+       drag handle excluded          ← clearAndSetSemantics {} suppresses it
 ```
 
 ### Focus traversal — Detail screen
 
 ```
 TalkBack swipe-right order:
-  1. "Navigate back" button
-  2. "Game of Thrones"  (header title)
-  3. "2011–2019 • Action, Adventure, Drama"  (header subtitle)
-  4. "Movie poster"  (hero poster image — merged into card)
-  5. "Rating 9.3"  (merged into hero card)
-  6. "57 min"  (runtime, merged)
-  7. "8 Seasons"  (merged)
-  8. "Won 59 Primetime Emmys"  (conditional — skipped if empty)
-  9. "Synopsis"  (section title)
-  10. <plot text>
-  11. "Cast: Emilia Clarke, Peter Dinklage …"
-  12–19. "Season 1" … "Season 8"  (Play button role each)
+  1. "Navigate back" button          ← hardcoded role=Button
+  2. "Game of Thrones"               ← header title (native Text)
+  3. "2011–2019 • Action, Drama"     ← header subtitle (native Text)
+  4. Hero card                       ← mergeDescendants: poster + rating + runtime + seasons
+  5. "Won 59 Primetime Emmys"        ← conditional, skipped when empty
+  6. "Synopsis"                      ← role=header, navigable via heading shortcut
+  7. <plot text>
+  8. "Cast: …"
+  9–N. "Season 1" … "Season N"      ← role=button each, "double-tap to open"
 ```
 
 ---
@@ -1034,6 +1142,7 @@ MoviesDemoAPP/
 │   │   └── java/.../core/network/
 │   │       ├── di/NetworkModule.kt
 │   │       ├── model/DataSourceModel.kt
+│   │       ├── model/ScreenModel.kt         ← ComponentNode, AccessibilityModel, StyleModel, ActionModel, VisibilityModel
 │   │       ├── model/OmdbDtos.kt
 │   │       ├── OmdbApiService.kt
 │   │       ├── NetworkClient.kt
@@ -1060,6 +1169,7 @@ MoviesDemoAPP/
 │   ├── sdui/src/main/java/.../engine/sdui/
 │   │   ├── SDUIRenderer.kt              ← public Composable + SDUIRenderEngine
 │   │   ├── SDUIComponentsDispatcher.kt  ← routes type → built-in renderer
+│   │   ├── AccessibilityUtils.kt        ← Modifier.applyAccessibility(AccessibilityModel?)
 │   │   ├── TemplateResolver.kt          ← {{key}} resolution + visibility evaluation
 │   │   ├── ComponentRegistry.kt         ← extensible custom component registry
 │   │   ├── usecase/LoadSDUIScreenUseCase.kt

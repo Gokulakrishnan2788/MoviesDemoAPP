@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.colorFromToken
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 
 @Composable
 internal fun RenderColumn(
@@ -28,6 +29,7 @@ internal fun RenderColumn(
     var mod: Modifier = Modifier.fillMaxWidth()
     if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
     if (pad > 0.dp) mod = mod.padding(pad)
+    mod = mod.applyAccessibility(node.accessibility, data)
 
     Column(
         modifier = mod,

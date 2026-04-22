@@ -9,13 +9,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 
 @Composable
 internal fun RenderCard(
@@ -33,9 +31,7 @@ internal fun RenderCard(
     var mod = Modifier
         .fillMaxWidth()
         .padding(horizontal = DesignTokens.SpacingMd, vertical = DesignTokens.SpacingSm)
-        .semantics(mergeDescendants = true) {
-            if (action != null) role = Role.Button
-        }
+        .applyAccessibility(node.accessibility, data)
     if (action != null) mod = mod.clickable { action.dispatch(data, onAction) }
 
     Card(

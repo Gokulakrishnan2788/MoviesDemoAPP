@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.engine.sdui.TemplateResolver
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 
 @Composable
 internal fun RenderHeader(
@@ -35,7 +36,8 @@ internal fun RenderHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = padH, end = padH, top = padTop, bottom = padBottom),
+            .padding(start = padH, end = padH, top = padTop, bottom = padBottom)
+            .applyAccessibility(node.accessibility, data),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {

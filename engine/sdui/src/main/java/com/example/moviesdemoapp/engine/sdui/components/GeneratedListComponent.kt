@@ -3,8 +3,10 @@ package com.example.moviesdemoapp.engine.sdui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.moviesdemoapp.core.network.model.ComponentNode
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 
 @Composable
 internal fun RenderGeneratedList(
@@ -19,6 +21,7 @@ internal fun RenderGeneratedList(
     val spacing = node.style?.spacing?.dp ?: 0.dp
 
     Column(
+        modifier = Modifier.applyAccessibility(node.accessibility, data),
         verticalArrangement = if (spacing > 0.dp) Arrangement.spacedBy(spacing) else Arrangement.Top,
     ) {
         (1..count).forEach { i ->
