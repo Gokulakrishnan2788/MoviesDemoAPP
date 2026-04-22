@@ -27,7 +27,8 @@
       "Bash(find /Users/gokulakrishnanmani/AndroidStudioProjects/MoviesDemoAPP/feature/movies -name \"MoviesModule.kt\" -exec cat {} \\\\;)",
       "Bash(./gradlew :feature:movies:assembleDebug)",
       "Bash(./gradlew :engine:sdui:compileDebugKotlin --info)",
-      "Bash(./gradlew :engine:sdui:compileDebugKotlin :feature:movies:compileDebugKotlin)"
+      "Bash(./gradlew :engine:sdui:compileDebugKotlin :feature:movies:compileDebugKotlin)",
+      "Bash(./gradlew :core:network:compileDebugKotlin :engine:sdui:compileDebugKotlin)"
     ]
   }
 }

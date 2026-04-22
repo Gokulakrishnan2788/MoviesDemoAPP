@@ -65,7 +65,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             "text"          -> RenderText(node, data, resolver)
             "header"        -> RenderHeader(node, data, onAction, resolver)
             "image"         -> RenderImage(node, data)
-            "icon"          -> RenderIcon(node)
+            "icon"          -> RenderIcon(node, data)
             "button"        -> RenderButton(node, data, onAction, resolver)
             "list"          -> RenderList(node, data, listData, onAction, renderNode)
             "generatedList" -> RenderGeneratedList(node, data, listData, onAction, renderNode)

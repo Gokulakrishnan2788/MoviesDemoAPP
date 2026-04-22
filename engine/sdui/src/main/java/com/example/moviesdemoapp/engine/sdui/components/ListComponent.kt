@@ -25,9 +25,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 import androidx.compose.ui.zIndex
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
@@ -80,13 +79,10 @@ internal fun RenderList(
             // key() ensures Compose tracks each item by identity, not position,
             // so composable state stays correct when the list reorders.
             key(itemData["id"] ?: index.toString()) {
-                val itemTitle = itemData["title"] ?: itemData["name"] ?: "Item ${index + 1}"
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .semantics(mergeDescendants = true) {
-                            contentDescription = "$itemTitle, long press to reorder"
-                        }
+                        .applyAccessibility(node.accessibility, data + itemData)
                         .onGloballyPositioned { itemHeights[index] = it.size.height.toFloat() }
                         .zIndex(if (isDragging) 1f else 0f)
                         .graphicsLayer {

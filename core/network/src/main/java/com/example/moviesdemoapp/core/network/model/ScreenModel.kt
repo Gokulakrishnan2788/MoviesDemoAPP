@@ -33,6 +33,7 @@ data class ComponentNode(
     val visibility: VisibilityModel? = null,
     val text: String? = null,
     val icon: String? = null,
+    val accessibility: AccessibilityModel? = null,
 )
 
 // Visual styling overrides for a ComponentNode.
@@ -73,4 +74,21 @@ data class ActionModel(
 data class VisibilityModel(
     val dataBinding: String? = null,
     val isNotEmpty: Boolean = false,
+)
+
+// Declarative accessibility contract for a ComponentNode.
+// All fields are optional; missing fields are treated as "no override".
+@Serializable
+data class AccessibilityModel(
+    // Overrides what TalkBack announces for this node.
+    // Omit when visible Text children already carry sufficient meaning.
+    val label: String? = null,
+    // Action label announced as "double-tap to <hint>".
+    val hint: String? = null,
+    // Semantic role: "button" | "image" | "checkbox" | "switch" | "tab" | "header"
+    val role: String? = null,
+    // When true, all descendant semantics are merged into this node's single focus target.
+    val mergeDescendants: Boolean? = null,
+    // When false the node is excluded from the accessibility tree entirely.
+    val importantForAccessibility: Boolean? = null,
 )

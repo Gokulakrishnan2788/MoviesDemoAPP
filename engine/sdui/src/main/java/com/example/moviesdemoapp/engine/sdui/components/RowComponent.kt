@@ -9,13 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 
 @Composable
 internal fun RenderRow(
@@ -31,8 +29,9 @@ internal fun RenderRow(
     val radius  = node.style?.cornerRadius?.dp ?: 0.dp
 
     val action = node.action
-    var mod: Modifier = Modifier.fillMaxWidth()
-    if (action != null) mod = mod.semantics(mergeDescendants = true) { role = Role.Button }
+    var mod: Modifier = Modifier
+        .fillMaxWidth()
+        .applyAccessibility(node.accessibility, data)
     if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
     if (pad > 0.dp) mod = mod.padding(pad)
     if (action != null) mod = mod.clickable { action.dispatch(data, onAction) }

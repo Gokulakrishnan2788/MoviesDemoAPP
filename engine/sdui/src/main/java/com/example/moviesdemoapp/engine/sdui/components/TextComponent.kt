@@ -10,6 +10,7 @@ import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
 import com.example.moviesdemoapp.engine.sdui.TemplateResolver
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 import androidx.compose.foundation.layout.padding
 
 @Composable
@@ -37,6 +38,7 @@ internal fun RenderText(
         fontWeight = fontWeight,
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
-        modifier = if (pad > 0.dp) Modifier.padding(pad) else Modifier,
+        modifier = (if (pad > 0.dp) Modifier.padding(pad) else Modifier)
+            .applyAccessibility(node.accessibility, data),
     )
 }

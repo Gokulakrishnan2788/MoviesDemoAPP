@@ -11,6 +11,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -45,6 +46,7 @@ internal fun RenderTopBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .applyAccessibility(node.accessibility, data)
             .padding(start = padH, end = padH, top = padTop, bottom = padBottom),
     ) {
         Row(

@@ -33,6 +33,9 @@
     {
       "id": "detailColumn",
       "type": "column",
+      "accessibility": {
+        "mergeDescendants": false
+      },
       "style": {
         "padding": 16,
         "spacing": 14,
@@ -42,6 +45,11 @@
         {
           "id": "backBar",
           "type": "topBar",
+          "accessibility": {
+            "label": "Navigate back",
+            "role": "button",
+            "hint": "go back"
+          },
           "props": {
             "leadingIcon": "back"
           },
@@ -57,6 +65,11 @@
         {
           "id": "detailHeader",
           "type": "header",
+          "accessibility": {
+            "label": "{{title}}, {{year}}, {{genre}}",
+            "role": "header",
+            "mergeDescendants": true
+          },
           "titleTemplate": "{{title}}",
           "subtitleTemplate": "{{year}} • {{genre}}",
           "style": {
@@ -70,6 +83,10 @@
         {
           "id": "heroRow",
           "type": "row",
+          "accessibility": {
+            "label": "{{title}}, IMDb {{rating}}, Runtime {{runtime}}, Seasons {{totalSeasons}}",
+            "mergeDescendants": true
+          },
           "style": {
             "spacing": 16,
             "padding": 16,
@@ -81,6 +98,10 @@
               "id": "detailPoster",
               "type": "image",
               "dataBinding": "posterURL",
+              "accessibility": {
+                "label": "{{title}} poster",
+                "role": "image"
+              },
               "style": {
                 "frameWidth": 132,
                 "frameHeight": 190,
@@ -90,6 +111,9 @@
             {
               "id": "heroMeta",
               "type": "column",
+              "accessibility": {
+                "mergeDescendants": true
+              },
               "style": {
                 "spacing": 10
               },
@@ -97,6 +121,9 @@
                 {
                   "id": "ratingMetaRow",
                   "type": "row",
+                  "accessibility": {
+                    "importantForAccessibility": false
+                  },
                   "style": {
                     "spacing": 8
                   },
@@ -105,6 +132,9 @@
                       "id": "detailRatingIcon",
                       "type": "icon",
                       "icon": "star.fill",
+                      "accessibility": {
+                        "importantForAccessibility": false
+                      },
                       "style": {
                         "fontSize": 12,
                         "foregroundColor": "accent"
@@ -114,6 +144,9 @@
                       "id": "detailRating",
                       "type": "text",
                       "template": "IMDb {{rating}}",
+                      "accessibility": {
+                        "importantForAccessibility": false
+                      },
                       "style": {
                         "fontSize": 15,
                         "fontWeight": "semibold",
@@ -126,6 +159,9 @@
                   "id": "runtime",
                   "type": "text",
                   "template": "Runtime: {{runtime}}",
+                  "accessibility": {
+                    "importantForAccessibility": false
+                  },
                   "style": {
                     "fontSize": 14,
                     "foregroundColor": "secondaryText"
@@ -135,6 +171,9 @@
                   "id": "seasons",
                   "type": "text",
                   "template": "Seasons: {{totalSeasons}}",
+                  "accessibility": {
+                    "importantForAccessibility": false
+                  },
                   "style": {
                     "fontSize": 14,
                     "foregroundColor": "secondaryText"
@@ -144,6 +183,9 @@
                   "id": "awards",
                   "type": "text",
                   "template": "Awards: {{awards}}",
+                  "accessibility": {
+                    "importantForAccessibility": false
+                  },
                   "style": {
                     "fontSize": 14,
                     "foregroundColor": "secondaryText",
@@ -161,6 +203,10 @@
         {
           "id": "plotSection",
           "type": "column",
+          "accessibility": {
+            "label": "Synopsis, {{plot}}",
+            "mergeDescendants": true
+          },
           "style": {
             "padding": 16,
             "spacing": 10,
@@ -172,6 +218,9 @@
               "id": "plotTitle",
               "type": "text",
               "text": "Synopsis",
+              "accessibility": {
+                "importantForAccessibility": false
+              },
               "style": {
                 "fontSize": 18,
                 "fontWeight": "bold",
@@ -182,6 +231,9 @@
               "id": "plotText",
               "type": "text",
               "dataBinding": "plot",
+              "accessibility": {
+                "importantForAccessibility": false
+              },
               "style": {
                 "fontSize": 15,
                 "foregroundColor": "secondaryText"
@@ -192,6 +244,10 @@
         {
           "id": "creditsSection",
           "type": "column",
+          "accessibility": {
+            "label": "Credits, Cast {{actors}}, Writer {{writer}}, Director {{director}}",
+            "mergeDescendants": true
+          },
           "style": {
             "padding": 16,
             "spacing": 10,
@@ -203,6 +259,9 @@
               "id": "creditsTitle",
               "type": "text",
               "text": "Credits",
+              "accessibility": {
+                "importantForAccessibility": false
+              },
               "style": {
                 "fontSize": 18,
                 "fontWeight": "bold",
@@ -213,6 +272,9 @@
               "id": "actors",
               "type": "text",
               "template": "Cast: {{actors}}",
+              "accessibility": {
+                "importantForAccessibility": false
+              },
               "style": {
                 "fontSize": 15,
                 "foregroundColor": "secondaryText"
@@ -222,6 +284,9 @@
               "id": "writer",
               "type": "text",
               "template": "Writer: {{writer}}",
+              "accessibility": {
+                "importantForAccessibility": false
+              },
               "style": {
                 "fontSize": 15,
                 "foregroundColor": "secondaryText"
@@ -231,6 +296,9 @@
               "id": "director",
               "type": "text",
               "template": "Director: {{director}}",
+              "accessibility": {
+                "importantForAccessibility": false
+              },
               "style": {
                 "fontSize": 15,
                 "foregroundColor": "secondaryText"
@@ -241,6 +309,10 @@
         {
           "id": "seasonSection",
           "type": "column",
+          "accessibility": {
+            "label": "Seasons section",
+            "mergeDescendants": false
+          },
           "style": {
             "spacing": 12
           },
@@ -249,6 +321,9 @@
               "id": "seasonTitle",
               "type": "text",
               "text": "Seasons",
+              "accessibility": {
+                "role": "header"
+              },
               "style": {
                 "fontSize": 18,
                 "fontWeight": "bold",
@@ -259,12 +334,21 @@
               "id": "generatedSeasonList",
               "type": "generatedList",
               "countBinding": "totalSeasons",
+              "accessibility": {
+                "mergeDescendants": false
+              },
               "style": {
                 "spacing": 10
               },
               "itemLayout": {
                 "id": "seasonRow",
                 "type": "row",
+                "accessibility": {
+                  "label": "Season {{seasonNumber}}",
+                  "role": "button",
+                  "hint": "view season details",
+                  "mergeDescendants": true
+                },
                 "style": {
                   "spacing": 10,
                   "padding": 14,
@@ -276,6 +360,9 @@
                     "id": "seasonBadge",
                     "type": "icon",
                     "icon": "play.tv.fill",
+                    "accessibility": {
+                      "importantForAccessibility": false
+                    },
                     "style": {
                       "fontSize": 14,
                       "foregroundColor": "accent",
@@ -287,6 +374,9 @@
                     "id": "seasonLabel",
                     "type": "text",
                     "template": "Season {{seasonNumber}}",
+                    "accessibility": {
+                      "importantForAccessibility": false
+                    },
                     "style": {
                       "fontSize": 15,
                       "fontWeight": "semibold",

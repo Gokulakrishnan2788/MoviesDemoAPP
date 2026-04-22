@@ -12,29 +12,24 @@ import androidx.compose.ui.unit.dp
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 
 @Composable
-internal fun RenderIcon(node: ComponentNode) {
+internal fun RenderIcon(node: ComponentNode, data: Map<String, String> = emptyMap()) {
     val name  = node.icon ?: node.props["icon"] ?: ""
     val color = node.style?.foregroundColor?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
     val size  = node.style?.fontSize?.dp ?: 16.dp
 
     val icon = when {
-        name.contains("search")                        -> Icons.Default.Search
+        name.contains("search")                       -> Icons.Default.Search
         name.contains("play") || name.contains("tv")  -> Icons.Default.PlayCircle
         else                                           -> Icons.Default.Star
     }
 
-    val description = node.props["contentDescription"] ?: when {
-        name.contains("search")                       -> "Search"
-        name.contains("play") || name.contains("tv")  -> "Play"
-        else                                           -> "Rating"
-    }
-
     Icon(
         imageVector = icon,
-        contentDescription = description,
+        contentDescription = null, // driven by AccessibilityModel via modifier semantics
         tint = color,
-        modifier = Modifier.size(size),
+        modifier = Modifier.size(size).applyAccessibility(node.accessibility, data),
     )
 }
