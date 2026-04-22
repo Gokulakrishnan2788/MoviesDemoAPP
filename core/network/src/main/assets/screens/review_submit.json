@@ -1,0 +1,160 @@
+{
+  "screenId": "review_submit",
+  "title": "Review & Submit",
+  "type": "scroll",
+  "state": {
+    "formId": "loanApplication",
+    "step": 4
+  },
+  "accessibility": {
+    "supportsDynamicType": true,
+    "supportsBoldText": true,
+    "voiceOverEnabled": true
+  },
+  "children": [
+    {
+      "id": "rootColumn",
+      "type": "column",
+      "style": {
+        "padding": 20,
+        "spacing": 16,
+        "backgroundColor": "screenBackground"
+      },
+      "children": [
+        {
+          "id": "header",
+          "type": "header",
+          "title": "Review & Submit",
+          "leadingIcon": "chevron.left",
+          "style": {
+            "foregroundColor": "primaryText"
+          },
+          "accessibility": {
+            "label": "Review and Submit screen",
+            "traits": ["header"]
+          }
+        },
+        {
+          "id": "reviewCard",
+          "type": "column",
+          "style": {
+            "padding": 16,
+            "spacing": 14,
+            "backgroundColor": "surface",
+            "cornerRadius": 12
+          },
+          "children": [
+            {
+              "id": "fullNameRow",
+              "type": "summaryRow",
+              "label": "Full Name",
+              "valueTemplate": "{{form.personal.fullName}}"
+            },
+            {
+              "id": "dobRow",
+              "type": "summaryRow",
+              "label": "Date of Birth",
+              "valueTemplate": "{{form.personal.dateOfBirth}}"
+            },
+            {
+              "id": "addressRow",
+              "type": "summaryRow",
+              "label": "Address",
+              "valueTemplate": "{{form.address.streetAddress}}, {{form.address.city}}, {{form.address.state}} {{form.address.zipCode}}"
+            },
+            {
+              "id": "employmentRow",
+              "type": "summaryRow",
+              "label": "Employment",
+              "valueTemplate": "{{form.financial.employmentStatus}}"
+            },
+            {
+              "id": "incomeRow",
+              "type": "summaryRow",
+              "label": "Annual Income",
+              "valueTemplate": "${{form.financial.annualIncome}}"
+            },
+            {
+              "id": "loanAmountRow",
+              "type": "summaryRow",
+              "label": "Loan Amount",
+              "valueTemplate": "${{form.financial.loanAmount}}"
+            },
+            {
+              "id": "loanTenureRow",
+              "type": "summaryRow",
+              "label": "Loan Tenure",
+              "valueTemplate": "{{form.financial.loanTenureYears}} years"
+            },
+            {
+              "id": "existingLoansRow",
+              "type": "summaryRow",
+              "label": "Existing Loans",
+              "valueTemplate": "{{form.financial.hasExistingLoans}}"
+            }
+          ]
+        },
+        {
+          "id": "footerActions",
+          "type": "row",
+          "style": {
+            "spacing": 12,
+            "paddingTop": 8
+          },
+          "children": [
+            {
+              "id": "editButton",
+              "type": "button",
+              "title": "Edit",
+              "variant": "secondary",
+              "action": {
+                "type": "navigation",
+                "destination": "personal_details"
+              },
+              "style": {
+                "flex": 1,
+                "weight": 1,
+                "height": 48,
+                "cornerRadius": 8
+              },
+              "accessibility": {
+                "label": "Edit",
+                "hint": "Go back and edit the form"
+              }
+            },
+            {
+              "id": "submitButton",
+              "type": "button",
+              "title": "Submit Form",
+              "variant": "success",
+              "action": {
+                "type": "api",
+                "endpoint": "submitLoanApplication",
+                "method": "POST",
+                "requestBodyBinding": "form",
+                "onSuccess": {
+                  "type": "navigation",
+                  "destination": "application_success"
+                },
+                "onFailure": {
+                  "type": "toast",
+                  "message": "Unable to submit application. Please try again."
+                }
+              },
+              "style": {
+                "flex": 2,
+                "weight": 1,
+                "height": 48,
+                "cornerRadius": 8
+              },
+              "accessibility": {
+                "label": "Submit Application",
+                "hint": "Double tap to submit the application"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

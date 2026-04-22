@@ -1,0 +1,223 @@
+{
+  "screenId": "personal_details",
+  "title": "Personal Details",
+  "type": "scroll",
+  "state": {
+    "formId": "loanApplication",
+    "step": 1
+  },
+  "accessibility": {
+    "supportsDynamicType": true,
+    "supportsBoldText": true,
+    "voiceOverEnabled": true
+  },
+  "children": [
+    {
+      "id": "rootColumn",
+      "type": "column",
+      "style": {
+        "padding": 20,
+        "spacing": 16,
+        "backgroundColor": "screenBackground"
+      },
+      "children": [
+        {
+          "id": "header",
+          "type": "header",
+          "title": "Personal Details",
+          "leadingIcon": "chevron.left",
+          "style": {
+            "foregroundColor": "primaryText"
+          },
+          "accessibility": {
+            "label": "Personal Details screen",
+            "traits": ["header"]
+          }
+        },
+        {
+          "id": "fullNameField",
+          "type": "textField",
+          "label": "Full Name",
+          "placeholder": "Enter full name",
+          "dataBinding": "form.personal.fullName",
+          "validation": {
+            "required": true,
+            "minLength": 2
+          },
+          "style": {
+            "fontSize": 16,
+            "labelFontSize": 14,
+            "cornerRadius": 8
+          },
+          "accessibility": {
+            "label": "Full Name",
+            "hint": "Enter your full name"
+          }
+        },
+        {
+          "id": "dobField",
+          "type": "dateField",
+          "label": "Date of Birth",
+          "placeholder": "Select Date",
+          "dataBinding": "form.personal.dateOfBirth",
+          "validation": {
+            "required": true
+          },
+          "style": {
+            "fontSize": 16,
+            "labelFontSize": 14,
+            "cornerRadius": 8,
+            "trailingIcon": "calendar"
+          },
+          "accessibility": {
+            "label": "Date of Birth",
+            "hint": "Double tap to choose date"
+          }
+        },
+        {
+          "id": "genderField",
+          "type": "segmentedControl",
+          "label": "Gender",
+          "dataBinding": "form.personal.gender",
+          "options": [
+            { "title": "Male", "value": "male" },
+            { "title": "Female", "value": "female" },
+            { "title": "Other", "value": "other" }
+          ],
+          "validation": {
+            "required": true
+          },
+          "style": {
+            "fontSize": 15,
+            "selectedBackgroundColor": "accent",
+            "selectedForegroundColor": "onAccent",
+            "cornerRadius": 8
+          },
+          "accessibility": {
+            "label": "Gender",
+            "hint": "Choose one option"
+          }
+        },
+        {
+          "id": "maritalStatusField",
+          "type": "dropdown",
+          "label": "Marital Status",
+          "placeholder": "Select marital status",
+          "dataBinding": "form.personal.maritalStatus",
+          "options": [
+            { "title": "Single", "value": "single" },
+            { "title": "Married", "value": "married" },
+            { "title": "Divorced", "value": "divorced" },
+            { "title": "Widowed", "value": "widowed" }
+          ],
+          "validation": {
+            "required": true
+          },
+          "style": {
+            "fontSize": 16,
+            "labelFontSize": 14,
+            "cornerRadius": 8
+          },
+          "accessibility": {
+            "label": "Marital Status",
+            "hint": "Double tap to select marital status"
+          }
+        },
+        {
+          "id": "mobileField",
+          "type": "textField",
+          "label": "Mobile Number",
+          "placeholder": "+1 123 456 7890",
+          "keyboardType": "phonePad",
+          "dataBinding": "form.personal.mobileNumber",
+          "validation": {
+            "required": true,
+            "regex": "^[0-9+\\-() ]{8,15}$"
+          },
+          "style": {
+            "fontSize": 16,
+            "labelFontSize": 14,
+            "cornerRadius": 8
+          },
+          "accessibility": {
+            "label": "Mobile Number",
+            "hint": "Enter your mobile number"
+          }
+        },
+        {
+          "id": "emailField",
+          "type": "textField",
+          "label": "Email Address",
+          "placeholder": "john.doe@example.com",
+          "keyboardType": "emailAddress",
+          "dataBinding": "form.personal.email",
+          "validation": {
+            "required": true,
+            "regex": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+          },
+          "style": {
+            "fontSize": 16,
+            "labelFontSize": 14,
+            "cornerRadius": 8
+          },
+          "accessibility": {
+            "label": "Email Address",
+            "hint": "Enter your email address"
+          }
+        },
+        {
+          "id": "footerActions",
+          "type": "row",
+          "style": {
+            "spacing": 12,
+            "paddingTop": 8
+          },
+          "children": [
+            {
+              "id": "backButton",
+              "type": "button",
+              "title": "Back",
+              "variant": "secondary",
+              "action": {
+                "type": "navigation",
+                "destination": "previous"
+              },
+              "style": {
+                "flex": 1,
+                "weight": 1,
+                "height": 48,
+                "cornerRadius": 8
+              },
+              "accessibility": {
+                "label": "Back",
+                "hint": "Go to previous screen"
+              }
+            },
+            {
+              "id": "continueButton",
+              "type": "button",
+              "title": "Continue",
+              "variant": "primary",
+              "action": {
+                "type": "navigation",
+                "destination": "address_details",
+                "saveForm": true,
+                "validateForm": true
+              },
+              "style": {
+                "flex": 1,
+                "weight": 1,
+                "height": 48,
+                "cornerRadius": 8
+              },
+              "accessibility": {
+                "label": "Continue",
+                "hint": "Save details and go to address details"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

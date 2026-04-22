@@ -1,0 +1,166 @@
+{
+  "screenId": "address_details",
+  "title": "Address Details",
+  "type": "scroll",
+  "state": {
+    "formId": "loanApplication",
+    "step": 2
+  },
+  "accessibility": {
+    "supportsDynamicType": true,
+    "supportsBoldText": true,
+    "voiceOverEnabled": true
+  },
+  "children": [
+    {
+      "id": "rootColumn",
+      "type": "column",
+      "style": {
+        "padding": 20,
+        "spacing": 16,
+        "backgroundColor": "screenBackground"
+      },
+      "children": [
+        {
+          "id": "header",
+          "type": "header",
+          "title": "Address Details",
+          "leadingIcon": "chevron.left",
+          "style": {
+            "foregroundColor": "primaryText"
+          },
+          "accessibility": {
+            "label": "Address Details screen",
+            "traits": ["header"]
+          }
+        },
+        {
+          "id": "streetAddressField",
+          "type": "textField",
+          "label": "Street Address",
+          "placeholder": "Enter street address",
+          "dataBinding": "form.address.streetAddress",
+          "validation": {
+            "required": true
+          },
+          "accessibility": {
+            "label": "Street Address",
+            "hint": "Enter your street address"
+          }
+        },
+        {
+          "id": "cityField",
+          "type": "textField",
+          "label": "City",
+          "placeholder": "Enter city",
+          "dataBinding": "form.address.city",
+          "validation": {
+            "required": true
+          },
+          "accessibility": {
+            "label": "City",
+            "hint": "Enter your city"
+          }
+        },
+        {
+          "id": "stateField",
+          "type": "dropdown",
+          "label": "State",
+          "placeholder": "Select state",
+          "dataBinding": "form.address.state",
+          "options": [
+            { "title": "California", "value": "CA" },
+            { "title": "Texas", "value": "TX" },
+            { "title": "New York", "value": "NY" },
+            { "title": "Florida", "value": "FL" }
+          ],
+          "validation": {
+            "required": true
+          },
+          "accessibility": {
+            "label": "State",
+            "hint": "Double tap to select state"
+          }
+        },
+        {
+          "id": "zipCodeField",
+          "type": "textField",
+          "label": "ZIP Code",
+          "placeholder": "Enter ZIP code",
+          "keyboardType": "numberPad",
+          "dataBinding": "form.address.zipCode",
+          "validation": {
+            "required": true,
+            "regex": "^[0-9]{5,6}$"
+          },
+          "accessibility": {
+            "label": "ZIP Code",
+            "hint": "Enter your ZIP code"
+          }
+        },
+        {
+          "id": "residenceTypeField",
+          "type": "segmentedControl",
+          "label": "Residence Type",
+          "dataBinding": "form.address.residenceType",
+          "options": [
+            { "title": "Owned", "value": "owned" },
+            { "title": "Rented", "value": "rented" }
+          ],
+          "validation": {
+            "required": true
+          },
+          "accessibility": {
+            "label": "Residence Type",
+            "hint": "Choose owned or rented"
+          }
+        },
+        {
+          "id": "footerActions",
+          "type": "row",
+          "style": {
+            "spacing": 12,
+            "paddingTop": 8
+          },
+          "children": [
+            {
+              "id": "backButton",
+              "type": "button",
+              "title": "Back",
+              "variant": "secondary",
+              "action": {
+                "type": "navigation",
+                "destination": "personal_details",
+                "saveForm": true
+              },
+              "style": {
+                "flex": 1,
+                "weight": 1,
+                "height": 48,
+                "cornerRadius": 8
+              }
+            },
+            {
+              "id": "continueButton",
+              "type": "button",
+              "title": "Continue",
+              "variant": "primary",
+              "action": {
+                "type": "navigation",
+                "destination": "financial_information",
+                "saveForm": true,
+                "validateForm": true
+              },
+              "style": {
+                "flex": 1,
+                "weight": 1,
+                "height": 48,
+                "cornerRadius": 8
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
