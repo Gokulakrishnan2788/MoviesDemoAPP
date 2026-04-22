@@ -1,16 +1,21 @@
 package com.example.moviesdemoapp.feature.movies.ui.list
 
+import androidx.lifecycle.SavedStateHandle
+import com.example.moviesdemoapp.core.data.ScreenRepository
 import com.example.moviesdemoapp.core.data.remote.DataSourceExecutor
 import com.example.moviesdemoapp.core.domain.BaseViewModel
-import com.example.moviesdemoapp.engine.sdui.usecase.LoadSDUIScreenUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class MoviesViewModel @Inject constructor(
-    private val loadSDUIScreen: LoadSDUIScreenUseCase,
+    savedStateHandle: SavedStateHandle,
+    private val screenRepository: ScreenRepository,
     private val executeDataSource: DataSourceExecutor,
 ) : BaseViewModel<MoviesState, MoviesIntent, MoviesEffect>() {
+
+    // screenId comes from the nav argument — no hardcoded screen name in feature code.
+    private val screenId: String = savedStateHandle["screenId"] ?: "tv_series_list"
 
     override fun initialState() = MoviesState()
 
@@ -28,7 +33,7 @@ class MoviesViewModel @Inject constructor(
     // ─── Intent handlers ─────────────────────────────────────────────────────
 
     private suspend fun loadScreen() {
-        val screenModel = loadSDUIScreen("tv_series_list")
+        val screenModel = screenRepository.loadScreen(screenId)
             ?: run { setState { copy(error = "Screen config not found") }; return }
 
         setState { copy(screenModel = screenModel, isLoading = true, error = null) }
@@ -60,8 +65,6 @@ class MoviesViewModel @Inject constructor(
 
     // ─── Order ───────────────────────────────────────────────────────────────
 
-    // Moves item at [from] to [to] in state.
-    // Order lives in-memory only — resets when the process dies.
     private fun reorderList(binding: String, from: Int, to: Int) {
         if (from == to) return
         setState {

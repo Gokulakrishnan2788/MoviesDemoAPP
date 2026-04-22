@@ -11,15 +11,10 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun SeriesDetailScreen(
-    seriesId: String,
     navController: NavController,
     viewModel: SeriesDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
-    LaunchedEffect(seriesId) {
-        viewModel.handleIntent(SeriesDetailIntent.Load(seriesId))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->

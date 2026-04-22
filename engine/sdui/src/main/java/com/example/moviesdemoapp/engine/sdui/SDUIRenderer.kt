@@ -13,16 +13,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import com.example.moviesdemoapp.core.network.model.ComponentNode
+import com.example.moviesdemoapp.core.network.model.ScreenModel
 import com.example.moviesdemoapp.core.ui.DesignTokens
-import com.example.moviesdemoapp.engine.sdui.components.SDUIComponents
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+
+// ─── Hilt entry point ─────────────────────────────────────────────────────────
+// Lets a @Composable reach into Hilt's SingletonComponent to get the shared
+// ComponentRegistry. This is the standard pattern for accessing a Hilt singleton
+// from code that cannot use @Inject (Composable functions).
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface ComponentRegistryEntryPoint {
+    fun componentRegistry(): ComponentRegistry
+}
 
 // ─── Public composable entry-point ───────────────────────────────────────────
 
 /**
  * Render a server-driven screen.
  *
- * Shows [CircularProgressIndicator] while [isLoading], an error [Text] when
- * [error] is non-null, or delegates to [SDUIRenderEngine] once [screenModel] is ready.
+ * Uses the singleton [ComponentRegistry] populated in MovieApp.registerSduiComponents().
+ * Any type registered there is automatically available here — no extra wiring needed.
  *
  * @param onAction invoked with (actionId, params) whenever the user interacts with
  *   a tappable SDUI component. The ViewModel converts this into a [UiIntent].
@@ -36,10 +52,21 @@ fun SDUIRenderer(
     listData: Map<String, List<Map<String, String>>> = emptyMap(),
     onAction: (actionId: String, params: Map<String, String>) -> Unit,
 ) {
+    val context = LocalContext.current
+
+    // Pull the singleton ComponentRegistry from Hilt.
+    // This is the SAME instance that MovieApp.registerSduiComponents() populated at startup,
+    // so all registered custom components are already available here.
+    val registry = remember {
+        EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            ComponentRegistryEntryPoint::class.java,
+        ).componentRegistry()
+    }
+
     val resolver = remember { TemplateResolver() }
-    val registry = remember { ComponentRegistry() }
-    val components = remember { SDUIComponents(resolver) }
-    val engine = remember { SDUIRenderEngine(registry, components) }
+    val components = remember { SDUIComponentsDispatcher(resolver) }
+    val engine = remember(registry) { SDUIRenderEngine(registry, components) }
 
     Box(
         modifier = Modifier
@@ -80,7 +107,7 @@ fun SDUIRenderer(
  */
 class SDUIRenderEngine(
     private val registry: ComponentRegistry,
-    private val components: SDUIComponents,
+    private val components: SDUIComponentsDispatcher,
 ) {
 
     @Composable
@@ -111,6 +138,10 @@ class SDUIRenderEngine(
         listData: Map<String, List<Map<String, String>>> = emptyMap(),
         onAction: (actionId: String, params: Map<String, String>) -> Unit = { _, _ -> },
     ) {
+        // Visibility is evaluated once here — applies to BOTH custom and built-in components.
+        // Keeping it here prevents custom components from bypassing JSON visibility rules.
+        if (!components.isVisible(node, data)) return
+
         val custom = registry.resolve(node.type)
         if (custom != null) {
             custom(node, data, onAction)
