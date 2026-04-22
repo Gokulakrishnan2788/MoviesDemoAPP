@@ -31,6 +31,19 @@
             android:exported="false"
             android:theme="@style/Theme.MoviesDemoAPP" />
 
+        <activity android:name=".app.DeepLinkActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="myapp.com"
+                    android:pathPrefix="/screen" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>

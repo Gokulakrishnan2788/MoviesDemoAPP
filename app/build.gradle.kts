@@ -50,6 +50,7 @@ dependencies {
     implementation(project(":engine:navigation"))
     implementation(project(":feature:movies"))
     implementation(project(":feature:banking"))
+    implementation(project(":feature:deeplink"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
