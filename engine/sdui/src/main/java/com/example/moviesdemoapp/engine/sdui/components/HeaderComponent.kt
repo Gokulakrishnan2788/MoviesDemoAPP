@@ -37,7 +37,7 @@ internal fun RenderHeader(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = padH, end = padH, top = padTop, bottom = padBottom)
-            .applyAccessibility(node.accessibility, data),
+            .applyAccessibility(node.screenAccessibility, data),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {

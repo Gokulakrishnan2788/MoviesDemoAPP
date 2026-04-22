@@ -30,14 +30,14 @@ internal fun RenderImage(node: ComponentNode, data: Map<String, String>) {
                   else Modifier.fillMaxWidth().height(height)
 
     // Resolve the label template against current item data BEFORE entering composition.
-    val resolvedLabel = node.accessibility?.label?.resolveTokens(data)
+    val resolvedLabel = node.screenAccessibility?.label?.resolveTokens(data)
 
     // The outer Box is the only accessibility node TalkBack sees.
     // clearAndSetSemantics {} on AsyncImage removes ALL Coil-internal semantics so
     // the two nodes never compete — there is no ambiguity about which contentDescription
     // TalkBack announces.
     val boxMod = when {
-        node.accessibility?.importantForAccessibility == false ->
+        node.screenAccessibility?.importantForAccessibility == false ->
             sizeMod.clearAndSetSemantics {}
         resolvedLabel != null ->
             sizeMod.semantics {

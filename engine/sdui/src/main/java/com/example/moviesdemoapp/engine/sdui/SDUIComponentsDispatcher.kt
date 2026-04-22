@@ -249,7 +249,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 .fillMaxWidth()
                 .semantics {
                     contentDescription =
-                        (component.accessibility?.label ?: component.label).toString()
+                        (component.screenAccessibility?.label ?: component.label).toString()
                 }
         ) {
 
@@ -347,7 +347,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 .padding(vertical = 8.dp)
                 .semantics {
                     contentDescription =
-                        (component.accessibility?.label ?: component.label).toString()
+                        (component.screenAccessibility?.label ?: component.label).toString()
                 },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -414,7 +414,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 .fillMaxWidth()
                 .semantics {
                     contentDescription =
-                        (component.accessibility?.label ?: component.label).toString()
+                        (component.screenAccessibility?.label ?: component.label).toString()
                 }
         ) {
 
@@ -494,7 +494,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 .fillMaxWidth()
                 .semantics {
                     contentDescription =
-                        (component.accessibility?.label ?: component.label).toString()
+                        (component.screenAccessibility?.label ?: component.label).toString()
                 }
         ) {
 
@@ -879,7 +879,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             modifier = Modifier
                 .fillMaxWidth()
                 .semantics {
-                    contentDescription = component.accessibility?.label ?: ""
+                    contentDescription = component.screenAccessibility?.label ?: ""
                 }
         ) {
 
@@ -970,7 +970,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             val pad = component.style?.padding?.dp ?: 0.dp
             Column(modifier = Modifier
                 .fillMaxWidth()
-                .background(color = color)) {
+                .background(color = color = colorFromToken("#1E1E2E"))) {
 
                 // 🔤 Label
                 component.label?.let {
@@ -1149,7 +1149,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             modifier = Modifier
                 .fillMaxWidth()
                 .semantics {
-                    contentDescription = node.accessibility?.label ?: ""
+                    contentDescription = node.screenAccessibility?.label ?: ""
                 }
         ) {
 
@@ -1362,7 +1362,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             modifier = modifier
                 .semantics {
                     contentDescription =
-                        (component.accessibility?.label ?: component.title).toString()
+                        (component.screenAccessibility?.label ?: component.title).toString()
                 },
             shape = RoundedCornerShape(cornerRadius),
             colors = ButtonDefaults.buttonColors(

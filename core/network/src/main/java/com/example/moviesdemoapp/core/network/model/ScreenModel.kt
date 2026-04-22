@@ -50,7 +50,7 @@ data class ComponentNode(
     val visibility: VisibilityModel? = null,
     val text: String? = null,
     val icon: String? = null,
-    val accessibility: AccessibilityModel? = null,
+    val screenAccessibility: AccessibilityModel? = null,
 )
 
 @Serializable

@@ -39,6 +39,6 @@ internal fun RenderText(
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
         modifier = (if (pad > 0.dp) Modifier.padding(pad) else Modifier)
-            .applyAccessibility(node.accessibility, data),
+            .applyAccessibility(node.screenAccessibility, data),
     )
 }
