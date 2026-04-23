@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -79,13 +78,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
+import com.example.analytics.engine.AnalyticsEngine
+import com.example.analytics.event.AnalyticsEvent
+import com.example.analytics.event.Provider
 import com.example.moviesdemoapp.core.network.model.ActionModel
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
 import com.example.moviesdemoapp.engine.sdui.components.NodeRenderer
 import com.example.moviesdemoapp.engine.sdui.model.AdaptiveConfig
-import com.google.type.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
@@ -110,12 +111,13 @@ import kotlin.math.roundToInt
  *      See MoviesComponentModule.kt for the template.
  */
 @Singleton
-class SDUIComponentsDispatcher @Inject constructor(private val resolver: TemplateResolver) {
+class SDUIComponentsDispatcher @Inject constructor(private val resolver: TemplateResolver, private val analyticsEngine: AnalyticsEngine) {
+
 
     /** Delegates to [TemplateResolver.isVisible] — called by [SDUIRenderEngine.RenderNode]. */
     fun isVisible(node: ComponentNode, data: Map<String, String>): Boolean =
         resolver.isVisible(node, data)
-
+    private var activityScreenName:String? = null
     private val formDataStoreAndValidation = FormDataStorage.formDataStoreAndValidation
     fun readAndSetValue(key: String?) = FormDataStorage.readAndSetValue(key)
     private fun validateForm() = FormDataStorage.validateForm()
@@ -176,12 +178,14 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
     @Composable
     fun RenderBuiltIn(
+        screenName:String?,
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
         onAction: (String, Map<String, String>) -> Unit,
         renderNode: NodeRenderer,
     ) {
+        this.activityScreenName = screenName
         // Visibility check
         if (!resolver.isVisible(node, data)) return
 
@@ -814,7 +818,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                                 component.dataBinding?.let {
                                     formState[it] = option.value
                                     if (component.validation?.required == true) {
-                                        formDataStoreAndValidation[component.dataBinding?:""] =
+                                        formDataStoreAndValidation[component.dataBinding ?: ""] =
                                             option.value
                                     }
                                 }
@@ -1403,6 +1407,20 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                     component.action?.dispatch(data, onAction)
                 } else {
                     if(validateForm()){
+                        activityScreenName?.let { eventName ->
+                            component.analytics?.let {
+                                analyticsEngine.track(
+                                    AnalyticsEvent(
+                                        provider = Provider.FIREBASE,
+                                        eventName = eventName,
+                                        params = emptyMap(),
+                                    )
+                                )
+                            }
+
+                        }
+
+
                         component.action?.dispatch(data, onAction)
                     } else {
                         Toast.makeText(

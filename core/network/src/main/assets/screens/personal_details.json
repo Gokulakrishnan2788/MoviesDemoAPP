@@ -198,6 +198,13 @@
               "type": "button",
               "title": "Continue",
               "variant": "primary",
+              "analytics": {
+                "event": "screen_view",
+                "params": {
+                  "screen_name": "{screenId}",
+                  "amount": "{form.loanAmount}"
+                }
+              },
               "action": {
                 "type": "navigation",
                 "destination": "address_details",

@@ -41,4 +41,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
+    implementation(project(":feature:analytics"))
+
+    // Koin dependency injection
+    implementation("io.insert-koin:koin-android:3.5.6")
 }

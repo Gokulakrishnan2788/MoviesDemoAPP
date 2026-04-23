@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+
 }
 
 android {
@@ -51,7 +52,7 @@ dependencies {
     implementation(project(":feature:movies"))
     implementation(project(":feature:banking"))
     implementation(project(":feature:deeplink"))
-
+    implementation(project(":feature:analytics"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -65,6 +66,7 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation("io.insert-koin:koin-android:3.5.6")
 
     ksp(libs.hilt.compiler)
 

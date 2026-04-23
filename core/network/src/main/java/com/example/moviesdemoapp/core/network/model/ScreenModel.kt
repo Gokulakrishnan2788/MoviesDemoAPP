@@ -40,6 +40,7 @@ data class ComponentNode(
     val style: StyleModel? = null,
     val children: List<ComponentNode> = emptyList(),
     val action: ActionModel? = null,
+    val analytics: Analytics? = null,
     val itemLayout: ComponentNode? = null,
     @SerialName("dataBinding") val dataBinding: String? = null,
     @SerialName("template") val template: String? = null,
@@ -52,6 +53,13 @@ data class ComponentNode(
     val icon: String? = null,
     val screenAccessibility: AccessibilityModel? = null,
 )
+
+
+@Serializable
+data class Analytics(
+    val event: String,
+    val params: Map<String, String>? = emptyMap())
+
 
 @Serializable
 data class DropdownOption(
