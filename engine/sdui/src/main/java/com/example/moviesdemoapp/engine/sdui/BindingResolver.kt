@@ -12,23 +12,34 @@ class BindingResolver (val context: Context) {
     }
 
     fun resolve(key:String?): String {
-        val bindingObj = bindings.getOrDefault(key, null)
-        if(bindingObj != null){
-            return when (bindingObj.source) {
+        try {
+            val bindingObj = bindings.getOrDefault(key, null)
+            if (bindingObj != null) {
+                return when (bindingObj.source) {
 
-                "string" -> context.getString(context.resources.getIdentifier(bindingObj.key, "string", context.packageName))
+                    "string" -> context.getString(
+                        context.resources.getIdentifier(
+                            bindingObj.key,
+                            "string",
+                            context.packageName
+                        )
+                    )
 
-                // future extension
-                "api" -> fetchFromApi(bindingObj.key)
+                    // future extension
+                    "api" -> fetchFromApi(bindingObj.key)
 
-                "form" -> getFormValue(bindingObj.key)
+                    "form" -> getFormValue(bindingObj.key)
 
-                "template" -> fetchTemplateValues(bindingObj.key)
+                    "template" -> fetchTemplateValues(bindingObj.key)
 
-                else -> ""
+                    else -> key ?: ""
+                }
             }
+            return key ?: ""
+        } catch (e: Exception) {
+            // In case of any error during binding resolution, return the key as fallback
+            return key ?: ""
         }
-        return ""
     }
 
     private fun fetchTemplateValues(key: String): String {
