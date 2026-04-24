@@ -1,5 +1,8 @@
+@file:OptIn(InternalSerializationApi::class)
+
 package com.example.moviesdemoapp.core.network.model
 
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -20,10 +23,9 @@ data class ScreenModel(
 
 @Serializable
 data class BindingItem(
-    val source: String,
-    val key: String
-){
-}
+    val source: String = "",
+    val key: String = ""
+)
 
 // A single renderable UI node: type + optional style, children, data bindings, action.
 @Serializable
@@ -71,7 +73,7 @@ data class Analytics(
 
 @Serializable
 data class DropdownOption(
-    val title: String,
+    val titleBinding: String = "",
     val value: String
 )
 

@@ -87,7 +87,6 @@ import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
 import com.example.moviesdemoapp.engine.sdui.components.NodeRenderer
 import com.example.moviesdemoapp.engine.sdui.model.AdaptiveConfig
-import com.google.api.Context
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
@@ -775,7 +774,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
         val selectedTitle: String? = component.options
             ?.find { it.value == selectedValue }
-            ?.title ?: component.placeholder
+            ?.titleBinding ?: component.placeholder
 
         val cornerRadius = (component.style?.cornerRadius?.toInt() ?: 8).dp
         val color = (component.style?.foregroundColor ?: component.style?.textColor)
@@ -830,7 +829,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = option.title,
+                            text = option.titleBinding,
                             fontSize = fontSize,
                             color = Color.White
                         )
@@ -862,7 +861,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
         val selectedTitle: String = component.options
             ?.find { it.value == selectedValue }
-            ?.title ?: component.placeholder ?: ""
+            ?.titleBinding ?: component.placeholder ?: ""
 
         val color = (component.style?.foregroundColor ?: component.style?.textColor)
             ?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
@@ -927,7 +926,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = option.title,
+                                    text = option.titleBinding,
                                     fontSize = fontSize
                                 )
                             },
