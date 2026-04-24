@@ -1,5 +1,12 @@
 {
   "screenId": "tv_series_list",
+
+  "bindings": {
+    "headerTitle":    { "source": "string", "key": "tv_series_list.header_title" },
+    "headerSubtitle": { "source": "string", "key": "tv_series_list.header_subtitle" },
+    "imdbPrefix":     { "source": "string", "key": "tv_series_list.imdb_prefix" }
+  },
+
   "dataSource": {
     "type": "remote",
     "request": {
@@ -13,10 +20,10 @@
       "root": "Search",
       "type": "collection",
       "fieldMapping": {
-        "id": "imdbID",
-        "title": "Title",
-        "year": "Year",
-        "type": "Type",
+        "id":        "imdbID",
+        "title":     "Title",
+        "year":      "Year",
+        "type":      "Type",
         "posterURL": "Poster"
       }
     },
@@ -33,11 +40,12 @@
         "type": "object",
         "fieldMapping": {
           "rating": "imdbRating",
-          "genre": "Genre"
+          "genre":  "Genre"
         }
       }
     }
   },
+
   "type": "scroll",
   "children": [
     {
@@ -52,8 +60,8 @@
         {
           "id": "listHeader",
           "type": "header",
-          "titleTemplate": "Series Hub",
-          "subtitleTemplate": "Live OMDB data for the game franchise",
+          "titleBinding": "headerTitle",
+          "subtitleBinding": "headerSubtitle",
           "style": {
             "spacing": 6,
             "foregroundColor": "primaryText"
@@ -145,9 +153,7 @@
                       {
                         "id": "ratingIcon",
                         "type": "icon",
-                        "props": {
-                          "icon": "star"
-                        },
+                        "icon": "star.fill",
                         "style": {
                           "fontSize": 12,
                           "foregroundColor": "accent"
@@ -156,7 +162,7 @@
                       {
                         "id": "ratingText",
                         "type": "text",
-                        "template": "IMDb {{rating}}",
+                        "template": "{{imdbPrefix}} {{rating}}",
                         "style": {
                           "fontSize": 14,
                           "fontWeight": "semibold",
