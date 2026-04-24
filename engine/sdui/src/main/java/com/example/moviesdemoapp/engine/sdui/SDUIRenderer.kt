@@ -65,12 +65,14 @@ fun SDUIRenderer(
             ComponentRegistryEntryPoint::class.java,
         ).componentRegistry()
     }
-
     val resolver = remember { TemplateResolver() }
     val analyticsEngine = remember {
         GlobalContext.get().get<AnalyticsEngine>()
     }
-    val components = remember { SDUIComponentsDispatcher(resolver, analyticsEngine) }
+
+    val bindingResolver = BindingResolver(context)
+    bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
+    val components = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver) }
     val engine = remember(registry) { SDUIRenderEngine(registry, components) }
 
     Box(

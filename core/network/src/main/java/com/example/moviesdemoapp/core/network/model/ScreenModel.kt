@@ -11,18 +11,26 @@ data class ScreenModel(
     val screenId: String,
     val type: String,
     val title: String? = null,
+    val bindings: Map<String, BindingItem>? = null,
     val state: State? = null,
     val accessibility: Accessibility? = null,
     val children: List<ComponentNode> = emptyList(),
     val dataSource: DataSourceModel? = null,
 )
 
+@Serializable
+data class BindingItem(
+    val source: String,
+    val key: String
+){
+}
+
 // A single renderable UI node: type + optional style, children, data bindings, action.
 @Serializable
 data class ComponentNode(
     val id: String? = null,
     val type: String,
-    val title: String? = null,
+    val titleBinding: String? = null,
     val displayTemplate: String? = null,
     val currencySymbol: String? = null,
     val valueTemplate: String? = null,

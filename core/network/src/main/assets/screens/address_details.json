@@ -1,6 +1,20 @@
 {
   "screenId": "address_details",
   "title": "Address Details",
+  "bindings": {
+    "headerTitle": { "source": "string", "key": "address_details.header_title" },
+    "streetAddressLabel": { "source": "string", "key": "address_details.street_address_label" },
+    "streetAddressPlaceholder": { "source": "string", "key": "address_details.street_address_placeholder" },
+    "cityLabel": { "source": "string", "key": "address_details.city_label" },
+    "cityPlaceholder": { "source": "string", "key": "address_details.city_placeholder" },
+    "stateLabel": { "source": "string", "key": "address_details.state_label" },
+    "statePlaceholder": { "source": "string", "key": "address_details.state_placeholder" },
+    "zipCodeLabel": { "source": "string", "key": "address_details.zip_code_label" },
+    "zipCodePlaceholder": { "source": "string", "key": "address_details.zip_code_placeholder" },
+    "residenceTypeLabel": { "source": "string", "key": "address_details.residence_type_label" },
+    "backTitle": { "source": "string", "key": "common.back" },
+    "continueTitle": { "source": "string", "key": "common.continue" }
+  },
   "type": "scroll",
   "state": {
     "formId": "loanApplication",
@@ -24,7 +38,7 @@
         {
           "id": "header",
           "type": "header",
-          "title": "Address Details",
+          "titleBinding": "Address Details",
           "leadingIcon": "chevron.left",
           "style": {
             "foregroundColor": "primaryText"
@@ -69,10 +83,10 @@
           "placeholder": "Select state",
           "dataBinding": "form.address.state",
           "options": [
-            { "title": "California", "value": "CA" },
-            { "title": "Texas", "value": "TX" },
-            { "title": "New York", "value": "NY" },
-            { "title": "Florida", "value": "FL" }
+            { "titleBinding": "California", "value": "CA" },
+            { "titleBinding": "Texas", "value": "TX" },
+            { "titleBinding": "New York", "value": "NY" },
+            { "titleBinding": "Florida", "value": "FL" }
           ],
           "validation": {
             "required": true
@@ -104,8 +118,8 @@
           "label": "Residence Type",
           "dataBinding": "form.address.residenceType",
           "options": [
-            { "title": "Owned", "value": "owned" },
-            { "title": "Rented", "value": "rented" }
+            { "titleBinding": "Owned", "value": "owned" },
+            { "titleBinding": "Rented", "value": "rented" }
           ],
           "validation": {
             "required": true
@@ -126,7 +140,7 @@
             {
               "id": "backButton",
               "type": "button",
-              "title": "Back",
+              "titleBinding": "Back",
               "variant": "secondary",
               "action": {
                 "type": "navigation",
@@ -143,7 +157,7 @@
             {
               "id": "continueButton",
               "type": "button",
-              "title": "Continue",
+              "titleBinding": "Continue",
               "variant": "primary",
               "action": {
                 "type": "navigation",

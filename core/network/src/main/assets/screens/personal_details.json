@@ -1,6 +1,21 @@
 {
   "screenId": "personal_details",
   "title": "Personal Details",
+  "bindings": {
+    "headerTitle": { "source": "string", "key": "personal_details.header_title" },
+    "fullNameLabel": { "source": "string", "key": "personal_details.full_name_label" },
+    "fullNamePlaceholder": { "source": "string", "key": "personal_details.full_name_placeholder" },
+    "dobLabel": { "source": "string", "key": "personal_details.dob_label" },
+    "dobPlaceholder": { "source": "string", "key": "personal_details.dob_placeholder" },
+    "genderLabel": { "source": "string", "key": "personal_details.gender_label" },
+    "maritalStatusLabel": { "source": "string", "key": "personal_details.marital_status_label" },
+    "maritalStatusPlaceholder": { "source": "string", "key": "personal_details.marital_status_placeholder" },
+    "mobileLabel": { "source": "string", "key": "personal_details.mobile_label" },
+    "mobilePlaceholder": { "source": "string", "key": "personal_details.mobile_placeholder" },
+    "emailLabel": { "source": "string", "key": "personal_details.email_label" },
+    "emailPlaceholder": { "source": "string", "key": "personal_details.email_placeholder" },
+    "continueTitle": { "source": "string", "key": "personal_details.continue_title" }
+  },
   "type": "scroll",
   "state": {
     "formId": "loanApplication",
@@ -24,7 +39,7 @@
         {
           "id": "header",
           "type": "header",
-          "title": "Personal Details",
+          "titleBinding": "Personal Details",
           "leadingIcon": "chevron.left",
           "style": {
             "foregroundColor": "primaryText"
@@ -80,9 +95,9 @@
           "label": "Gender",
           "dataBinding": "form.personal.gender",
           "options": [
-            { "title": "Male", "value": "male" },
-            { "title": "Female", "value": "female" },
-            { "title": "Other", "value": "other" }
+            { "titleBinding": "Male", "value": "male" },
+            { "titleBinding": "Female", "value": "female" },
+            { "titleBinding": "Other", "value": "other" }
           ],
           "validation": {
             "required": true
@@ -105,10 +120,10 @@
           "placeholder": "Select marital status",
           "dataBinding": "form.personal.maritalStatus",
           "options": [
-            { "title": "Single", "value": "single" },
-            { "title": "Married", "value": "married" },
-            { "title": "Divorced", "value": "divorced" },
-            { "title": "Widowed", "value": "widowed" }
+            { "titleBinding": "Single", "value": "single" },
+            { "titleBinding": "Married", "value": "married" },
+            { "titleBinding": "Divorced", "value": "divorced" },
+            { "titleBinding": "Widowed", "value": "widowed" }
           ],
           "validation": {
             "required": true
@@ -176,7 +191,7 @@
             {
               "id": "backButton",
               "type": "button",
-              "title": "Back",
+              "titleBinding": "Back",
               "variant": "secondary",
               "action": {
                 "type": "navigation",
@@ -196,7 +211,7 @@
             {
               "id": "continueButton",
               "type": "button",
-              "title": "Continue",
+              "titleBinding": "Continue",
               "variant": "primary",
               "analytics": {
                 "event": "screen_view",

@@ -87,6 +87,7 @@ import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
 import com.example.moviesdemoapp.engine.sdui.components.NodeRenderer
 import com.example.moviesdemoapp.engine.sdui.model.AdaptiveConfig
+import com.google.api.Context
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
@@ -111,7 +112,8 @@ import kotlin.math.roundToInt
  *      See MoviesComponentModule.kt for the template.
  */
 @Singleton
-class SDUIComponentsDispatcher @Inject constructor(private val resolver: TemplateResolver, private val analyticsEngine: AnalyticsEngine) {
+class SDUIComponentsDispatcher @Inject constructor(private val resolver: TemplateResolver, private val analyticsEngine: AnalyticsEngine, private val  bindingResolver :BindingResolver) {
+
 
 
     /** Delegates to [TemplateResolver.isVisible] — called by [SDUIRenderEngine.RenderNode]. */
@@ -1262,8 +1264,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     ) {
         var title = node.titleTemplate?.let { resolver.resolve(it, data) }
             ?: node.props["title"] ?: ""
-        if(title.isEmpty() && node.title != null){
-            title =  node.title ?: ""
+        if(title.isEmpty() && node.titleBinding != null){
+            title = bindingResolver.resolve( node.titleBinding ?: "")
         }
         val subtitle = node.subtitleTemplate?.let { resolver.resolve(it, data) }
             ?: node.props["subtitle"]
@@ -1348,7 +1350,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
         Button(
             onClick = {
-                if(component.title.equals("Back", ignoreCase = true)) {
+                if(component.titleBinding.equals("Back", ignoreCase = true)) {
                     component.action?.dispatch(data, onAction)
                 } else {
                     if(validateForm()){
@@ -1366,7 +1368,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             modifier = modifier
                 .semantics {
                     contentDescription =
-                        (component.screenAccessibility?.label ?: component.title).toString()
+                        (component.screenAccessibility?.label ?: bindingResolver.resolve( component.titleBinding ?: "")).toString()
                 },
             shape = RoundedCornerShape(cornerRadius),
             colors = ButtonDefaults.buttonColors(
@@ -1375,7 +1377,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         ) {
 
             Text(
-                text = component.title ?: "",
+                text = bindingResolver.resolve( component.titleBinding ?: ""),
                 color = textColor
             )
         }
@@ -1403,7 +1405,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         val context = LocalContext.current
         Button(
             onClick = {
-                if(component.title.equals("Back", ignoreCase = true)) {
+                if(bindingResolver.resolve( component.titleBinding?: "").equals("Back", ignoreCase = true)) {
                     component.action?.dispatch(data, onAction)
                 } else {
                     if(validateForm()){
@@ -1436,7 +1438,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 .height(height)
                 .semantics {
                     contentDescription =
-                        (component.accessibility?.label ?: component.title).toString()
+                        (component.accessibility?.label ?: bindingResolver.resolve( component.titleBinding))
                 },
             shape = RoundedCornerShape(cornerRadius),
             colors = ButtonDefaults.buttonColors(
@@ -1445,7 +1447,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         ) {
 
             Text(
-                text = component.title ?: "",
+                text = bindingResolver.resolve( component.titleBinding ?: ""),
                 color = textColor
             )
         }

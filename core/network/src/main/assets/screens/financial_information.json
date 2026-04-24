@@ -1,6 +1,22 @@
 {
   "screenId": "financial_information",
   "title": "Financial Information",
+  "bindings": {
+    "headerTitle": { "source": "string", "key": "financial_information.header_title" },
+    "employmentStatusLabel": { "source": "string", "key": "financial_information.employment_status_label" },
+    "employmentStatusPlaceholder": { "source": "string", "key": "financial_information.employment_status_placeholder" },
+    "annualIncomeLabel": { "source": "string", "key": "financial_information.annual_income_label" },
+    "annualIncomePlaceholder": { "source": "string", "key": "financial_information.annual_income_placeholder" },
+    "loanAmountLabel": { "source": "string", "key": "financial_information.loan_amount_label" },
+    "loanAmountPlaceholder": { "source": "string", "key": "financial_information.loan_amount_placeholder" },
+    "loanAmountRangeLabel": { "source": "string", "key": "financial_information.loan_amount_range_label" },
+    "loanAmountRangeDisplay": { "source": "string", "key": "financial_information.loan_amount_range_display" },
+    "loanTenureLabel": { "source": "string", "key": "financial_information.loan_tenure_label" },
+    "loanTenureDisplay": { "source": "string", "key": "financial_information.loan_tenure_display" },
+    "existingLoansLabel": { "source": "string", "key": "financial_information.existing_loans_label" },
+    "backTitle": { "source": "string", "key": "common.back" },
+    "continueTitle": { "source": "string", "key": "common.continue" }
+  },
   "type": "scroll",
   "state": {
     "formId": "loanApplication",
@@ -24,7 +40,7 @@
         {
           "id": "header",
           "type": "header",
-          "title": "Financial Information",
+          "titleBinding": "Financial Information",
           "leadingIcon": "chevron.left",
           "style": {
             "foregroundColor": "primaryText"
@@ -41,10 +57,10 @@
           "placeholder": "Select employment status",
           "dataBinding": "form.financial.employmentStatus",
           "options": [
-            { "title": "Full-Time Employed", "value": "full_time" },
-            { "title": "Part-Time Employed", "value": "part_time" },
-            { "title": "Self-Employed", "value": "self_employed" },
-            { "title": "Unemployed", "value": "unemployed" }
+            { "titleBinding": "Full-Time Employed", "value": "full_time" },
+            { "titleBinding": "Part-Time Employed", "value": "part_time" },
+            { "titleBinding": "Self-Employed", "value": "self_employed" },
+            { "titleBinding": "Unemployed", "value": "unemployed" }
           ],
           "validation": {
             "required": true
@@ -142,7 +158,7 @@
             {
               "id": "backButton",
               "type": "button",
-              "title": "Back",
+              "titleBinding": "Back",
               "variant": "secondary",
               "action": {
                 "type": "navigation",
@@ -159,7 +175,7 @@
             {
               "id": "continueButton",
               "type": "button",
-              "title": "Continue",
+              "titleBinding": "Continue",
               "variant": "primary",
               "action": {
                 "type": "navigation",

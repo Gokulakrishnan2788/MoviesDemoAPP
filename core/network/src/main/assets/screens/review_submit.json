@@ -1,6 +1,37 @@
 {
   "screenId": "review_submit",
   "title": "Review & Submit",
+  "bindings": {
+    "headerTitle": { "source": "string", "key": "review_submit.header_title" },
+    "fullNameLabel": { "source": "string", "key": "review_submit.full_name_label" },
+    "dateOfBirthLabel": { "source": "string", "key": "review_submit.date_of_birth_label" },
+    "addressLabel": { "source": "string", "key": "review_submit.address_label" },
+    "employmentLabel": { "source": "string", "key": "review_submit.employment_label" },
+    "annualIncomeLabel": { "source": "string", "key": "review_submit.annual_income_label" },
+    "loanAmountLabel": { "source": "string", "key": "review_submit.loan_amount_label" },
+    "loanTenureLabel": { "source": "string", "key": "review_submit.loan_tenure_label" },
+    "existingLoansLabel": { "source": "string", "key": "review_submit.existing_loans_label" },
+    "editTitle": { "source": "string", "key": "review_submit.edit_title" },
+    "submitTitle": { "source": "string", "key": "review_submit.submit_title" },
+    "yearsSuffix": { "source": "string", "key": "review_submit.years_suffix" },
+    "currencySymbol": { "source": "string", "key": "common.currency_symbol" },
+    "addressValue": {
+      "source": "template",
+      "template": "{{form.address.streetAddress}}, {{form.address.city}}, {{form.address.state}} {{form.address.zipCode}}"
+    },
+    "incomeValue": {
+      "source": "template",
+      "template": "{{currencySymbol}}{{form.financial.annualIncome}}"
+    },
+    "loanAmountValue": {
+      "source": "template",
+      "template": "{{currencySymbol}}{{form.financial.loanAmount}}"
+    },
+    "loanTenureValue": {
+      "source": "template",
+      "template": "{{form.financial.loanTenureYears}} {{yearsSuffix}}"
+    }
+  },
   "type": "scroll",
   "state": {
     "formId": "loanApplication",
@@ -24,7 +55,7 @@
         {
           "id": "header",
           "type": "header",
-          "title": "Review & Submit",
+          "titleBinding": "Review & Submit",
           "leadingIcon": "chevron.left",
           "style": {
             "foregroundColor": "primaryText"
@@ -105,7 +136,7 @@
             {
               "id": "editButton",
               "type": "button",
-              "title": "Edit",
+              "titleBinding": "Edit",
               "variant": "secondary",
               "action": {
                 "type": "navigation",
@@ -125,7 +156,7 @@
             {
               "id": "submitButton",
               "type": "button",
-              "title": "Submit Form",
+              "titleBinding": "Submit Form",
               "variant": "success",
               "action": {
                 "type": "api",
