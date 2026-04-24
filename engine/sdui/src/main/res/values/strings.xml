@@ -1,0 +1,65 @@
+<resources>
+    <string name="app_name">MoviesDemoAPP</string>
+
+    <!-- Address Details Strings -->
+    <string name="address_details.header_title">Address Detail</string>
+    <string name="address_details.street_address_label">Street Address</string>
+    <string name="address_details.street_address_placeholder">Enter street address</string>
+    <string name="address_details.city_label">City</string>
+    <string name="address_details.city_placeholder">Enter city</string>
+    <string name="address_details.state_label">State</string>
+    <string name="address_details.state_placeholder">Select state</string>
+    <string name="address_details.zip_code_label">ZIP Code</string>
+    <string name="address_details.zip_code_placeholder">Enter ZIP code</string>
+    <string name="address_details.residence_type_label">Residence Type</string>
+
+    <!-- Common Strings -->
+    <string name="common.back">Back</string>
+    <string name="common.continue">Continue</string>
+
+    <!-- Financial Information Strings -->
+    <string name="financial_information.header_title">Financial Information</string>
+    <string name="financial_information.employment_status_label">Employment Status</string>
+    <string name="financial_information.employment_status_placeholder">Select employment status</string>
+    <string name="financial_information.annual_income_label">Annual Income</string>
+    <string name="financial_information.annual_income_placeholder">Enter annual income</string>
+    <string name="financial_information.loan_amount_label">Loan Amount</string>
+    <string name="financial_information.loan_amount_placeholder">Enter desired loan amount</string>
+    <string name="financial_information.loan_amount_range_label">Loan Amount Range</string>
+    <string name="financial_information.loan_amount_range_display">₹%1$s - ₹%2$s</string>
+    <string name="financial_information.loan_tenure_label">Loan Tenure</string>
+    <string name="financial_information.loan_tenure_display">%1$d months</string>
+    <string name="financial_information.existing_loans_label">Existing Loans</string>
+
+    <!-- Personal Details Strings -->
+    <string name="personal_details.header_title">Personal Details</string>
+    <string name="personal_details.full_name_label">Full Name</string>
+    <string name="personal_details.full_name_placeholder">Enter your full name</string>
+    <string name="personal_details.dob_label">Date of Birth</string>
+    <string name="personal_details.dob_placeholder">Select date of birth</string>
+    <string name="personal_details.gender_label">Gender</string>
+    <string name="personal_details.marital_status_label">Marital Status</string>
+    <string name="personal_details.marital_status_placeholder">Select marital status</string>
+    <string name="personal_details.mobile_label">Mobile Number</string>
+    <string name="personal_details.mobile_placeholder">Enter mobile number</string>
+    <string name="personal_details.email_label">Email Address</string>
+    <string name="personal_details.email_placeholder">Enter email address</string>
+    <string name="personal_details.continue_title">Continue</string>
+
+    <!-- Review & Submit Strings -->
+    <string name="review_submit.header_title">Review &amp; Submit</string>
+    <string name="review_submit.full_name_label">Full Name</string>
+    <string name="review_submit.date_of_birth_label">Date of Birth</string>
+    <string name="review_submit.address_label">Address</string>
+    <string name="review_submit.employment_label">Employment Status</string>
+    <string name="review_submit.annual_income_label">Annual Income</string>
+    <string name="review_submit.loan_amount_label">Loan Amount</string>
+    <string name="review_submit.loan_tenure_label">Loan Tenure</string>
+    <string name="review_submit.existing_loans_label">Existing Loans</string>
+    <string name="review_submit.edit_title">Edit</string>
+    <string name="review_submit.submit_title">Submit</string>
+    <string name="review_submit.years_suffix">years</string>
+
+    <!-- Currency Symbol -->
+    <string name="common.currency_symbol">₹</string>
+</resources>
