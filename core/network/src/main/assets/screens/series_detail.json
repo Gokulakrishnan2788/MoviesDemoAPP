@@ -145,7 +145,7 @@
                       "type": "text",
                       "template": "IMDb {{rating}}",
                       "accessibility": {
-                        "importantForAccessibility": false
+                        "importantForAccessibility": true
                       },
                       "style": {
                         "fontSize": 15,
@@ -160,7 +160,7 @@
                   "type": "text",
                   "template": "Runtime: {{runtime}}",
                   "accessibility": {
-                    "importantForAccessibility": false
+                    "importantForAccessibility": true
                   },
                   "style": {
                     "fontSize": 14,
@@ -172,7 +172,7 @@
                   "type": "text",
                   "template": "Seasons: {{totalSeasons}}",
                   "accessibility": {
-                    "importantForAccessibility": false
+                    "importantForAccessibility": true
                   },
                   "style": {
                     "fontSize": 14,
@@ -184,7 +184,7 @@
                   "type": "text",
                   "template": "Awards: {{awards}}",
                   "accessibility": {
-                    "importantForAccessibility": false
+                    "importantForAccessibility": true
                   },
                   "style": {
                     "fontSize": 14,
