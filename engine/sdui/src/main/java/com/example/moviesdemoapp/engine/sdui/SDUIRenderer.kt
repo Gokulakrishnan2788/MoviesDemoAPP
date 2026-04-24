@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.example.analytics.engine.AnalyticsEngine
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.network.model.ScreenModel
 import com.example.moviesdemoapp.core.ui.DesignTokens
@@ -21,6 +22,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import org.koin.core.context.GlobalContext
 
 // ─── Hilt entry point ─────────────────────────────────────────────────────────
 // Lets a @Composable reach into Hilt's SingletonComponent to get the shared
@@ -63,9 +65,14 @@ fun SDUIRenderer(
             ComponentRegistryEntryPoint::class.java,
         ).componentRegistry()
     }
-
     val resolver = remember { TemplateResolver() }
-    val components = remember { SDUIComponentsDispatcher(resolver) }
+    val analyticsEngine = remember {
+        GlobalContext.get().get<AnalyticsEngine>()
+    }
+
+    val bindingResolver = BindingResolver(context)
+    bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
+    val components = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver) }
     val engine = remember(registry) { SDUIRenderEngine(registry, components) }
 
     Box(
@@ -123,16 +130,17 @@ class SDUIRenderEngine(
 
         when (screenModel.type) {
             "scroll" -> Column(modifier = base.verticalScroll(rememberScrollState())) {
-                screenModel.children.forEach { RenderNode(it, data, listData, onAction) }
+                screenModel.children.forEach { RenderNode(screenModel.screenId,it, data, listData, onAction) }
             }
             else -> Column(modifier = base) {
-                screenModel.children.forEach { RenderNode(it, data, listData, onAction) }
+                screenModel.children.forEach { RenderNode(screenModel.screenId,it, data, listData, onAction) }
             }
         }
     }
 
     @Composable
     fun RenderNode(
+        screenName:String?,
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>> = emptyMap(),
@@ -148,11 +156,12 @@ class SDUIRenderEngine(
             return
         }
         components.RenderBuiltIn(
+            screenName = screenName,
             node = node,
             data = data,
             listData = listData,
             onAction = onAction,
-            renderNode = { n, d, l, a -> RenderNode(n, d, l, a) },
+            renderNode = { n, d, l, a -> RenderNode(screenName, n, d, l, a) },
         )
     }
 }

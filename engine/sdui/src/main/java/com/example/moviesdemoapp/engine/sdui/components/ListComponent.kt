@@ -82,7 +82,7 @@ internal fun RenderList(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .applyAccessibility(node.accessibility, data + itemData)
+                        .applyAccessibility(node.screenAccessibility, data + itemData)
                         .onGloballyPositioned { itemHeights[index] = it.size.height.toFloat() }
                         .zIndex(if (isDragging) 1f else 0f)
                         .graphicsLayer {

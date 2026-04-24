@@ -21,7 +21,7 @@ internal fun RenderGeneratedList(
     val spacing = node.style?.spacing?.dp ?: 0.dp
 
     Column(
-        modifier = Modifier.applyAccessibility(node.accessibility, data),
+        modifier = Modifier.applyAccessibility(node.screenAccessibility, data),
         verticalArrangement = if (spacing > 0.dp) Arrangement.spacedBy(spacing) else Arrangement.Top,
     ) {
         (1..count).forEach { i ->

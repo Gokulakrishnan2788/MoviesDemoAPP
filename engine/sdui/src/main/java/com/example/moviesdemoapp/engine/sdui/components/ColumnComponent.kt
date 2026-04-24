@@ -29,7 +29,7 @@ internal fun RenderColumn(
     var mod: Modifier = Modifier.fillMaxWidth()
     if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
     if (pad > 0.dp) mod = mod.padding(pad)
-    mod = mod.applyAccessibility(node.accessibility, data)
+    mod = mod.applyAccessibility(node.screenAccessibility, data)
 
     Column(
         modifier = mod,

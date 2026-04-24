@@ -1,0 +1,15 @@
+{
+  "bottomNavItems": [
+    {
+      "route": "movies_graph",
+      "label": "Movies",
+      "icon": "movie"
+    },
+    {
+      "route": "banking_graph",
+      "label": "Banking",
+      "icon": "account_balance"
+    }
+  ]
+}
+

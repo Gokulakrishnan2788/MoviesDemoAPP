@@ -31,7 +31,7 @@ internal fun RenderRow(
     val action = node.action
     var mod: Modifier = Modifier
         .fillMaxWidth()
-        .applyAccessibility(node.accessibility, data)
+        .applyAccessibility(node.screenAccessibility, data)
     if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
     if (pad > 0.dp) mod = mod.padding(pad)
     if (action != null) mod = mod.clickable { action.dispatch(data, onAction) }

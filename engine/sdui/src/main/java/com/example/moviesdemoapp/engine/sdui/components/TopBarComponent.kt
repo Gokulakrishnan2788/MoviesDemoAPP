@@ -46,7 +46,7 @@ internal fun RenderTopBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .applyAccessibility(node.accessibility, data)
+            .applyAccessibility(node.screenAccessibility, data)
             .padding(start = padH, end = padH, top = padTop, bottom = padBottom),
     ) {
         Row(

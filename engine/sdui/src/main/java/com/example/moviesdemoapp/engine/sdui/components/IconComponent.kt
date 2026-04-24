@@ -30,6 +30,6 @@ internal fun RenderIcon(node: ComponentNode, data: Map<String, String> = emptyMa
         imageVector = icon,
         contentDescription = null, // driven by AccessibilityModel via modifier semantics
         tint = color,
-        modifier = Modifier.size(size).applyAccessibility(node.accessibility, data),
+        modifier = Modifier.size(size).applyAccessibility(node.screenAccessibility, data),
     )
 }

@@ -23,7 +23,7 @@ internal fun RenderButton(
     Box(
         modifier = Modifier
             .padding(DesignTokens.SpacingMd)
-            .applyAccessibility(node.accessibility, data)
+            .applyAccessibility(node.screenAccessibility, data)
             .clickable { node.action?.dispatch(data, onAction) },
     ) {
         Text(text = label, color = DesignTokens.Accent, fontSize = DesignTokens.TextLg)

@@ -31,7 +31,7 @@ internal fun RenderCard(
     var mod = Modifier
         .fillMaxWidth()
         .padding(horizontal = DesignTokens.SpacingMd, vertical = DesignTokens.SpacingSm)
-        .applyAccessibility(node.accessibility, data)
+        .applyAccessibility(node.screenAccessibility, data)
     if (action != null) mod = mod.clickable { action.dispatch(data, onAction) }
 
     Card(

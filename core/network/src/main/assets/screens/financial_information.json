@@ -1,0 +1,198 @@
+{
+  "screenId": "financial_information",
+  "title": "Financial Information",
+  "bindings": {
+    "headerTitle": { "source": "string", "key": "financial_information.header_title" },
+    "employmentStatusLabel": { "source": "string", "key": "financial_information.employment_status_label" },
+    "employmentStatusPlaceholder": { "source": "string", "key": "financial_information.employment_status_placeholder" },
+    "annualIncomeLabel": { "source": "string", "key": "financial_information.annual_income_label" },
+    "annualIncomePlaceholder": { "source": "string", "key": "financial_information.annual_income_placeholder" },
+    "loanAmountLabel": { "source": "string", "key": "financial_information.loan_amount_label" },
+    "loanAmountPlaceholder": { "source": "string", "key": "financial_information.loan_amount_placeholder" },
+    "loanAmountRangeLabel": { "source": "string", "key": "financial_information.loan_amount_range_label" },
+    "loanAmountRangeDisplay": { "source": "string", "key": "financial_information.loan_amount_range_display" },
+    "loanTenureLabel": { "source": "string", "key": "financial_information.loan_tenure_label" },
+    "loanTenureDisplay": { "source": "string", "key": "financial_information.loan_tenure_display" },
+    "existingLoansLabel": { "source": "string", "key": "financial_information.existing_loans_label" },
+    "backTitle": { "source": "string", "key": "common.back" },
+    "continueTitle": { "source": "string", "key": "common.continue" }
+  },
+  "type": "scroll",
+  "state": {
+    "formId": "loanApplication",
+    "step": 3
+  },
+  "accessibility": {
+    "supportsDynamicType": true,
+    "supportsBoldText": true,
+    "voiceOverEnabled": true
+  },
+  "children": [
+    {
+      "id": "rootColumn",
+      "type": "column",
+      "style": {
+        "padding": 20,
+        "spacing": 16,
+        "backgroundColor": "screenBackground"
+      },
+      "children": [
+        {
+          "id": "header",
+          "type": "header",
+          "titleBinding": "Financial Information",
+          "leadingIcon": "chevron.left",
+          "style": {
+            "foregroundColor": "primaryText"
+          },
+          "accessibility": {
+            "label": "Financial Information screen",
+            "traits": ["header"]
+          }
+        },
+        {
+          "id": "employmentStatusField",
+          "type": "dropdown",
+          "label": "Employment Status",
+          "placeholder": "Select employment status",
+          "dataBinding": "form.financial.employmentStatus",
+          "options": [
+            { "titleBinding": "Full-Time Employed", "value": "full_time" },
+            { "titleBinding": "Part-Time Employed", "value": "part_time" },
+            { "titleBinding": "Self-Employed", "value": "self_employed" },
+            { "titleBinding": "Unemployed", "value": "unemployed" }
+          ],
+          "validation": {
+            "required": true
+          },
+          "accessibility": {
+            "label": "Employment Status",
+            "hint": "Double tap to select employment status"
+          }
+        },
+        {
+          "id": "annualIncomeField",
+          "type": "currencyField",
+          "label": "Annual Income",
+          "placeholder": "$80,000",
+          "currencySymbol": "$",
+          "dataBinding": "form.financial.annualIncome",
+          "validation": {
+            "required": true,
+            "min": 1000
+          },
+          "accessibility": {
+            "label": "Annual Income",
+            "hint": "Enter annual income amount"
+          }
+        },
+        {
+          "id": "loanAmountField",
+          "type": "currencyField",
+          "label": "Loan Amount",
+          "placeholder": "$20,000",
+          "currencySymbol": "$",
+          "dataBinding": "form.financial.loanAmount",
+          "validation": {
+            "required": true,
+            "min": 1000,
+            "max": 50000
+          },
+          "accessibility": {
+            "label": "Loan Amount",
+            "hint": "Enter desired loan amount"
+          }
+        },
+        {
+          "id": "loanAmountSlider",
+          "type": "slider",
+          "label": "Loan Amount Range",
+          "dataBinding": "form.financial.loanAmount",
+          "minValue": 5000,
+          "maxValue": 50000,
+          "step": 1000,
+          "displayTemplate": "$5k to $50k",
+          "style": {
+            "accentColor": "accent"
+          },
+          "accessibility": {
+            "label": "Loan Amount Slider",
+            "hint": "Swipe up or down to adjust loan amount"
+          }
+        },
+        {
+          "id": "loanTenureField",
+          "type": "stepperField",
+          "label": "Loan Tenure",
+          "dataBinding": "form.financial.loanTenureYears",
+          "minValue": 1,
+          "maxValue": 30,
+          "step": 1,
+          "displayTemplate": "{{value}} years",
+          "style": {
+            "height": 40
+          },
+          "accessibility": {
+            "label": "Loan Tenure",
+            "hint": "Adjust number of years"
+          }
+        },
+        {
+          "id": "existingLoansField",
+          "type": "toggle",
+          "label": "Existing Loans",
+          "dataBinding": "form.financial.hasExistingLoans",
+          "accessibility": {
+            "label": "Existing Loans",
+            "hint": "Double tap to turn on or off"
+          }
+        },
+        {
+          "id": "footerActions",
+          "type": "row",
+          "style": {
+            "spacing": 12,
+            "paddingTop": 8
+          },
+          "children": [
+            {
+              "id": "backButton",
+              "type": "button",
+              "titleBinding": "Back",
+              "variant": "secondary",
+              "action": {
+                "type": "navigation",
+                "destination": "address_details",
+                "saveForm": true
+              },
+              "style": {
+                "flex": 1,
+                "weight": 1,
+                "height": 48,
+                "cornerRadius": 8
+              }
+            },
+            {
+              "id": "continueButton",
+              "type": "button",
+              "titleBinding": "Continue",
+              "variant": "primary",
+              "action": {
+                "type": "navigation",
+                "destination": "review_submit",
+                "saveForm": true,
+                "validateForm": true
+              },
+              "style": {
+                "flex": 1,
+                "weight": 1,
+                "height": 48,
+                "cornerRadius": 8
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

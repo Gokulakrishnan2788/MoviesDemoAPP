@@ -10,19 +10,45 @@ import kotlinx.serialization.Serializable
 data class ScreenModel(
     val screenId: String,
     val type: String,
+    val title: String? = null,
+    val bindings: Map<String, BindingItem>? = null,
+    val state: State? = null,
+    val accessibility: Accessibility? = null,
     val children: List<ComponentNode> = emptyList(),
     val dataSource: DataSourceModel? = null,
 )
+
+@Serializable
+data class BindingItem(
+    val source: String,
+    val key: String
+){
+}
 
 // A single renderable UI node: type + optional style, children, data bindings, action.
 @Serializable
 data class ComponentNode(
     val id: String? = null,
     val type: String,
+    val titleBinding: String? = null,
+    val displayTemplate: String? = null,
+    val currencySymbol: String? = null,
+    val valueTemplate: String? = null,
+    val minValue: Int? = null,
+    val maxValue: Int? = null,
+    val step: Int? = null,
+    val leadingIcon: String? = null,
+    val variant: String? = null,
+    val label: String? = null,
+    val placeholder: String? = null,
+    val options: List<DropdownOption>? = emptyList(),
+    val validation: Validation? = null,
+    val accessibility: AccessibilityNodeModel? = null,
     val props: Map<String, String> = emptyMap(),
     val style: StyleModel? = null,
     val children: List<ComponentNode> = emptyList(),
     val action: ActionModel? = null,
+    val analytics: Analytics? = null,
     val itemLayout: ComponentNode? = null,
     @SerialName("dataBinding") val dataBinding: String? = null,
     @SerialName("template") val template: String? = null,
@@ -33,8 +59,40 @@ data class ComponentNode(
     val visibility: VisibilityModel? = null,
     val text: String? = null,
     val icon: String? = null,
-    val accessibility: AccessibilityModel? = null,
+    val screenAccessibility: AccessibilityModel? = null,
 )
+
+
+@Serializable
+data class Analytics(
+    val event: String,
+    val params: Map<String, String>? = emptyMap())
+
+
+@Serializable
+data class DropdownOption(
+    val title: String,
+    val value: String
+)
+
+// UI action attached to a tappable component (navigate, search, etc.)
+@Serializable
+data class Validation(
+    val required: Boolean? = null,
+    val minLength: Int? = null,
+    val min: Int? = null
+)
+
+
+
+// UI action attached to a tappable component (navigate, search, etc.)
+@Serializable
+data class AccessibilityNodeModel(
+    val label: String? = null,
+    val traits: List<String> = emptyList(),
+)
+
+
 
 // Visual styling overrides for a ComponentNode.
 @Serializable
@@ -65,6 +123,7 @@ data class StyleModel(
 data class ActionModel(
     val type: String,
     val route: String? = null,
+    val destination: String? = null,
     val routeTemplate: String? = null,
     val params: Map<String, String> = emptyMap(),
 )
@@ -74,6 +133,21 @@ data class ActionModel(
 data class VisibilityModel(
     val dataBinding: String? = null,
     val isNotEmpty: Boolean = false,
+)
+
+// Controls component visibility based on data presence.
+@Serializable
+data class State(
+    val formId: String? = null,
+    val step: Int? = null,
+)
+
+// Controls component visibility based on data presence.
+@Serializable
+data class Accessibility(
+    val supportsDynamicType: Boolean? = null,
+    val supportsBoldText: Boolean? = null,
+    val voiceOverEnabled: Boolean? = null
 )
 
 // Declarative accessibility contract for a ComponentNode.

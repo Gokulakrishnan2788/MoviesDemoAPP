@@ -50,7 +50,8 @@ dependencies {
     implementation(project(":engine:navigation"))
     implementation(project(":feature:movies"))
     implementation(project(":feature:banking"))
-
+    implementation(project(":feature:deeplink"))
+    implementation(project(":feature:analytics"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -64,6 +65,8 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.koin.android)
+    implementation(libs.kotlinx.serialization.json)
 
     ksp(libs.hilt.compiler)
 
