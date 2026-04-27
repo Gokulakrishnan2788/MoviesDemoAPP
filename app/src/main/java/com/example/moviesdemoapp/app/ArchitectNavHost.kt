@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import com.example.moviesdemoapp.feature.banking.data.BankingFormStateRepository
 import com.example.moviesdemoapp.feature.banking.ui.bankingGraph
 import com.example.moviesdemoapp.feature.movies.ui.moviesGraph
 
@@ -19,6 +18,6 @@ fun ArchitectNavHost(
         modifier = modifier,
     ) {
         moviesGraph(navController)
-        bankingGraph(navController, BankingFormStateRepository(navController.context))
+        bankingGraph(navController)
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.analytics.engine.AnalyticsEngine
 import com.example.moviesdemoapp.core.network.model.ComponentNode
+import com.example.moviesdemoapp.core.network.model.FormStatusDetail
 import com.example.moviesdemoapp.core.network.model.ScreenModel
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import dagger.hilt.EntryPoint
@@ -72,7 +73,7 @@ fun SDUIRenderer(
 
     val bindingResolver = BindingResolver(context)
     bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
-    val components = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver) }
+    val components = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver, context) }
     val engine = remember(registry) { SDUIRenderEngine(registry, components) }
 
     Box(

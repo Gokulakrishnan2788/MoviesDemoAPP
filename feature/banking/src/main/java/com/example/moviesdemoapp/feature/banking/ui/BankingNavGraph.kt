@@ -1,199 +1,108 @@
 package com.example.moviesdemoapp.feature.banking.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.composable
-import androidx.navigation.navigation
+import androidx.navigation.compose.navigation
+import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.engine.navigation.Routes
-import com.example.moviesdemoapp.feature.banking.data.BankingFormStateRepository
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageEffect
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageIntent
 import kotlinx.coroutines.flow.collectLatest
 
 fun NavGraphBuilder.bankingGraph(
-    navController: NavController,
-    formStateRepository: BankingFormStateRepository
+    navController: NavController
 ) {
-    var selectedPage: String? = null
-    var lastNavigatedPage: String? = null
+    navigation(startDestination = "banking_entry", route = "banking_graph") {
 
-    navigation(startDestination = Routes.BANKING, route = "banking_graph") {
-        
-        composable(Routes.BANKING) {
-            val viewModel: BankingViewModel = hiltViewModel()
-            val state by viewModel.state.collectAsState()
+        composable("banking_entry") { entry: NavBackStackEntry ->
+            val formStatusViewModel: FormStatusViewModel = hiltViewModel(entry)
+            val formDetail by formStatusViewModel._formId.collectAsStateWithLifecycle()
 
-            /**
-             * On initial entry: Check if user has saved progress
-             * If forms 1 & 2 are done, auto-navigate to form 3
-             */
-            LaunchedEffect(Unit) {
-                val completionStatus = formStateRepository.getFormCompletionStatus()
-                
-                // Auto-navigate to form 3 if forms 1 & 2 are complete
-                if (completionStatus.canProceedToForm3() && lastNavigatedPage != Routes.BANKING_FINENCIAL_DETAIL) {
-                    navController.navigate(Routes.BANKING_FINENCIAL_DETAIL) {
-                        popUpTo(Routes.BANKING) { inclusive = true }
-                    }
-                    lastNavigatedPage = Routes.BANKING_FINENCIAL_DETAIL
+            LaunchedEffect(formDetail) {
+                if (formDetail == null) {
+                    formStatusViewModel.checkAndNavigateToNextForm()
                 } else {
-                    viewModel.handleIntent(BankingPageIntent.LoadPersonalDetailMainPage)
+                    navController.navigate(formDetail!!) {
+                        popUpTo("banking_entry") { inclusive = true }
+                    }
                 }
             }
 
-            // Handle navigation effects
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = DesignTokens.Accent)
+            }
+        }
+
+        composable(route = Routes.BANKING) { entry: NavBackStackEntry ->
+            val viewModel: BankingViewModel = hiltViewModel(entry)
+
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
-                    when (effect) {
-                        is BankingPageEffect.Navigate -> {
-                            selectedPage = effect.route
-                            navController.popBackStack()
-                        }
-                        is BankingPageEffect.AutoNavigate -> {
-                            // Auto-navigation handled by the logic above
-                        }
+                    if (effect is BankingPageEffect.Navigate) {
+                        navController.navigate(effect.route)
                     }
                 }
             }
 
             BankingScreen(navController, viewModel) { page ->
-                selectedPage = page
-                // Mark form 1 as completed
-                viewModel.handleIntent(
-                    BankingPageIntent.MarkFormCompleted(1, page)
-                )
+                viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING, page))
             }
         }
 
-        composable(route = Routes.BANKING_ADDRESS) {
-            val viewModel: BankingViewModel = hiltViewModel()
-            val state by viewModel.state.collectAsState()
+        composable(route = Routes.BANKING_ADDRESS) { entry: NavBackStackEntry ->
+            val viewModel: BankingViewModel = hiltViewModel(entry)
 
-            LaunchedEffect(Unit) {
-                viewModel.handleIntent(
-                    BankingPageIntent.LoadOtherMainPage(Routes.BANKING_ADDRESS)
-                )
-            }
-
-            // Mark form 2 as completed when user submits
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
-                    when (effect) {
-                        is BankingPageEffect.Navigate -> {
-                            selectedPage = effect.route
-                            // Mark form 2 as completed
-                            viewModel.handleIntent(
-                                BankingPageIntent.MarkFormCompleted(2, effect.route)
-                            )
-                            navController.popBackStack()
-                        }
-                        is BankingPageEffect.AutoNavigate -> {
-                            // Handle auto-navigation to next form
-                        }
+                    if (effect is BankingPageEffect.Navigate) {
+                        viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING_ADDRESS, effect.route))
+                        navController.navigate(effect.route)
                     }
                 }
             }
 
-            BankingIncrementScreen(navController, viewModel, pageDetail = Routes.BANKING_ADDRESS) { page ->
-                selectedPage = page
-            }
+            BankingIncrementScreen(navController, viewModel, pageDetail = Routes.BANKING_ADDRESS) { _ -> }
         }
 
-        composable(route = Routes.BANKING_FINENCIAL_DETAIL) {
-            val viewModel: BankingViewModel = hiltViewModel()
-            val state by viewModel.state.collectAsState()
+        composable(route = Routes.BANKING_FINENCIAL_DETAIL) { entry: NavBackStackEntry ->
+            val viewModel: BankingViewModel = hiltViewModel(entry)
 
-            LaunchedEffect(Unit) {
-                viewModel.handleIntent(
-                    BankingPageIntent.LoadOtherMainPage(Routes.BANKING_FINENCIAL_DETAIL)
-                )
-            }
-
-            // Mark form 3 as completed when user submits
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
-                    when (effect) {
-                        is BankingPageEffect.Navigate -> {
-                            selectedPage = effect.route
-                            // Mark form 3 as completed
-                            viewModel.handleIntent(
-                                BankingPageIntent.MarkFormCompleted(3, effect.route)
-                            )
-                            navController.popBackStack()
-                        }
-                        is BankingPageEffect.AutoNavigate -> {
-                            // Handle auto-navigation
-                        }
+                    if (effect is BankingPageEffect.Navigate) {
+                        viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING_FINENCIAL_DETAIL, effect.route))
+                        navController.navigate(effect.route)
                     }
                 }
             }
 
-            BankingIncrementScreen(
-                navController, 
-                viewModel, 
-                pageDetail = Routes.BANKING_FINENCIAL_DETAIL
-            ) { page ->
-                selectedPage = page
-            }
+            BankingIncrementScreen(navController, viewModel, pageDetail = Routes.BANKING_FINENCIAL_DETAIL) { _ -> }
         }
 
-        composable(route = Routes.BANKING_REVIEW_SUBMIT) {
-            val viewModel: BankingViewModel = hiltViewModel()
-            val state by viewModel.state.collectAsState()
+        composable(route = Routes.BANKING_REVIEW_SUBMIT) { entry: NavBackStackEntry ->
+            val viewModel: BankingViewModel = hiltViewModel(entry)
 
-            LaunchedEffect(Unit) {
-                viewModel.handleIntent(
-                    BankingPageIntent.LoadOtherMainPage(Routes.BANKING_REVIEW_SUBMIT)
-                )
-            }
-
-            // Mark form 4 as completed when user submits
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
-                    when (effect) {
-                        is BankingPageEffect.Navigate -> {
-                            selectedPage = effect.route
-                            // Mark form 4 as completed
-                            viewModel.handleIntent(
-                                BankingPageIntent.MarkFormCompleted(4, effect.route)
-                            )
-                            navController.popBackStack()
-                        }
-                        is BankingPageEffect.AutoNavigate -> {
-                            // Handle auto-navigation
-                        }
+                    if (effect is BankingPageEffect.Navigate) {
+                        viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING_REVIEW_SUBMIT, effect.route))
+                        navController.navigate(effect.route)
                     }
                 }
             }
 
-            BankingIncrementScreen(
-                navController, 
-                viewModel, 
-                pageDetail = Routes.BANKING_REVIEW_SUBMIT
-            ) { page ->
-                selectedPage = page
-            }
-        }
-
-        // Dynamic route for any additional selected pages
-        if (selectedPage != null) {
-            composable(selectedPage!!) {
-                val viewModel: BankingViewModel = hiltViewModel()
-                
-                LaunchedEffect(Unit) {
-                    viewModel.handleIntent(
-                        BankingPageIntent.LoadOtherMainPage(selectedPage!!)
-                    )
-                }
-
-                BankingIncrementScreen(navController, viewModel, pageDetail = selectedPage) { page ->
-                    selectedPage = page
-                }
-            }
+            BankingIncrementScreen(navController, viewModel, pageDetail = Routes.BANKING_REVIEW_SUBMIT) { _ -> }
         }
     }
 }

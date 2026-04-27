@@ -1,6 +1,28 @@
 {
   "screenId": "financial_information",
   "title": "Financial Information",
+  "formStatus": [
+    {
+      "personal_details": {
+        "status": "incomplete"
+      }
+    },
+    {
+      "address_details": {
+        "status": "incomplete"
+      }
+    },
+    {
+      "financial_information": {
+        "status": "incomplete"
+      }
+    },
+    {
+      "review_submit": {
+        "status": "incomplete"
+      }
+    }
+  ],
   "bindings": {
     "headerTitle": { "source": "string", "key": "financial_information.header_title" },
     "employmentStatusLabel": { "source": "string", "key": "financial_information.employment_status_label" },

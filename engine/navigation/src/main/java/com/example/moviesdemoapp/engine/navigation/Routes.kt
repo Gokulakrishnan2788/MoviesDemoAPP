@@ -4,7 +4,7 @@ package com.example.moviesdemoapp.engine.navigation
 object Routes {
     const val SPLASH        = "splash"
     const val MAIN          = "main"
-    const val BANKING       = "banking"
+    const val BANKING       = "personal_details"
 
     // screenId is passed as a query param so ViewModels can read it from SavedStateHandle
     // without any feature code knowing which JSON file backs the screen.

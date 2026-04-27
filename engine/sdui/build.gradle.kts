@@ -23,6 +23,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:network"))
     implementation(project(":engine:navigation"))
+    implementation(libs.androidx.ui.text)
     implementation(libs.hilt.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(platform(libs.androidx.compose.bom))

@@ -6,6 +6,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
+import com.example.moviesdemoapp.core.data.ScreenRepository
+import com.example.moviesdemoapp.engine.navigation.Routes
 
 /**
  * Manages persistence of banking form completion state.
@@ -13,154 +15,117 @@ import androidx.core.content.edit
  */
 @Singleton
 class BankingFormStateRepository @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext context: Context,
+    private val screenRepository: ScreenRepository,
 ) {
     private val prefs: SharedPreferences = context.getSharedPreferences(
         "banking_form_state",
         Context.MODE_PRIVATE
     )
 
-    companion object {
-        private const val FORM_1_COMPLETED = "form_1_personal_details_completed"
-        private const val FORM_2_COMPLETED = "form_2_address_completed"
-        private const val FORM_3_COMPLETED = "form_3_financial_completed"
-        private const val FORM_4_COMPLETED = "form_4_review_completed"
-        private const val LAST_COMPLETED_FORM = "last_completed_form"
-        private const val FORM_1_DATA = "form_1_data"
-        private const val FORM_2_DATA = "form_2_data"
-        private const val FORM_3_DATA = "form_3_data"
-    }
+    // Define the list of known form IDs (now matching navigation routes)
+    private val formIds = listOf(
+        Routes.BANKING,
+        Routes.BANKING_ADDRESS,
+        Routes.BANKING_FINENCIAL_DETAIL,
+        Routes.BANKING_REVIEW_SUBMIT
+    )
 
     /**
-     * Mark a form as completed and save its data
+     * Mark a form as completed and save its data dynamically using its ID
      */
-    fun markFormCompleted(formNumber: Int, formData: String? = null) {
-        val key = when (formNumber) {
-            1 -> FORM_1_COMPLETED
-            2 -> FORM_2_COMPLETED
-            3 -> FORM_3_COMPLETED
-            4 -> FORM_4_COMPLETED
-            else -> return
-        }
-
-        prefs.edit().apply {
-            putBoolean(key, true)
-            putLong(LAST_COMPLETED_FORM, formNumber.toLong())
+    fun markFormCompleted(formId: String, formData: String? = null) {
+        prefs.edit {
+            putBoolean("form_${formId}_completed", true)
+            putString("last_completed_form_id", formId)
 
             // Save form data if provided
             formData?.let {
-                when (formNumber) {
-                    1 -> putString(FORM_1_DATA, it)
-                    2 -> putString(FORM_2_DATA, it)
-                    3 -> putString(FORM_3_DATA, it)
-                }
+                putString("form_${formId}_data", it)
             }
-            apply()
         }
+    }
+
+    fun checkFormCompleted(formId: String): Boolean {
+       return prefs.getBoolean("form_${formId}_completed",false)
     }
 
     /**
      * Check if a specific form is completed
      */
-    fun isFormCompleted(formNumber: Int): Boolean {
-        val key = when (formNumber) {
-            1 -> FORM_1_COMPLETED
-            2 -> FORM_2_COMPLETED
-            3 -> FORM_3_COMPLETED
-            4 -> FORM_4_COMPLETED
-            else -> return false
-        }
-        return prefs.getBoolean(key, false)
+    fun isFormCompleted(formId: String): Boolean {
+        return prefs.getBoolean("form_${formId}_completed", false)
     }
 
     /**
-     * Get the last completed form number
+     * Get the list of all incomplete form IDs
      */
-    fun getLastCompletedForm(): Int {
-        return prefs.getLong(LAST_COMPLETED_FORM, 0L).toInt()
+    fun getIncompleteFormIds(): List<String> {
+
+        return formIds.filter { !isFormCompleted(it) }
+    }
+
+    /**
+     * Get a random incomplete form ID. 
+     * If all are completed, returns the first one to allow restart.
+     */
+    fun getRandomIncompleteForm(): String {
+        val incomplete = getIncompleteFormIds()
+        return if (incomplete.isEmpty()) formIds.first() else incomplete.random()
+    }
+
+    /**
+     * Get the first incomplete form (sequential)
+     */
+    fun getNextIncompleteForm(): String? {
+        return getIncompleteFormIds().firstOrNull()
     }
 
     /**
      * Get completion status for all forms
      */
     fun getFormCompletionStatus(): FormCompletionStatus {
+        val incomplete = getIncompleteFormIds()
         return FormCompletionStatus(
-            isForm1Completed = isFormCompleted(1),
-            isForm2Completed = isFormCompleted(2),
-            isForm3Completed = isFormCompleted(3),
-            isForm4Completed = isFormCompleted(4),
-            lastCompletedForm = getLastCompletedForm()
+            isForm1Completed = isFormCompleted("1"),
+            isForm2Completed = isFormCompleted("2"),
+            isForm3Completed = isFormCompleted("3"),
+            isForm4Completed = isFormCompleted("4"),
+            lastCompletedForm = prefs.getString("last_completed_form_id", "0") ?: "0",
+            incompleteForms = incomplete
         )
     }
 
     /**
-     * Get the next incomplete form number
-     * Returns the first incomplete form, or null if all forms are complete
+     * Get the form to resume from (randomly chosen from incomplete ones)
      */
-    fun getNextIncompleteForm(): Int? {
-        for (i in 1..4) {
-            if (!isFormCompleted(i)) {
-                return i
-            }
-        }
-        return null
-    }
-
-    /**
-     * Get the form to resume from (where user left off)
-     * Returns form 3 if forms 1 & 2 are complete, else returns next incomplete form
-     */
-    fun getFormToResume(): Int {
-        return when {
-            !isFormCompleted(1) -> 1
-            !isFormCompleted(2) -> 2
-            !isFormCompleted(3) -> 3
-            !isFormCompleted(4) -> 4
-            else -> 1 // All complete, restart from form 1
+    fun getFormToResume(useRandom: Boolean = true): String {
+        return if (useRandom) {
+            getRandomIncompleteForm()
+        } else {
+            getNextIncompleteForm() ?: formIds.first()
         }
     }
 
     /**
      * Get saved form data
      */
-    fun getFormData(formNumber: Int): String? {
-        val key = when (formNumber) {
-            1 -> FORM_1_DATA
-            2 -> FORM_2_DATA
-            3 -> FORM_3_DATA
-            else -> return null
-        }
-        return prefs.getString(key, null)
+    fun getFormData(formId: String): String? {
+        return prefs.getString("form_${formId}_data", null)
     }
 
     /**
-     * Reset all form state (start fresh)
+     * Reset all form state
      */
     fun resetAllForms() {
-        prefs.edit().apply {
-            remove(FORM_1_COMPLETED)
-            remove(FORM_2_COMPLETED)
-            remove(FORM_3_COMPLETED)
-            remove(FORM_4_COMPLETED)
-            remove(LAST_COMPLETED_FORM)
-            remove(FORM_1_DATA)
-            remove(FORM_2_DATA)
-            remove(FORM_3_DATA)
-            apply()
-        }
+        prefs.edit { clear() }
     }
 
     /**
      * Clear specific form data
      */
-    fun clearFormData(formNumber: Int) {
-        val key = when (formNumber) {
-            1 -> FORM_1_DATA
-            2 -> FORM_2_DATA
-            3 -> FORM_3_DATA
-            else -> return
-        }
-        prefs.edit { remove(key) }
+    fun clearFormData(formId: String) {
+        prefs.edit { remove("form_${formId}_data") }
     }
 }
 
@@ -172,9 +137,9 @@ data class FormCompletionStatus(
     val isForm2Completed: Boolean = false,
     val isForm3Completed: Boolean = false,
     val isForm4Completed: Boolean = false,
-    val lastCompletedForm: Int = 0
+    val lastCompletedForm: String = "0",
+    val incompleteForms: List<String> = emptyList()
 ) {
-    fun allFormsCompleted(): Boolean = isForm1Completed && isForm2Completed && isForm3Completed && isForm4Completed
+    fun allFormsCompleted(): Boolean = incompleteForms.isEmpty()
     fun canProceedToForm3(): Boolean = isForm1Completed && isForm2Completed
 }
-

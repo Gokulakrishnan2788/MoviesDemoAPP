@@ -1,6 +1,28 @@
 {
   "screenId": "address_details",
   "title": "Address Details",
+  "formStatus": [
+    {
+      "personal_details": {
+        "status": "incomplete"
+      }
+    },
+    {
+      "address_details": {
+        "status": "incomplete"
+      }
+    },
+    {
+      "financial_information": {
+        "status": "incomplete"
+      }
+    },
+    {
+      "review_submit": {
+        "status": "incomplete"
+      }
+    }
+  ],
   "bindings": {
     "headerTitle": { "source": "string", "key": "address_details.header_title" },
     "streetAddressLabel": { "source": "string", "key": "address_details.street_address_label" },

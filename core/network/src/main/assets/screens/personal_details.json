@@ -1,6 +1,28 @@
 {
   "screenId": "personal_details",
   "title": "Personal Details",
+  "formStatus": [
+    {
+      "personal_details": {
+        "status": "incomplete"
+      }
+    },
+    {
+      "address_details": {
+        "status": "incomplete"
+      }
+    },
+    {
+      "financial_information": {
+        "status": "incomplete"
+      }
+    },
+    {
+      "review_submit": {
+        "status": "incomplete"
+      }
+    }
+  ],
   "bindings": {
     "headerTitle": { "source": "string", "key": "personal_details.header_title" },
     "fullNameLabel": { "source": "string", "key": "personal_details.full_name_label" },
@@ -52,6 +74,7 @@
         {
           "id": "fullNameField",
           "type": "textField",
+          "inputType": "text",
           "label": "Full Name",
           "placeholder": "Enter full name",
           "dataBinding": "form.personal.fullName",
@@ -141,6 +164,7 @@
         {
           "id": "mobileField",
           "type": "textField",
+          "inputType": "phone",
           "label": "Mobile Number",
           "placeholder": "+1 123 456 7890",
           "keyboardType": "phonePad",
@@ -162,6 +186,7 @@
         {
           "id": "emailField",
           "type": "textField",
+          "inputType": "email",
           "label": "Email Address",
           "placeholder": "john.doe@example.com",
           "keyboardType": "emailAddress",
@@ -214,10 +239,11 @@
               "titleBinding": "Continue",
               "variant": "primary",
               "analytics": {
-                "event": "screen_view",
+                "event": "personal_detail_click",
                 "params": {
                   "screen_name": "{screenId}",
-                  "amount": "{form.loanAmount}"
+                  "email": "{form.personal.email}",
+                  "maritalStatus": "{form.personal.maritalStatus}"
                 }
               },
               "action": {

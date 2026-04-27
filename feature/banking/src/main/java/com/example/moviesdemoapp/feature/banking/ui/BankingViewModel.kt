@@ -3,6 +3,7 @@ package com.example.moviesdemoapp.feature.banking.ui
 import com.example.moviesdemoapp.core.data.ScreenRepository
 import com.example.moviesdemoapp.core.data.remote.DataSourceExecutor
 import com.example.moviesdemoapp.core.domain.BaseViewModel
+import com.example.moviesdemoapp.engine.navigation.Routes
 import com.example.moviesdemoapp.feature.banking.data.BankingFormStateRepository
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageEffect
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageIntent
@@ -29,7 +30,7 @@ class BankingViewModel @Inject constructor(
             is BankingPageIntent.LoadPersonalDetailMainPage -> loadScreen()
             is BankingPageIntent.LoadOtherMainPage -> loadScreen(intent.pageDetail)
             is BankingPageIntent.OnAction -> handleAction(intent.actionId, intent.params)
-            is BankingPageIntent.MarkFormCompleted -> handleFormCompleted(intent.formNumber, intent.formData)
+            is BankingPageIntent.MarkFormCompleted -> handleFormCompleted(intent.formId, intent.formData)
             is BankingPageIntent.CheckAndNavigateToNextForm -> checkAndNavigateToNextForm()
             is BankingPageIntent.ResumeFromSavedState -> resumeFromSavedState()
         }
@@ -64,7 +65,7 @@ class BankingViewModel @Inject constructor(
                 screenModel = screenModel,
                 isLoading = true,
                 error = null,
-                currentFormNumber = 1
+                currentFormId = Routes.BANKING
             )
         }
 
@@ -97,8 +98,8 @@ class BankingViewModel @Inject constructor(
     /**
      * Mark a form as completed and save state
      */
-    private fun handleFormCompleted(formNumber: Int, formData: String? = null) {
-        formStateRepository.markFormCompleted(formNumber, formData)
+    private fun handleFormCompleted(formId: String, formData: String? = null) {
+        formStateRepository.markFormCompleted(formId, formData)
 
         val completionStatus = formStateRepository.getFormCompletionStatus()
         setState {
@@ -107,7 +108,7 @@ class BankingViewModel @Inject constructor(
                 isForm2Completed = completionStatus.isForm2Completed,
                 isForm3Completed = completionStatus.isForm3Completed,
                 isForm4Completed = completionStatus.isForm4Completed,
-                currentFormNumber = formNumber
+                currentFormId = formId
             )
         }
     }
@@ -120,14 +121,14 @@ class BankingViewModel @Inject constructor(
 
         // If forms 1 and 2 are complete, auto-navigate to form 3
         if (completionStatus.canProceedToForm3()) {
-            setState { copy(currentFormNumber = 3) }
-            setEffect(BankingPageEffect.AutoNavigate(3))
-            loadScreen("address_details") // Load form 3
+            setState { copy(currentFormId = Routes.BANKING_FINENCIAL_DETAIL) }
+            setEffect(BankingPageEffect.AutoNavigate(Routes.BANKING_FINENCIAL_DETAIL))
+            loadScreen("financial_information") // Load form 3
         }
     }
 
     /**
-     * Resume from where the user left off
+     * Resume from where the user left off (Choosing a random incomplete form)
      */
     private suspend fun resumeFromSavedState() {
         val completionStatus = formStateRepository.getFormCompletionStatus()
@@ -141,18 +142,18 @@ class BankingViewModel @Inject constructor(
             )
         }
 
-        // Navigate to the appropriate form
-        val formToResume = formStateRepository.getFormToResume()
+        // Navigate to a random incomplete form
+        val formToResume = formStateRepository.getRandomIncompleteForm()
 
         when (formToResume) {
-            1 -> loadScreen("personal_details")
-            2 -> loadScreen("address_details")
-            3 -> {
-                setState { copy(currentFormNumber = 3) }
+            Routes.BANKING -> loadScreen("personal_details")
+            Routes.BANKING_ADDRESS -> loadScreen("address_details")
+            Routes.BANKING_FINENCIAL_DETAIL -> {
+                setState { copy(currentFormId = Routes.BANKING_FINENCIAL_DETAIL) }
                 loadScreen("financial_information")
             }
-            4 -> {
-                setState { copy(currentFormNumber = 4) }
+            Routes.BANKING_REVIEW_SUBMIT -> {
+                setState { copy(currentFormId = Routes.BANKING_REVIEW_SUBMIT) }
                 loadScreen("review_submit")
             }
         }

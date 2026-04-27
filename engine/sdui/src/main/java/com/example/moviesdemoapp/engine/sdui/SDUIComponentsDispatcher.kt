@@ -1,6 +1,7 @@
 package com.example.moviesdemoapp.engine.sdui
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -72,6 +73,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -82,6 +85,7 @@ import com.example.analytics.engine.AnalyticsEngine
 import com.example.analytics.event.AnalyticsEvent
 import com.example.analytics.event.Provider
 import com.example.moviesdemoapp.core.network.model.ActionModel
+import com.example.moviesdemoapp.core.network.model.Analytics
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.core.ui.colorFromToken
@@ -111,10 +115,10 @@ import kotlin.math.roundToInt
  *      See MoviesComponentModule.kt for the template.
  */
 @Singleton
-class SDUIComponentsDispatcher @Inject constructor(private val resolver: TemplateResolver, private val analyticsEngine: AnalyticsEngine, private val  bindingResolver :BindingResolver) {
+class SDUIComponentsDispatcher @Inject constructor(private val resolver: TemplateResolver, private val analyticsEngine: AnalyticsEngine, private val  bindingResolver :BindingResolver, private val context: Context) {
 
 
-
+    private val sduiViewModel = SDUIViewModel(context)
     /** Delegates to [TemplateResolver.isVisible] — called by [SDUIRenderEngine.RenderNode]. */
     fun isVisible(node: ComponentNode, data: Map<String, String>): Boolean =
         resolver.isVisible(node, data)
@@ -1143,10 +1147,12 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             }
         }
 
+        val isInputTypeValid = isInputTypeValid(value, node.inputType)
 
         val isError = when {
             isRequired && value.isEmpty() -> true
             value.isNotEmpty() && value.length < minLength -> true
+            !isInputTypeValid -> true
             else -> false
         }
 
@@ -1178,6 +1184,14 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 placeholder = {
                     Text(node.placeholder ?: "")
                 },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = getKeyboardType(node.inputType)
+                ),
+                visualTransformation = if (node.inputType?.lowercase() == "password") {
+                    PasswordVisualTransformation()
+                } else {
+                    VisualTransformation.None
+                },
                 isError = isError,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(fontSize = fontSize),
@@ -1189,6 +1203,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 val errorText = when {
                     isRequired && value.isEmpty() -> "This field is required"
                     value.length < minLength -> "Minimum $minLength characters required"
+                    !isInputTypeValid -> "Invalid ${node.inputType ?: "format"}"
                     else -> ""
                 }
 
@@ -1200,35 +1215,31 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 )
             }
         }
-
-
-
-        /*val text = node.label ?: ""
-        val placeholder = node.placeholder ?: ""
-        val color = (node.style?.foregroundColor ?: node.style?.textColor)
-            ?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
-        val fontSize = node.style?.fontSize?.sp ?: DesignTokens.TextMd
-        val fontWeight = node.style?.fontWeight.toFontWeight()
-        val maxLines = node.style?.lineLimit ?: node.style?.maxLines ?: Int.MAX_VALUE
-        val pad = node.style?.padding?.dp ?: 0.dp
-        var changedText by remember { mutableStateOf("") }
-        Column {
-            TextField(
-                value = text,
-                onValueChange = { newText -> changedText = newText },
-                label = { Text(placeholder) },
-                modifier = if (pad > 0.dp) Modifier.padding(pad) else Modifier,
-                maxLines = maxLines,
-                colors = TextFieldDefaults.colors()
-            )
-
-        }*/
-
-
-
-
-
     }
+
+    private fun getKeyboardType(inputType: String?): KeyboardType {
+        return when (inputType?.lowercase()) {
+            "number" -> KeyboardType.Number
+            "phone" -> KeyboardType.Phone
+            "email" -> KeyboardType.Email
+            "password" -> KeyboardType.Password
+            "decimal" -> KeyboardType.Decimal
+            "uri" -> KeyboardType.Uri
+            else -> KeyboardType.Text
+        }
+    }
+
+    private fun isInputTypeValid(value: String, inputType: String?): Boolean {
+        if (value.isEmpty()) return true
+        return when (inputType?.lowercase()) {
+            "email" -> android.util.Patterns.EMAIL_ADDRESS.matcher(value).matches()
+            "phone" -> android.util.Patterns.PHONE.matcher(value).matches()
+            "number" -> value.all { it.isDigit() }
+            "decimal" -> value.toDoubleOrNull() != null
+            else -> true
+        }
+    }
+
 
     // ─── Text / Header ────────────────────────────────────────────────────────
 
@@ -1353,6 +1364,19 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                     component.action?.dispatch(data, onAction)
                 } else {
                     if(validateForm()){
+                        activityScreenName?.let { eventName ->
+                            sduiViewModel.markFormCompleted(eventName, null)
+                            component.analytics?.let {
+                                analyticsEngine.track(
+                                    AnalyticsEvent(
+                                        provider = Provider.FIREBASE,
+                                        eventName = eventName,
+                                        params = bindAnalyticsDataParam(it),
+                                    )
+                                )
+                            }
+
+                        }
                         component.action?.dispatch(data, onAction)
                     } else {
                         Toast.makeText(
@@ -1409,12 +1433,13 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 } else {
                     if(validateForm()){
                         activityScreenName?.let { eventName ->
+                            sduiViewModel.markFormCompleted(eventName, null)
                             component.analytics?.let {
                                 analyticsEngine.track(
                                     AnalyticsEvent(
                                         provider = Provider.FIREBASE,
                                         eventName = eventName,
-                                        params = emptyMap(),
+                                        params = bindAnalyticsDataParam(it),
                                     )
                                 )
                             }
@@ -1450,6 +1475,15 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 color = textColor
             )
         }
+    }
+
+    private fun bindAnalyticsDataParam(it: Analytics): Map<String, String?> {
+        val params = mutableMapOf<String, String?>()
+        it.params?.forEach { param ->
+            val value = FormDataStorage.readAndSetValue(param.value.replace("{", "")?.replace("}", "") ?: "")
+            params[param.key] = value
+        }
+        return params
     }
 
     // ─── Data ─────────────────────────────────────────────────────────────────

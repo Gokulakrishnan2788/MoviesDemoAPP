@@ -1,6 +1,20 @@
 {
   "screenId": "review_submit",
   "title": "Review & Submit",
+  "formStatus": {
+    "personal_details": {
+      "status": "incomplete"
+    },
+    "address_details": {
+      "status": "incomplete"
+    },
+    "financial_information": {
+      "status": "incomplete"
+    },
+    "review_submit": {
+      "status": "incomplete"
+    }
+  },
   "bindings": {
     "headerTitle": { "source": "string", "key": "review_submit.header_title" },
     "fullNameLabel": { "source": "string", "key": "review_submit.full_name_label" },
