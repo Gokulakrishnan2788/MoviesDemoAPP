@@ -20,14 +20,21 @@ import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.engine.sdui.resolveTokens
 
 @Composable
-internal fun RenderImage(node: ComponentNode, data: Map<String, String>) {
-    val url    = node.dataBinding?.let { data[it] } ?: node.props["url"] ?: ""
-    val width  = node.style?.frameWidth?.dp
+internal fun RenderImage(
+    node: ComponentNode,
+    data: Map<String, String>,
+) {
+    val url = node.dataBinding?.let { data[it] } ?: node.props["url"] ?: ""
+    val width = node.style?.frameWidth?.dp
     val height = node.style?.frameHeight?.dp ?: 200.dp
     val radius = node.style?.cornerRadius?.dp ?: 0.dp
 
-    val sizeMod = if (width != null) Modifier.size(width = width, height = height)
-                  else Modifier.fillMaxWidth().height(height)
+    val sizeMod =
+        if (width != null) {
+            Modifier.size(width = width, height = height)
+        } else {
+            Modifier.fillMaxWidth().height(height)
+        }
 
     // Resolve the label template against current item data BEFORE entering composition.
     val resolvedLabel = node.screenAccessibility?.label?.resolveTokens(data)
@@ -36,26 +43,28 @@ internal fun RenderImage(node: ComponentNode, data: Map<String, String>) {
     // clearAndSetSemantics {} on AsyncImage removes ALL Coil-internal semantics so
     // the two nodes never compete — there is no ambiguity about which contentDescription
     // TalkBack announces.
-    val boxMod = when {
-        node.screenAccessibility?.importantForAccessibility == false ->
-            sizeMod.clearAndSetSemantics {}
-        resolvedLabel != null ->
-            sizeMod.semantics {
-                contentDescription = resolvedLabel
-                role = Role.Image
-            }
-        else -> sizeMod
-    }
+    val boxMod =
+        when {
+            node.screenAccessibility?.importantForAccessibility == false ->
+                sizeMod.clearAndSetSemantics {}
+            resolvedLabel != null ->
+                sizeMod.semantics {
+                    contentDescription = resolvedLabel
+                    role = Role.Image
+                }
+            else -> sizeMod
+        }
 
     Box(modifier = boxMod) {
         AsyncImage(
             model = url,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .matchParentSize()
-                .clip(RoundedCornerShape(radius))
-                .clearAndSetSemantics {},
+            modifier =
+                Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(radius))
+                    .clearAndSetSemantics {},
         )
     }
 }

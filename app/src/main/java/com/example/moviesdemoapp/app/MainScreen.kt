@@ -44,13 +44,14 @@ fun MainScreen(navController: NavHostController) {
                         },
                         label = { Text(tab.title) },
                         selected = currentRoute == tab.graphRoute,
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = DesignTokens.Accent,
-                            selectedTextColor = DesignTokens.Accent,
-                            unselectedIconColor = DesignTokens.SecondaryText,
-                            unselectedTextColor = DesignTokens.SecondaryText,
-                            indicatorColor = DesignTokens.Surface,
-                        ),
+                        colors =
+                            NavigationBarItemDefaults.colors(
+                                selectedIconColor = DesignTokens.Accent,
+                                selectedTextColor = DesignTokens.Accent,
+                                unselectedIconColor = DesignTokens.SecondaryText,
+                                unselectedTextColor = DesignTokens.SecondaryText,
+                                indicatorColor = DesignTokens.Surface,
+                            ),
                         onClick = {
                             navController.navigate(tab.graphRoute) {
                                 popUpTo(navController.graph.findStartDestination().id) {

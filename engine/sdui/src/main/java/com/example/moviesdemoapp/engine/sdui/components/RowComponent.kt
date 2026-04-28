@@ -23,15 +23,16 @@ internal fun RenderRow(
     onAction: (String, Map<String, String>) -> Unit,
     renderNode: NodeRenderer,
 ) {
-    val bg      = node.style?.backgroundColor?.let { colorFromToken(it) }
-    val pad     = node.style?.padding?.dp ?: 0.dp
+    val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
+    val pad = node.style?.padding?.dp ?: 0.dp
     val spacing = node.style?.spacing?.dp ?: DesignTokens.SpacingSm
-    val radius  = node.style?.cornerRadius?.dp ?: 0.dp
+    val radius = node.style?.cornerRadius?.dp ?: 0.dp
 
     val action = node.action
-    var mod: Modifier = Modifier
-        .fillMaxWidth()
-        .applyAccessibility(node.screenAccessibility, data)
+    var mod: Modifier =
+        Modifier
+            .fillMaxWidth()
+            .applyAccessibility(node.screenAccessibility, data)
     if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
     if (pad > 0.dp) mod = mod.padding(pad)
     if (action != null) mod = mod.clickable { action.dispatch(data, onAction) }

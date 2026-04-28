@@ -26,18 +26,19 @@ internal fun RenderHeader(
     onAction: (String, Map<String, String>) -> Unit,
     resolver: TemplateResolver,
 ) {
-    val title     = node.titleTemplate?.let { resolver.resolve(it, data) } ?: node.props["title"] ?: ""
-    val subtitle  = node.subtitleTemplate?.let { resolver.resolve(it, data) } ?: node.props["subtitle"]
+    val title = node.titleTemplate?.let { resolver.resolve(it, data) } ?: node.props["title"] ?: ""
+    val subtitle = node.subtitleTemplate?.let { resolver.resolve(it, data) } ?: node.props["subtitle"]
     val hasSearch = node.action?.type == "search"
-    val padH      = node.style?.padding?.dp ?: DesignTokens.SpacingMd
-    val padTop    = node.style?.paddingTop?.dp ?: DesignTokens.SpacingSm
+    val padH = node.style?.padding?.dp ?: DesignTokens.SpacingMd
+    val padTop = node.style?.paddingTop?.dp ?: DesignTokens.SpacingSm
     val padBottom = node.style?.paddingBottom?.dp ?: DesignTokens.SpacingSm
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = padH, end = padH, top = padTop, bottom = padBottom)
-            .applyAccessibility(node.screenAccessibility, data),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = padH, end = padH, top = padTop, bottom = padBottom)
+                .applyAccessibility(node.screenAccessibility, data),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -53,9 +54,11 @@ internal fun RenderHeader(
         }
         if (hasSearch) {
             IconButton(onClick = { node.action?.dispatch(data, onAction) }) {
-                Icon(Icons.Default.Search,
+                Icon(
+                    Icons.Default.Search,
                     contentDescription = "Search",
-                    tint = DesignTokens.PrimaryText)
+                    tint = DesignTokens.PrimaryText,
+                )
             }
         }
     }

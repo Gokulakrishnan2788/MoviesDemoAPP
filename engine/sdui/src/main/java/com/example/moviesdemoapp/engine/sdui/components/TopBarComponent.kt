@@ -7,11 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -21,12 +16,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.engine.sdui.TemplateResolver
+import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 
 @Composable
 internal fun RenderTopBar(
@@ -35,19 +35,20 @@ internal fun RenderTopBar(
     onAction: (String, Map<String, String>) -> Unit,
     resolver: TemplateResolver,
 ) {
-    val title    = node.props["title"] ?: node.titleTemplate?.let { resolver.resolve(it, data) } ?: ""
+    val title = node.props["title"] ?: node.titleTemplate?.let { resolver.resolve(it, data) } ?: ""
     val subtitle = node.props["subtitle"] ?: node.subtitleTemplate?.let { resolver.resolve(it, data) }
-    val hasBack   = node.props["leadingIcon"] == "back"
+    val hasBack = node.props["leadingIcon"] == "back"
     val hasSearch = node.props["trailingIcon"] == "search"
-    val padH      = node.style?.padding?.dp ?: DesignTokens.SpacingMd
-    val padTop    = node.style?.paddingTop?.dp ?: DesignTokens.SpacingSm
+    val padH = node.style?.padding?.dp ?: DesignTokens.SpacingMd
+    val padTop = node.style?.paddingTop?.dp ?: DesignTokens.SpacingSm
     val padBottom = node.style?.paddingBottom?.dp ?: DesignTokens.SpacingSm
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .applyAccessibility(node.screenAccessibility, data)
-            .padding(start = padH, end = padH, top = padTop, bottom = padBottom),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .applyAccessibility(node.screenAccessibility, data)
+                .padding(start = padH, end = padH, top = padTop, bottom = padBottom),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -56,13 +57,13 @@ internal fun RenderTopBar(
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                 if (hasBack) {
                     Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .semantics {
-                                role = Role.Button
-                                contentDescription = "Navigate back"
-                            }
-                            .clickable { node.action?.dispatch(data, onAction) },
+                        modifier =
+                            Modifier
+                                .size(36.dp)
+                                .semantics {
+                                    role = Role.Button
+                                    contentDescription = "Navigate back"
+                                }.clickable { node.action?.dispatch(data, onAction) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -96,9 +97,10 @@ internal fun RenderTopBar(
                 color = DesignTokens.SecondaryText,
                 fontSize = DesignTokens.TextMd,
                 textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = DesignTokens.SpacingXs),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = DesignTokens.SpacingXs),
             )
         }
     }

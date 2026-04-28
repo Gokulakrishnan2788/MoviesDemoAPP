@@ -37,12 +37,13 @@ object DesignTokens {
 }
 
 /** Resolves an SDUI color token string to its [Color] value. */
-fun colorFromToken(token: String): Color = when (token) {
-    "screenBackground" -> DesignTokens.ScreenBackground
-    "cardBackground" -> DesignTokens.CardBackground
-    "surface" -> DesignTokens.Surface
-    "primaryText" -> DesignTokens.PrimaryText
-    "secondaryText" -> DesignTokens.SecondaryText
-    "accent" -> DesignTokens.Accent
-    else -> Color.Unspecified
-}
+fun colorFromToken(token: String): Color =
+    when (token) {
+        "screenBackground" -> DesignTokens.ScreenBackground
+        "cardBackground" -> DesignTokens.CardBackground
+        "surface" -> DesignTokens.Surface
+        "primaryText" -> DesignTokens.PrimaryText
+        "secondaryText" -> DesignTokens.SecondaryText
+        "accent" -> DesignTokens.Accent
+        else -> Color.Unspecified
+    }

@@ -21,10 +21,10 @@ internal fun RenderColumn(
     onAction: (String, Map<String, String>) -> Unit,
     renderNode: NodeRenderer,
 ) {
-    val bg      = node.style?.backgroundColor?.let { colorFromToken(it) }
-    val pad     = node.style?.padding?.dp ?: 0.dp
+    val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
+    val pad = node.style?.padding?.dp ?: 0.dp
     val spacing = node.style?.spacing?.dp ?: 0.dp
-    val radius  = node.style?.cornerRadius?.dp ?: 0.dp
+    val radius = node.style?.cornerRadius?.dp ?: 0.dp
 
     var mod: Modifier = Modifier.fillMaxWidth()
     if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))

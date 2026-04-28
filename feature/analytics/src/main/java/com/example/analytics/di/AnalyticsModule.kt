@@ -10,38 +10,39 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
-val analyticsModule = module {
+val analyticsModule =
+    module {
 
-    // Firebase Analytics instance
-    single { FirebaseAnalytics.getInstance(androidContext()) }
+        // Firebase Analytics instance
+        single { FirebaseAnalytics.getInstance(androidContext()) }
 
-    // Analytics Providers
-    single { FirebaseAnalyticsProvider(get()) }
-    single { AdobeAnalyticsProviderProvider() }
+        // Analytics Providers
+        single { FirebaseAnalyticsProvider(get()) }
+        single { AdobeAnalyticsProviderProvider() }
 
-    // List of all providers
-    single<List<AnalyticsProvider>> {
-        listOf(
-            get<FirebaseAnalyticsProvider>(),
-            get<AdobeAnalyticsProviderProvider>()
-        )
+        // List of all providers
+        single<List<AnalyticsProvider>> {
+            listOf(
+                get<FirebaseAnalyticsProvider>(),
+                get<AdobeAnalyticsProviderProvider>(),
+            )
+        }
+
+        // Analytics Interceptor
+        single { AnalyticsInterceptor() }
+
+        // Analytics Engine - the main class you want to inject
+        single {
+            AnalyticsEngine(
+                providers = get(),
+                interceptor = get(),
+            )
+        }
+
+        // Analytics Handler
+        single {
+            AnalyticsHandler(
+                analyticsEngine = get(),
+            )
+        }
     }
-
-    // Analytics Interceptor
-    single { AnalyticsInterceptor() }
-
-    // Analytics Engine - the main class you want to inject
-    single {
-        AnalyticsEngine(
-            providers = get(),
-            interceptor = get()
-        )
-    }
-
-    // Analytics Handler
-    single {
-        AnalyticsHandler(
-            analyticsEngine = get()
-        )
-    }
-}

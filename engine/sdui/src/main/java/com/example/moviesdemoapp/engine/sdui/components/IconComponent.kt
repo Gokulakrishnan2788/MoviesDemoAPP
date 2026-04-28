@@ -15,16 +15,20 @@ import com.example.moviesdemoapp.core.ui.colorFromToken
 import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 
 @Composable
-internal fun RenderIcon(node: ComponentNode, data: Map<String, String> = emptyMap()) {
-    val name  = node.icon ?: node.props["icon"] ?: ""
+internal fun RenderIcon(
+    node: ComponentNode,
+    data: Map<String, String> = emptyMap(),
+) {
+    val name = node.icon ?: node.props["icon"] ?: ""
     val color = node.style?.foregroundColor?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
-    val size  = node.style?.fontSize?.dp ?: 16.dp
+    val size = node.style?.fontSize?.dp ?: 16.dp
 
-    val icon = when {
-        name.contains("search")                       -> Icons.Default.Search
-        name.contains("play") || name.contains("tv")  -> Icons.Default.PlayCircle
-        else                                           -> Icons.Default.Star
-    }
+    val icon =
+        when {
+            name.contains("search") -> Icons.Default.Search
+            name.contains("play") || name.contains("tv") -> Icons.Default.PlayCircle
+            else -> Icons.Default.Star
+        }
 
     Icon(
         imageVector = icon,

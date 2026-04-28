@@ -25,10 +25,8 @@ data class ScreenModel(
 @Serializable
 data class FormStatusDetail(
     val status: String,
-    val formNeedTobeDeleteAfterSubmit: List<String>? = emptyList()
+    val formNeedTobeDeleteAfterSubmit: List<String>? = emptyList(),
 )
-
-
 
 @Serializable
 data class BindingItem(
@@ -79,17 +77,16 @@ data class ComponentNode(
     val screenAccessibility: AccessibilityModel? = null,
 )
 
-
 @Serializable
 data class Analytics(
     val event: String,
-    val params: Map<String, String>? = emptyMap())
-
+    val params: Map<String, String>? = emptyMap(),
+)
 
 @Serializable
 data class DropdownOption(
     val titleBinding: String = "",
-    val value: String
+    val value: String,
 )
 
 // UI action attached to a tappable component (navigate, search, etc.)
@@ -97,10 +94,8 @@ data class DropdownOption(
 data class Validation(
     val required: Boolean? = null,
     val minLength: Int? = null,
-    val min: Int? = null
+    val min: Int? = null,
 )
-
-
 
 // UI action attached to a tappable component (navigate, search, etc.)
 @Serializable
@@ -108,8 +103,6 @@ data class AccessibilityNodeModel(
     val label: String? = null,
     val traits: List<String> = emptyList(),
 )
-
-
 
 // Visual styling overrides for a ComponentNode.
 @Serializable
@@ -164,7 +157,7 @@ data class State(
 data class Accessibility(
     val supportsDynamicType: Boolean? = null,
     val supportsBoldText: Boolean? = null,
-    val voiceOverEnabled: Boolean? = null
+    val voiceOverEnabled: Boolean? = null,
 )
 
 // Declarative accessibility contract for a ComponentNode.

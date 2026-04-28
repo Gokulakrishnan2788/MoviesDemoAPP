@@ -14,12 +14,15 @@ import javax.inject.Singleton
  * in the caller when switching from local to remote.
  */
 @Singleton
-class ScreenRepository @Inject constructor(
-    private val source: ScreenSource,
-    private val json: Json,
-) {
-    suspend fun loadScreen(screenId: String): ScreenModel? = runCatching {
-        val raw = source.load(screenId) ?: return@runCatching null
-        json.decodeFromString<ScreenModel>(raw)
-    }.getOrNull()
-}
+class ScreenRepository
+    @Inject
+    constructor(
+        private val source: ScreenSource,
+        private val json: Json,
+    ) {
+        suspend fun loadScreen(screenId: String): ScreenModel? =
+            runCatching {
+                val raw = source.load(screenId) ?: return@runCatching null
+                json.decodeFromString<ScreenModel>(raw)
+            }.getOrNull()
+    }

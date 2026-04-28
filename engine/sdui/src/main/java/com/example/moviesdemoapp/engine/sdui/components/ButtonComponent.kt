@@ -21,10 +21,11 @@ internal fun RenderButton(
     val label = node.template?.let { resolver.resolve(it, data) } ?: node.props["label"] ?: ""
 
     Box(
-        modifier = Modifier
-            .padding(DesignTokens.SpacingMd)
-            .applyAccessibility(node.screenAccessibility, data)
-            .clickable { node.action?.dispatch(data, onAction) },
+        modifier =
+            Modifier
+                .padding(DesignTokens.SpacingMd)
+                .applyAccessibility(node.screenAccessibility, data)
+                .clickable { node.action?.dispatch(data, onAction) },
     ) {
         Text(text = label, color = DesignTokens.Accent, fontSize = DesignTokens.TextLg)
     }

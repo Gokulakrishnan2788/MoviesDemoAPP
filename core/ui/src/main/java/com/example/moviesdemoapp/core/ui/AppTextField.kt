@@ -32,13 +32,14 @@ fun AppTextField(
         label = if (label.isNotEmpty()) ({ Text(label) }) else null,
         placeholder = if (placeholder.isNotEmpty()) ({ Text(placeholder) }) else null,
         shape = RoundedCornerShape(DesignTokens.RadiusMd),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = DesignTokens.Accent,
-            unfocusedBorderColor = DesignTokens.SecondaryText,
-            focusedTextColor = DesignTokens.PrimaryText,
-            unfocusedTextColor = DesignTokens.PrimaryText,
-            cursorColor = DesignTokens.Accent,
-        ),
+        colors =
+            OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = DesignTokens.Accent,
+                unfocusedBorderColor = DesignTokens.SecondaryText,
+                focusedTextColor = DesignTokens.PrimaryText,
+                unfocusedTextColor = DesignTokens.PrimaryText,
+                cursorColor = DesignTokens.Accent,
+            ),
     )
 }
 

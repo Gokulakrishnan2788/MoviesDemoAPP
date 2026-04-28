@@ -9,9 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import com.example.moviesdemoapp.core.ui.DesignTokens
@@ -20,14 +20,11 @@ import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageEffect
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageIntent
 import kotlinx.coroutines.flow.collectLatest
 
-fun NavGraphBuilder.bankingGraph(
-    navController: NavController
-) {
+fun NavGraphBuilder.bankingGraph(navController: NavController) {
     navigation(startDestination = "banking_entry", route = "banking_graph") {
-
         composable("banking_entry") { entry: NavBackStackEntry ->
             val formStatusViewModel: FormStatusViewModel = hiltViewModel(entry)
-            val formDetail by formStatusViewModel._formId.collectAsStateWithLifecycle()
+            val formDetail by formStatusViewModel.formId.collectAsStateWithLifecycle()
 
             LaunchedEffect(formDetail) {
                 if (formDetail == null) {
@@ -66,7 +63,9 @@ fun NavGraphBuilder.bankingGraph(
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING_ADDRESS, effect.route))
+                        viewModel.handleIntent(
+                            BankingPageIntent.MarkFormCompleted(Routes.BANKING_ADDRESS, effect.route),
+                        )
                         navController.navigate(effect.route)
                     }
                 }
@@ -81,7 +80,9 @@ fun NavGraphBuilder.bankingGraph(
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING_FINENCIAL_DETAIL, effect.route))
+                        viewModel.handleIntent(
+                            BankingPageIntent.MarkFormCompleted(Routes.BANKING_FINENCIAL_DETAIL, effect.route),
+                        )
                         navController.navigate(effect.route)
                     }
                 }
@@ -96,7 +97,9 @@ fun NavGraphBuilder.bankingGraph(
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING_REVIEW_SUBMIT, effect.route))
+                        viewModel.handleIntent(
+                            BankingPageIntent.MarkFormCompleted(Routes.BANKING_REVIEW_SUBMIT, effect.route),
+                        )
                         navController.navigate(effect.route)
                     }
                 }

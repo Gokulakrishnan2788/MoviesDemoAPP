@@ -5,7 +5,6 @@ import com.example.moviesdemoapp.core.domain.UiIntent
 import com.example.moviesdemoapp.core.domain.UiState
 import com.example.moviesdemoapp.core.network.model.ScreenModel
 
-
 data class BankingPageState(
     val screenModel: ScreenModel? = null,
     val isLoading: Boolean = false,
@@ -21,14 +20,32 @@ data class BankingPageState(
 
 sealed interface BankingPageIntent : UiIntent {
     data object LoadPersonalDetailMainPage : BankingPageIntent
-    data class LoadOtherMainPage(val pageDetail: String) : BankingPageIntent
-    data class OnAction(val actionId: String, val params: Map<String, String>) : BankingPageIntent
-    data class MarkFormCompleted(val formId: String, val formData: String? = null) : BankingPageIntent
+
+    data class LoadOtherMainPage(
+        val pageDetail: String,
+    ) : BankingPageIntent
+
+    data class OnAction(
+        val actionId: String,
+        val params: Map<String, String>,
+    ) : BankingPageIntent
+
+    data class MarkFormCompleted(
+        val formId: String,
+        val formData: String? = null,
+    ) : BankingPageIntent
+
     data object CheckAndNavigateToNextForm : BankingPageIntent
+
     data object ResumeFromSavedState : BankingPageIntent
 }
 
 sealed interface BankingPageEffect : UiEffect {
-    data class Navigate(val route: String) : BankingPageEffect
-    data class AutoNavigate(val formId: String) : BankingPageEffect
+    data class Navigate(
+        val route: String,
+    ) : BankingPageEffect
+
+    data class AutoNavigate(
+        val formId: String,
+    ) : BankingPageEffect
 }

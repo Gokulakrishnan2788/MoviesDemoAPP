@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun BankingScreen(
     navController: NavController,
     viewModel: BankingViewModel = hiltViewModel(),
-    onFormComplete: (String) -> Unit
+    onFormComplete: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -57,7 +57,7 @@ fun BankingIncrementScreen(
     navController: NavController,
     viewModel: BankingViewModel = hiltViewModel(),
     pageDetail: String?,
-    onFormComplete: (String) -> Unit
+    onFormComplete: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -97,4 +97,3 @@ fun BankingIncrementScreen(
         },
     )
 }
-

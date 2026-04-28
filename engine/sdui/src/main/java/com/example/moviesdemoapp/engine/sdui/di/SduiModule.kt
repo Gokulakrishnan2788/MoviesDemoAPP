@@ -9,7 +9,6 @@ import dagger.multibindings.Multibinds
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class SduiModule {
-
     /**
      * Declares the base empty Set<SduiComponentProvider> multibinding.
      *

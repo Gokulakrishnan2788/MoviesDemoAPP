@@ -19,7 +19,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DataBindingsModule {
-
     @Binds
     @Singleton
     abstract fun bindSDUIDataRepository(impl: SDUIDataRepositoryImpl): SDUIDataRepository
@@ -36,11 +35,11 @@ abstract class DataBindingsModule {
 @Module
 @InstallIn(SingletonComponent::class)
 object DataModule {
-
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, "movieapp.db").build()
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+    ): AppDatabase = Room.databaseBuilder(context, AppDatabase::class.java, "movieapp.db").build()
 
     @Provides
     @Singleton

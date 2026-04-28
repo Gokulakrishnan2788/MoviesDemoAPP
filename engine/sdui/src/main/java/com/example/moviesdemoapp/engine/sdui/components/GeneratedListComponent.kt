@@ -16,8 +16,8 @@ internal fun RenderGeneratedList(
     onAction: (String, Map<String, String>) -> Unit,
     renderNode: NodeRenderer,
 ) {
-    val count   = node.countBinding?.let { data[it]?.toIntOrNull() } ?: 0
-    val layout  = node.itemLayout ?: return
+    val count = node.countBinding?.let { data[it]?.toIntOrNull() } ?: 0
+    val layout = node.itemLayout ?: return
     val spacing = node.style?.spacing?.dp ?: 0.dp
 
     Column(

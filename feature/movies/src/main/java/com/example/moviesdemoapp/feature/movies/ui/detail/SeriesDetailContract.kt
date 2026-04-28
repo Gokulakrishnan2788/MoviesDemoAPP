@@ -14,6 +14,7 @@ data class SeriesDetailState(
 
 sealed interface SeriesDetailIntent : UiIntent {
     data object Load : SeriesDetailIntent
+
     data object NavigateBack : SeriesDetailIntent
 }
 

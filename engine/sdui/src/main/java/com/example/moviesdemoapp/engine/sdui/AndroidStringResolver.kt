@@ -13,8 +13,9 @@ import com.example.moviesdemoapp.core.network.StringResolver
  * Falls back to the raw [key] when no matching string resource is found,
  * so missing keys are visible in the UI instead of crashing.
  */
-class AndroidStringResolver(private val context: Context) : StringResolver {
-
+class AndroidStringResolver(
+    private val context: Context,
+) : StringResolver {
     override fun resolve(key: String): String {
         val resourceKey = key.replace('.', '_')
         val resId = context.resources.getIdentifier(resourceKey, "string", context.packageName)

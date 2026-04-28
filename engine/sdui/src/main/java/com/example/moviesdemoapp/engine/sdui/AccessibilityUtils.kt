@@ -37,19 +37,19 @@ fun Modifier.applyAccessibility(
     if (model.importantForAccessibility == false) return this.clearAndSetSemantics {}
 
     val resolvedLabel = model.label?.resolveTokens(data)
-    val resolvedHint  = model.hint?.resolveTokens(data)
+    val resolvedHint = model.hint?.resolveTokens(data)
 
     return semantics(mergeDescendants = model.mergeDescendants == true) {
         resolvedLabel?.let { contentDescription = it }
 
         model.role?.let { roleValue ->
             when (roleValue.lowercase()) {
-                "button"   -> role = Role.Button
-                "image"    -> role = Role.Image
+                "button" -> role = Role.Button
+                "image" -> role = Role.Image
                 "checkbox" -> role = Role.Checkbox
-                "switch"   -> role = Role.Switch
-                "tab"      -> role = Role.Tab
-                "header"   -> heading()
+                "switch" -> role = Role.Switch
+                "tab" -> role = Role.Tab
+                "header" -> heading()
             }
         }
 

@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.analytics.engine.AnalyticsEngine
 import com.example.moviesdemoapp.core.network.StringResolver
 import com.example.moviesdemoapp.core.network.model.ComponentNode
-import com.example.moviesdemoapp.core.network.model.FormStatusDetail
 import com.example.moviesdemoapp.core.network.model.ScreenModel
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import dagger.hilt.EntryPoint
@@ -34,6 +33,7 @@ import org.koin.core.context.GlobalContext
 @InstallIn(SingletonComponent::class)
 interface SduiEntryPoint {
     fun componentRegistry(): ComponentRegistry
+
     fun stringResolver(): StringResolver
 }
 
@@ -60,59 +60,57 @@ fun SDUIRenderer(
     val context = LocalContext.current
 
     // Pull singleton dependencies from Hilt via the entry point.
-    val entryPoint = remember {
-        EntryPointAccessors.fromApplication(context.applicationContext, SduiEntryPoint::class.java)
-    }
-    val registry       = remember { entryPoint.componentRegistry() }
+    val entryPoint =
+        remember {
+            EntryPointAccessors.fromApplication(context.applicationContext, SduiEntryPoint::class.java)
+        }
+    val registry = remember { entryPoint.componentRegistry() }
     val stringResolver = remember { entryPoint.stringResolver() }
 
-    val resolver        = remember { TemplateResolver() }
+    val resolver = remember { TemplateResolver() }
     val analyticsEngine = remember { GlobalContext.get().get<AnalyticsEngine>() }
     val bindingResolver = remember { BindingResolver(stringResolver) }
-    val components      = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver) }
-    val engine          = remember(registry) { SDUIRenderEngine(registry, components) }
-    val resolver = remember { TemplateResolver() }
-    val analyticsEngine = remember {
-        GlobalContext.get().get<AnalyticsEngine>()
-    }
-
-    val bindingResolver = BindingResolver(context)
-    bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
     val components = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver, context) }
     val engine = remember(registry) { SDUIRenderEngine(registry, components) }
 
     // Pre-resolve all bindings whenever the screen definition or API data changes.
     // Resolved values are merged into dataMap so every component can access them
     // via the standard data[key] lookup — no extra logic in components.
-    val enrichedData = remember(screenModel, dataMap) {
-        bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
-        val resolved = bindingResolver.resolveAll(dataMap)
-        dataMap + resolved
-    }
+    val enrichedData =
+        remember(screenModel, dataMap) {
+            bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
+            val resolved = bindingResolver.resolveAll(dataMap)
+            dataMap + resolved
+        }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DesignTokens.ScreenBackground),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(DesignTokens.ScreenBackground),
     ) {
         when {
-            isLoading -> CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-                color = DesignTokens.Accent,
-            )
-            error != null -> Text(
-                text = error,
-                color = DesignTokens.SecondaryText,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(DesignTokens.SpacingMd),
-            )
-            screenModel != null -> engine.Render(
-                screenModel = screenModel,
-                data = enrichedData,
-                listData = listData,
-                onAction = onAction,
-            )
+            isLoading ->
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = DesignTokens.Accent,
+                )
+            error != null ->
+                Text(
+                    text = error,
+                    color = DesignTokens.SecondaryText,
+                    modifier =
+                        Modifier
+                            .align(Alignment.Center)
+                            .padding(DesignTokens.SpacingMd),
+                )
+            screenModel != null ->
+                engine.Render(
+                    screenModel = screenModel,
+                    data = enrichedData,
+                    listData = listData,
+                    onAction = onAction,
+                )
         }
     }
 }
@@ -131,7 +129,6 @@ class SDUIRenderEngine(
     private val registry: ComponentRegistry,
     private val components: SDUIComponentsDispatcher,
 ) {
-
     @Composable
     fun Render(
         screenModel: ScreenModel,
@@ -139,23 +136,26 @@ class SDUIRenderEngine(
         listData: Map<String, List<Map<String, String>>> = emptyMap(),
         onAction: (actionId: String, params: Map<String, String>) -> Unit = { _, _ -> },
     ) {
-        val base = Modifier
-            .fillMaxSize()
-            .background(DesignTokens.ScreenBackground)
+        val base =
+            Modifier
+                .fillMaxSize()
+                .background(DesignTokens.ScreenBackground)
 
         when (screenModel.type) {
-            "scroll" -> Column(modifier = base.verticalScroll(rememberScrollState())) {
-                screenModel.children.forEach { RenderNode(screenModel.screenId,it, data, listData, onAction) }
-            }
-            else -> Column(modifier = base) {
-                screenModel.children.forEach { RenderNode(screenModel.screenId,it, data, listData, onAction) }
-            }
+            "scroll" ->
+                Column(modifier = base.verticalScroll(rememberScrollState())) {
+                    screenModel.children.forEach { RenderNode(screenModel.screenId, it, data, listData, onAction) }
+                }
+            else ->
+                Column(modifier = base) {
+                    screenModel.children.forEach { RenderNode(screenModel.screenId, it, data, listData, onAction) }
+                }
         }
     }
 
     @Composable
     fun RenderNode(
-        screenName:String?,
+        screenName: String?,
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>> = emptyMap(),

@@ -9,7 +9,6 @@ import org.koin.core.context.startKoin
 /** Application class. Enables both Hilt and Koin dependency injection for the entire app. */
 @HiltAndroidApp
 class App : Application() {
-
     override fun onCreate() {
         super.onCreate()
 
