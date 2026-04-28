@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.analytics.engine.AnalyticsEngine
 import com.example.moviesdemoapp.core.network.StringResolver
 import com.example.moviesdemoapp.core.network.model.ComponentNode
+import com.example.moviesdemoapp.core.network.model.FormStatusDetail
 import com.example.moviesdemoapp.core.network.model.ScreenModel
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import dagger.hilt.EntryPoint
@@ -70,6 +71,15 @@ fun SDUIRenderer(
     val bindingResolver = remember { BindingResolver(stringResolver) }
     val components      = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver) }
     val engine          = remember(registry) { SDUIRenderEngine(registry, components) }
+    val resolver = remember { TemplateResolver() }
+    val analyticsEngine = remember {
+        GlobalContext.get().get<AnalyticsEngine>()
+    }
+
+    val bindingResolver = BindingResolver(context)
+    bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
+    val components = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver, context) }
+    val engine = remember(registry) { SDUIRenderEngine(registry, components) }
 
     // Pre-resolve all bindings whenever the screen definition or API data changes.
     // Resolved values are merged into dataMap so every component can access them

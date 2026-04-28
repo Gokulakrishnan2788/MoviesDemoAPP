@@ -14,12 +14,21 @@ data class ScreenModel(
     val screenId: String,
     val type: String,
     val title: String? = null,
+    val formStatus: List<Map<String, FormStatusDetail>>? = null,
     val bindings: Map<String, BindingItem>? = null,
     val state: State? = null,
     val accessibility: Accessibility? = null,
     val children: List<ComponentNode> = emptyList(),
     val dataSource: DataSourceModel? = null,
 )
+
+@Serializable
+data class FormStatusDetail(
+    val status: String,
+    val formNeedTobeDeleteAfterSubmit: List<String>? = emptyList()
+)
+
+
 
 @Serializable
 data class BindingItem(
@@ -46,6 +55,7 @@ data class ComponentNode(
     val leadingIcon: String? = null,
     val variant: String? = null,
     val label: String? = null,
+    val inputType: String? = null,
     val placeholder: String? = null,
     val options: List<DropdownOption>? = emptyList(),
     val validation: Validation? = null,

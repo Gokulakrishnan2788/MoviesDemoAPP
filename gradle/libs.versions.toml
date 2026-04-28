@@ -29,6 +29,7 @@ uiText = "1.10.6"
 protoliteWellKnownTypes = "18.0.1"
 appcompat = "1.7.1"
 material = "1.13.0"
+uiTextVersion = "1.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -75,6 +76,7 @@ androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", ve
 protolite-well-known-types = { group = "com.google.firebase", name = "protolite-well-known-types", version.ref = "protoliteWellKnownTypes" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiTextVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
