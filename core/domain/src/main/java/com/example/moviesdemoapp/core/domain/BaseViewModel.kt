@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
  * @param E UI effect for one-shot events — must implement [UiEffect]
  */
 abstract class BaseViewModel<S : UiState, I : UiIntent, E : UiEffect> : ViewModel() {
-
     /** Provide the initial state for this ViewModel. */
     abstract fun initialState(): S
 

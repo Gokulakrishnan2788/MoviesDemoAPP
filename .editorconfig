@@ -1,0 +1,26 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+max_line_length = 120
+ktlint_standard_no-wildcard-imports = enabled
+# Compose @Composable functions use PascalCase by convention — disable the
+# standard camelCase rule so it does not conflict with Compose naming.
+ktlint_standard_function-naming = disabled
+ktlint_standard_trailing-comma-on-call-site = enabled
+ktlint_standard_trailing-comma-on-declaration-site = enabled
+# Compose-specific rules — active when io.nlopez.compose.rules:ktlint is on the classpath
+ktlint_compose_composable-naming = enabled
+
+[*.xml]
+indent_size = 4
+
+[*.json]
+indent_size = 2

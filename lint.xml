@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+
+    <!-- ── Global path exclusions ──────────────────────────────────────────── -->
+    <!-- Generated and build output directories are never linted.              -->
+    <issue id="all">
+        <ignore path="**/generated/**" />
+        <ignore path="**/build/**" />
+    </issue>
+
+    <!-- ── Severity overrides ───────────────────────────────────────────────── -->
+
+    <!-- Hardcoded strings must go through string resources. Error in all modules. -->
+    <issue id="HardcodedText" severity="error" />
+
+    <!-- App Indexing is not used in this project — suppress globally. -->
+    <issue id="GoogleAppIndexingWarning" severity="ignore" />
+
+    <!-- Obsolete custom lint checks from transitive dependencies — safe to ignore. -->
+    <issue id="ObsoleteLintCustomCheck" severity="ignore" />
+
+    <!-- FirebaseAnalytics.getInstance declares WAKE_LOCK in its own manifest;
+         this MissingPermission hit in the Koin DI module is a false positive. -->
+    <issue id="MissingPermission">
+        <ignore path="**/analytics/di/AnalyticsModule.kt" />
+    </issue>
+
+</lint>

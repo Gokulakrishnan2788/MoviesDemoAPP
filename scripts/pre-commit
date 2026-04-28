@@ -1,0 +1,17 @@
+#!/bin/sh
+# Runs automatically on every git commit.
+# To bypass in emergencies: git commit --no-verify -m "message"
+
+echo "Running ktlintCheck..."
+./gradlew ktlintCheck --daemon -q
+KTLINT_EXIT=$?
+
+if [ $KTLINT_EXIT -ne 0 ]; then
+    echo ""
+    echo "ktlint violations found."
+    echo "Run ./gradlew ktlintFormat to auto-fix, then re-commit."
+    exit 1
+fi
+
+echo "ktlint passed. Proceeding with commit."
+exit 0

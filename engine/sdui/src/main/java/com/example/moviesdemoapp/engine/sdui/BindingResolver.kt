@@ -21,8 +21,9 @@ import com.example.moviesdemoapp.core.network.model.BindingItem
  *   - [resolve] reads from the pre-built cache so existing call-sites in
  *     [SDUIComponentsDispatcher] (titleBinding, button labels) need no changes.
  */
-class BindingResolver(private val stringResolver: StringResolver) {
-
+class BindingResolver(
+    private val stringResolver: StringResolver,
+) {
     private var bindings: Map<String, BindingItem> = emptyMap()
     private var resolvedCache: Map<String, String> = emptyMap()
 
@@ -89,8 +90,8 @@ class BindingResolver(private val stringResolver: StringResolver) {
             val item = bindings[key] ?: return key
             when (item.source) {
                 "string" -> stringResolver.resolve(item.key)
-                "form"   -> FormDataStorage.readAndSetValue(key)
-                else     -> key
+                "form" -> FormDataStorage.readAndSetValue(key)
+                else -> key
             }
         } catch (e: Exception) {
             key

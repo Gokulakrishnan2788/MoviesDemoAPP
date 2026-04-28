@@ -10,12 +10,16 @@ import androidx.navigation.compose.rememberNavController
 import com.example.deeplink.model.DeepLinkPageEffect
 import com.example.deeplink.model.DeepLinkPageIntent
 import com.example.moviesdemoapp.engine.sdui.SDUIRenderer
-
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun DeepLinkScreen(navController: NavController = rememberNavController(),
-                   viewModel: DeepLinkScreenViewModel = hiltViewModel(), page:String, indexPage:String? = null, onNavigate: ((String) -> Unit)? = null) {
+fun DeepLinkScreen(
+    navController: NavController = rememberNavController(),
+    viewModel: DeepLinkScreenViewModel = hiltViewModel(),
+    page: String,
+    indexPage: String? = null,
+    onNavigate: ((String) -> Unit)? = null,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {

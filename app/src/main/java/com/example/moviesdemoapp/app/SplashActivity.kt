@@ -22,15 +22,15 @@ import kotlinx.coroutines.delay
 @SuppressLint("CustomSplashScreen")
 @AndroidEntryPoint
 class SplashActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MovieAppTheme {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(DesignTokens.ScreenBackground),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(DesignTokens.ScreenBackground),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(

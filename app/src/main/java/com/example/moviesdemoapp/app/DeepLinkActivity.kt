@@ -9,9 +9,8 @@ import com.example.deeplink.DeepLinkScreen
 import com.example.moviesdemoapp.core.ui.MovieAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
-
 @AndroidEntryPoint
-class DeepLinkActivity: ComponentActivity() {
+class DeepLinkActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val uri = intent?.data
@@ -26,13 +25,14 @@ class DeepLinkActivity: ComponentActivity() {
                     onNavigate = { route ->
                         // Handle navigation in DeepLinkActivity context
                         // For example, start MainActivity with the route
-                        val intent = Intent(this, MainActivity::class.java).apply {
-                            putExtra("route", route)
-                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                        }
+                        val intent =
+                            Intent(this, MainActivity::class.java).apply {
+                                putExtra("route", route)
+                                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                            }
                         startActivity(intent)
                         finish()
-                    }
+                    },
                 )
             }
         }

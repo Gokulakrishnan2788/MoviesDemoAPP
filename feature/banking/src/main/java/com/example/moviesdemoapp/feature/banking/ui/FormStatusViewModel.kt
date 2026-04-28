@@ -14,50 +14,59 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class FormStatusViewModel @Inject constructor(
-    private val bankingFormStateRepository: BankingFormStateRepository,
-    private val screenRepository: ScreenRepository,
-) : ViewModel() {
+class FormStatusViewModel
+    @Inject
+    constructor(
+        private val bankingFormStateRepository: BankingFormStateRepository,
+        private val screenRepository: ScreenRepository,
+    ) : ViewModel() {
+        private val _formId: MutableStateFlow<String?> = MutableStateFlow(null)
+        val formId: StateFlow<String?> = _formId
 
-    private val formId: MutableStateFlow<String?> = MutableStateFlow(null)
-    val _formId: StateFlow<String?> = formId
+        fun checkAndNavigateToNextForm() {
+            viewModelScope.launch {
+                // Check persistence first
+                val incompleteFromPrefs = bankingFormStateRepository.getIncompleteFormIds()
+                if (incompleteFromPrefs.isNotEmpty()) {
+                    // We have a list of incomplete forms from our local tracking
+                    _formId.value = incompleteFromPrefs.first()
+                    return@launch
+                }
 
-    fun checkAndNavigateToNextForm() {
-        viewModelScope.launch {
-            // Check persistence first
-            val incompleteFromPrefs = bankingFormStateRepository.getIncompleteFormIds()
-            if (incompleteFromPrefs.isNotEmpty()) {
-                // We have a list of incomplete forms from our local tracking
-                formId.value = incompleteFromPrefs.first()
-                return@launch
-            }
+                // Fallback to server-driven status if local is all complete or empty
+                val screenModel = loadScreen("personal_details")
+                val statusList =
+                    screenModel?.formStatus
+                        ?: listOf(
+                            mapOf(
+                                Routes.BANKING to
+                                    com.example.moviesdemoapp.core.network.model
+                                        .FormStatusDetail("incomplete"),
+                            ),
+                        )
 
-            // Fallback to server-driven status if local is all complete or empty
-            val screenModel = loadScreen("personal_details")
-            val statusList = screenModel?.formStatus ?: listOf(mapOf(Routes.BANKING to com.example.moviesdemoapp.core.network.model.FormStatusDetail("incomplete")))
-            
-            for (map in statusList) {
-                for (entry in map.entries) {
-                    val id = entry.key
-                    val detail = entry.value
-                    val isLocalComplete = bankingFormStateRepository.isFormCompleted(id)
-                    
-                    if (!isLocalComplete && !detail.status.equals("completed", ignoreCase = true)) {
-                        // Found the first incomplete form
-                        formId.value = id
-                        return@launch
+                for (map in statusList) {
+                    for (entry in map.entries) {
+                        val id = entry.key
+                        val detail = entry.value
+                        val isLocalComplete = bankingFormStateRepository.isFormCompleted(id)
+
+                        if (!isLocalComplete && !detail.status.equals("completed", ignoreCase = true)) {
+                            // Found the first incomplete form
+                            _formId.value = id
+                            return@launch
+                        }
                     }
                 }
-            }
-            
-            // If everything is complete, default to the first page
-            formId.value = Routes.BANKING
-        }
-    }
 
-    private suspend fun loadScreen(screenName: String): ScreenModel? {
-        return viewModelScope.async {
-            screenRepository.loadScreen(screenName)
-        }.await()
+                // If everything is complete, default to the first page
+                _formId.value = Routes.BANKING
+            }
+        }
+
+        private suspend fun loadScreen(screenName: String): ScreenModel? =
+            viewModelScope
+                .async {
+                    screenRepository.loadScreen(screenName)
+                }.await()
     }
-}

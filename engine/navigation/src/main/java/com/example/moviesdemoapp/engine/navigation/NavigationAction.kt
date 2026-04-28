@@ -4,10 +4,13 @@ package com.example.moviesdemoapp.engine.navigation
 enum class NavType {
     /** Push destination onto the back stack. */
     PUSH,
+
     /** Replace entire back stack with destination. */
     REPLACE,
+
     /** Pop the current screen. */
     POP,
+
     /** Navigate via deep link URI. */
     DEEP_LINK,
 }

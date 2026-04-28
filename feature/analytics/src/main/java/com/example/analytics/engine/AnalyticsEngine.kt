@@ -9,21 +9,25 @@ import com.example.analytics.security.AnalyticsInterceptor
 
 class AnalyticsEngine(
     private val providers: List<AnalyticsProvider>,
-    private val interceptor: AnalyticsInterceptor
+    private val interceptor: AnalyticsInterceptor,
 ) {
     fun track(event: AnalyticsEvent) {
         when (event.provider) {
-            Provider.FIREBASE -> providers.filterIsInstance<FirebaseAnalyticsProvider>()
-                .forEach { firebase ->
-                    val safeEvent = interceptor.process(event) ?: return
-                    firebase.track(safeEvent)
-                }
+            Provider.FIREBASE ->
+                providers
+                    .filterIsInstance<FirebaseAnalyticsProvider>()
+                    .forEach { firebase ->
+                        val safeEvent = interceptor.process(event) ?: return
+                        firebase.track(safeEvent)
+                    }
 
-            Provider.ABODE -> providers.filterIsInstance<AdobeAnalyticsProviderProvider>()
-                .forEach { adobe ->
-                    val safeEvent = interceptor.process(event) ?: return
-                    adobe.track(safeEvent)
-                }
+            Provider.ABODE ->
+                providers
+                    .filterIsInstance<AdobeAnalyticsProviderProvider>()
+                    .forEach { adobe ->
+                        val safeEvent = interceptor.process(event) ?: return
+                        adobe.track(safeEvent)
+                    }
 
             Provider.ALL -> {
                 val safeEvent = interceptor.process(event) ?: return
@@ -33,7 +37,6 @@ class AnalyticsEngine(
             }
 
             Provider.NONE -> {
-
             }
         }
     }

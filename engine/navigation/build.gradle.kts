@@ -14,6 +14,15 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions { jvmTarget = "11" }
+
+    lint {
+        abortOnError = true
+        warningsAsErrors = false
+        htmlReport = true
+        htmlOutput = file("$buildDir/reports/lint-results-debug.html")
+        lintConfig = file("$rootDir/lint.xml")
+        baseline = file("$rootDir/lint-baseline.xml")
+    }
 }
 
 dependencies {

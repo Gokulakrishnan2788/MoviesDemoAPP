@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
-
 }
 
 android {
@@ -24,7 +23,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -34,6 +33,15 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+
+    lint {
+        abortOnError = true
+        warningsAsErrors = false
+        htmlReport = true
+        htmlOutput = file("$buildDir/reports/lint-results-debug.html")
+        lintConfig = file("$rootDir/lint.xml")
+        baseline = file("$rootDir/lint-baseline.xml")
     }
 }
 

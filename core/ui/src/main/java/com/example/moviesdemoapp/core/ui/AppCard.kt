@@ -25,9 +25,10 @@ fun AppCard(
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(DesignTokens.RadiusMd),
-        colors = CardDefaults.cardColors(
-            containerColor = DesignTokens.CardBackground,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = DesignTokens.CardBackground,
+            ),
     ) {
         Box(content = content)
     }

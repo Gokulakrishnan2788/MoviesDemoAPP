@@ -10,16 +10,23 @@ import javax.inject.Singleton
 // OkHttp-backed implementation of NetworkClient.
 // All blocking IO is confined to Dispatchers.IO here — callers stay dispatcher-agnostic.
 @Singleton
-class OkHttpNetworkClient @Inject constructor(
-    private val okHttpClient: OkHttpClient,
-) : NetworkClient {
-
-    override suspend fun get(url: String): String? = withContext(Dispatchers.IO) {
-        runCatching {
-            val request = Request.Builder().url(url).get().build()
-            okHttpClient.newCall(request).execute().use { response ->
-                if (response.isSuccessful) response.body?.string() else null
+class OkHttpNetworkClient
+    @Inject
+    constructor(
+        private val okHttpClient: OkHttpClient,
+    ) : NetworkClient {
+        override suspend fun get(url: String): String? =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    val request =
+                        Request
+                            .Builder()
+                            .url(url)
+                            .get()
+                            .build()
+                    okHttpClient.newCall(request).execute().use { response ->
+                        if (response.isSuccessful) response.body?.string() else null
+                    }
+                }.getOrNull()
             }
-        }.getOrNull()
     }
-}

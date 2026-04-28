@@ -13,7 +13,6 @@ import dagger.hilt.android.AndroidEntryPoint
 /** Main activity — entry point for the primary app experience after splash. */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -25,12 +24,14 @@ class MainActivity : ComponentActivity() {
                 val initialRoute = intent.getStringExtra("route")
                 if (initialRoute != null && savedInstanceState == null) {
                     // Navigate to the appropriate graph based on the route
-                    val targetGraph = when (initialRoute) {
-                        "banking", Routes.BANKING, Routes.BANKING_ADDRESS,
-                        Routes.BANKING_FINENCIAL_DETAIL, Routes.BANKING_REVIEW_SUBMIT,
-                        Routes.BANKING_PERSONAL_DETAIL -> "banking_graph"
-                        else -> "movies_graph" // default to movies graph
-                    }
+                    val targetGraph =
+                        when (initialRoute) {
+                            "banking", Routes.BANKING, Routes.BANKING_ADDRESS,
+                            Routes.BANKING_FINENCIAL_DETAIL, Routes.BANKING_REVIEW_SUBMIT,
+                            Routes.BANKING_PERSONAL_DETAIL,
+                            -> "banking_graph"
+                            else -> "movies_graph" // default to movies graph
+                        }
 
                     // First navigate to the target graph
                     navController.navigate(targetGraph) {

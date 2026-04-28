@@ -16,6 +16,15 @@ android {
     }
     kotlinOptions { jvmTarget = "11" }
     buildFeatures { compose = true }
+
+    lint {
+        abortOnError = true
+        warningsAsErrors = false
+        htmlReport = true
+        htmlOutput = file("$buildDir/reports/lint-results-debug.html")
+        lintConfig = file("$rootDir/lint.xml")
+        baseline = file("$rootDir/lint-baseline.xml")
+    }
 }
 
 dependencies {
@@ -32,5 +41,4 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
-
 }

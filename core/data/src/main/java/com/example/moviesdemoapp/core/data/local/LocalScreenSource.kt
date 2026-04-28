@@ -12,10 +12,16 @@ import javax.inject.Singleton
  * backend is ready.
  */
 @Singleton
-class LocalScreenSource @Inject constructor(
-    @ApplicationContext private val context: Context,
-) : ScreenSource {
-    override suspend fun load(screenId: String): String? = runCatching {
-        context.assets.open("screens/$screenId.json").bufferedReader().readText()
-    }.getOrNull()
-}
+class LocalScreenSource
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) : ScreenSource {
+        override suspend fun load(screenId: String): String? =
+            runCatching {
+                context.assets
+                    .open("screens/$screenId.json")
+                    .bufferedReader()
+                    .readText()
+            }.getOrNull()
+    }

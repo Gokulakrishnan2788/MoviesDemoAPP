@@ -13,17 +13,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
  * (film, building.columns) that mirror SF Symbol / icon-kit naming conventions.
  */
 object IconMapper {
-    fun getIcon(iconName: String): ImageVector {
-        return when (iconName.lowercase()) {
+    fun getIcon(iconName: String): ImageVector =
+        when (iconName.lowercase()) {
             // New SDUI icon names (tab_config.json)
-            "film"              -> Icons.Default.VideoLibrary
-            "building.columns"  -> Icons.Default.AccountBalance
+            "film" -> Icons.Default.VideoLibrary
+            "building.columns" -> Icons.Default.AccountBalance
             // Legacy names (backward compat)
-            "movie"             -> Icons.Default.Movie
-            "account_balance"   -> Icons.Default.AccountBalance
-            "wallet"            -> Icons.Default.AccountBalanceWallet
-            else                -> Icons.Default.Movie
+            "movie" -> Icons.Default.Movie
+            "account_balance" -> Icons.Default.AccountBalance
+            "wallet" -> Icons.Default.AccountBalanceWallet
+            else -> Icons.Default.Movie
         }
-    }
 }
-

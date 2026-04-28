@@ -1,0 +1,17 @@
+#!/bin/sh
+# Runs automatically on every git push.
+# To bypass in emergencies: git push --no-verify
+
+echo "Running lintDebug before push..."
+./gradlew lintDebug --daemon -q
+LINT_EXIT=$?
+
+if [ $LINT_EXIT -ne 0 ]; then
+    echo ""
+    echo "Android Lint errors found."
+    echo "Open app/build/reports/lint-results-debug.html for details."
+    exit 1
+fi
+
+echo "Lint passed. Pushing to remote..."
+exit 0

@@ -23,15 +23,20 @@ internal fun RenderCard(
     onAction: (String, Map<String, String>) -> Unit,
     renderNode: NodeRenderer,
 ) {
-    val bg     = node.style?.backgroundColor?.let { colorFromToken(it) } ?: DesignTokens.CardBackground
-    val pad    = node.style?.padding?.dp?.takeIf { it > 0.dp } ?: DesignTokens.SpacingMd
+    val bg = node.style?.backgroundColor?.let { colorFromToken(it) } ?: DesignTokens.CardBackground
+    val pad =
+        node.style
+            ?.padding
+            ?.dp
+            ?.takeIf { it > 0.dp } ?: DesignTokens.SpacingMd
     val radius = node.style?.cornerRadius?.dp ?: DesignTokens.RadiusMd
 
     val action = node.action
-    var mod = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = DesignTokens.SpacingMd, vertical = DesignTokens.SpacingSm)
-        .applyAccessibility(node.screenAccessibility, data)
+    var mod =
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = DesignTokens.SpacingMd, vertical = DesignTokens.SpacingSm)
+            .applyAccessibility(node.screenAccessibility, data)
     if (action != null) mod = mod.clickable { action.dispatch(data, onAction) }
 
     Card(

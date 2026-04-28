@@ -31,10 +31,11 @@ fun AppTopBar(
         },
         navigationIcon = { navigationIcon?.invoke() },
         actions = { actions?.invoke() },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = DesignTokens.ScreenBackground,
-            titleContentColor = DesignTokens.PrimaryText,
-        ),
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = DesignTokens.ScreenBackground,
+                titleContentColor = DesignTokens.PrimaryText,
+            ),
     )
 }
 

@@ -15,9 +15,15 @@ data class MoviesState(
 
 sealed interface MoviesIntent : UiIntent {
     data object LoadScreen : MoviesIntent
-    data class OnAction(val actionId: String, val params: Map<String, String>) : MoviesIntent
+
+    data class OnAction(
+        val actionId: String,
+        val params: Map<String, String>,
+    ) : MoviesIntent
 }
 
 sealed interface MoviesEffect : UiEffect {
-    data class Navigate(val route: String) : MoviesEffect
+    data class Navigate(
+        val route: String,
+    ) : MoviesEffect
 }

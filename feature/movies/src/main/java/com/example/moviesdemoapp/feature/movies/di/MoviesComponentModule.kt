@@ -43,3 +43,6 @@ package com.example.moviesdemoapp.feature.movies.di
 //
 // Nothing else changes — no MovieApp, no engine, no SDUIRenderer modifications.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Placeholder object — delete this when the Hilt module above is uncommented.
+internal object MoviesComponentModule

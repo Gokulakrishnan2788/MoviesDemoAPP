@@ -26,14 +26,16 @@ fun AppButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(48.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(48.dp),
         shape = RoundedCornerShape(DesignTokens.RadiusMd),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = DesignTokens.Accent,
-            contentColor = DesignTokens.PrimaryText,
-        ),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = DesignTokens.Accent,
+                contentColor = DesignTokens.PrimaryText,
+            ),
     ) {
         Text(text = text, fontSize = DesignTokens.TextLg)
     }

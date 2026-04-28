@@ -13,7 +13,11 @@ import javax.inject.Singleton
  * @param onAction  (actionId, params) callback when the component is tapped
  */
 typealias ComponentFactory =
-    @Composable (node: ComponentNode, data: Map<String, String>, onAction: (String, Map<String, String>) -> Unit) -> Unit
+    @Composable (
+        node: ComponentNode,
+        data: Map<String, String>,
+        onAction: (String, Map<String, String>) -> Unit,
+    ) -> Unit
 
 /**
  * Singleton registry mapping SDUI type strings to custom [ComponentFactory] composables.
@@ -46,25 +50,30 @@ typealias ComponentFactory =
  * Registered custom factories are checked FIRST in [SDUIRenderEngine.RenderNode].
  */
 @Singleton
-class ComponentRegistry @Inject constructor(
-    providers: Set<@JvmSuppressWildcards SduiComponentProvider>,
-) {
-    private val registry = mutableMapOf<String, ComponentFactory>()
+class ComponentRegistry
+    @Inject
+    constructor(
+        providers: Set<@JvmSuppressWildcards SduiComponentProvider>,
+    ) {
+        private val registry = mutableMapOf<String, ComponentFactory>()
 
-    init {
-        // Each feature module's SduiComponentProvider contributes to this set via
-        // Hilt @IntoSet multibinding. They are all called once here at construction.
-        providers.forEach { it.registerInto(this) }
+        init {
+            // Each feature module's SduiComponentProvider contributes to this set via
+            // Hilt @IntoSet multibinding. They are all called once here at construction.
+            providers.forEach { it.registerInto(this) }
+        }
+
+        /**
+         * Register a custom composable [factory] for [componentType].
+         * Called by [SduiComponentProvider.registerInto] implementations — not called directly.
+         */
+        fun register(
+            componentType: String,
+            factory: ComponentFactory,
+        ) {
+            registry[componentType] = factory
+        }
+
+        /** Resolve the factory for [componentType], or null if not registered. */
+        fun resolve(componentType: String): ComponentFactory? = registry[componentType]
     }
-
-    /**
-     * Register a custom composable [factory] for [componentType].
-     * Called by [SduiComponentProvider.registerInto] implementations — not called directly.
-     */
-    fun register(componentType: String, factory: ComponentFactory) {
-        registry[componentType] = factory
-    }
-
-    /** Resolve the factory for [componentType], or null if not registered. */
-    fun resolve(componentType: String): ComponentFactory? = registry[componentType]
-}

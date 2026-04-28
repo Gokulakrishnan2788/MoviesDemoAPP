@@ -12,9 +12,9 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object StringResolverModule {
-
     @Provides
     @Singleton
-    fun provideStringResolver(@ApplicationContext context: Context): StringResolver =
-        AndroidStringResolver(context)
+    fun provideStringResolver(
+        @ApplicationContext context: Context,
+    ): StringResolver = AndroidStringResolver(context)
 }

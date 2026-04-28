@@ -8,7 +8,6 @@ import androidx.room.Query
 
 @Dao
 interface WatchlistDao {
-
     @Query("SELECT * FROM watchlist ORDER BY addedAt DESC")
     suspend fun getAll(): List<WatchlistEntity>
 
