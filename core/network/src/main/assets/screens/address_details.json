@@ -4,12 +4,20 @@
   "formStatus": [
     {
       "personal_details": {
-        "status": "incomplete"
+        "status": "incomplete",
+        "formData": null
       }
     },
     {
       "address_details": {
-        "status": "incomplete"
+        "status": "incomplete",
+        "formData": {
+          "form.address.streetAddress": "Abc road",
+          "form.address.city": "Bengaluru",
+          "form.address.state": "KARNATAKA",
+          "form.address.zipCode": "001100",
+          "form.address.residenceType": "Resident"
+        }
       }
     },
     {
@@ -19,7 +27,12 @@
     },
     {
       "review_submit": {
-        "status": "incomplete"
+        "status": "complete",
+        "formNeedTobeDeleteAfterSubmit": [
+          "personal_details",
+          "address_details",
+          "financial_information"
+        ]
       }
     }
   ],

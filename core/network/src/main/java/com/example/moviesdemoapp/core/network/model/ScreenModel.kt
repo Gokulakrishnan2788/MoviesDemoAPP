@@ -24,7 +24,8 @@ data class ScreenModel(
 
 @Serializable
 data class FormStatusDetail(
-    val status: String
+    val status: String,
+    val formNeedTobeDeleteAfterSubmit: List<String>? = emptyList()
 )
 
 

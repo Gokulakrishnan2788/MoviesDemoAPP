@@ -19,7 +19,12 @@
     },
     {
       "review_submit": {
-        "status": "incomplete"
+        "status": "complete",
+        "formNeedTobeDeleteAfterSubmit": [
+          "personal_details",
+          "address_details",
+          "financial_information"
+        ]
       }
     }
   ],
