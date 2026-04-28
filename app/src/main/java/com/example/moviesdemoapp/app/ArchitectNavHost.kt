@@ -10,11 +10,12 @@ import com.example.moviesdemoapp.feature.movies.ui.moviesGraph
 @Composable
 fun ArchitectNavHost(
     navController: NavHostController,
+    startDestination: String = "movies_graph",
     modifier: Modifier = Modifier,
 ) {
     NavHost(
         navController = navController,
-        startDestination = "movies_graph",
+        startDestination = startDestination,
         modifier = modifier,
     ) {
         moviesGraph(navController)

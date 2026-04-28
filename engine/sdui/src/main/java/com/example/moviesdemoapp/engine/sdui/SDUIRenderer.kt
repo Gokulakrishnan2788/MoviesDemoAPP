@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.analytics.engine.AnalyticsEngine
+import com.example.moviesdemoapp.core.network.StringResolver
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.network.model.FormStatusDetail
 import com.example.moviesdemoapp.core.network.model.ScreenModel
@@ -31,8 +32,9 @@ import org.koin.core.context.GlobalContext
 // from code that cannot use @Inject (Composable functions).
 @EntryPoint
 @InstallIn(SingletonComponent::class)
-interface ComponentRegistryEntryPoint {
+interface SduiEntryPoint {
     fun componentRegistry(): ComponentRegistry
+    fun stringResolver(): StringResolver
 }
 
 // ─── Public composable entry-point ───────────────────────────────────────────
@@ -57,15 +59,18 @@ fun SDUIRenderer(
 ) {
     val context = LocalContext.current
 
-    // Pull the singleton ComponentRegistry from Hilt.
-    // This is the SAME instance that MovieApp.registerSduiComponents() populated at startup,
-    // so all registered custom components are already available here.
-    val registry = remember {
-        EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            ComponentRegistryEntryPoint::class.java,
-        ).componentRegistry()
+    // Pull singleton dependencies from Hilt via the entry point.
+    val entryPoint = remember {
+        EntryPointAccessors.fromApplication(context.applicationContext, SduiEntryPoint::class.java)
     }
+    val registry       = remember { entryPoint.componentRegistry() }
+    val stringResolver = remember { entryPoint.stringResolver() }
+
+    val resolver        = remember { TemplateResolver() }
+    val analyticsEngine = remember { GlobalContext.get().get<AnalyticsEngine>() }
+    val bindingResolver = remember { BindingResolver(stringResolver) }
+    val components      = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver) }
+    val engine          = remember(registry) { SDUIRenderEngine(registry, components) }
     val resolver = remember { TemplateResolver() }
     val analyticsEngine = remember {
         GlobalContext.get().get<AnalyticsEngine>()
@@ -75,6 +80,15 @@ fun SDUIRenderer(
     bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
     val components = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver, context) }
     val engine = remember(registry) { SDUIRenderEngine(registry, components) }
+
+    // Pre-resolve all bindings whenever the screen definition or API data changes.
+    // Resolved values are merged into dataMap so every component can access them
+    // via the standard data[key] lookup — no extra logic in components.
+    val enrichedData = remember(screenModel, dataMap) {
+        bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
+        val resolved = bindingResolver.resolveAll(dataMap)
+        dataMap + resolved
+    }
 
     Box(
         modifier = Modifier
@@ -95,7 +109,7 @@ fun SDUIRenderer(
             )
             screenModel != null -> engine.Render(
                 screenModel = screenModel,
-                data = dataMap,
+                data = enrichedData,
                 listData = listData,
                 onAction = onAction,
             )

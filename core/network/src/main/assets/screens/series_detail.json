@@ -1,5 +1,44 @@
 {
   "screenId": "series_detail",
+
+  "bindings": {
+
+    "title": { "source": "api", "path": "Title" },
+    "year": { "source": "api", "path": "Year" },
+    "genre": { "source": "api", "path": "Genre" },
+    "posterURL": { "source": "api", "path": "Poster" },
+    "rating": { "source": "api", "path": "imdbRating" },
+    "runtime": { "source": "api", "path": "Runtime" },
+    "awards": { "source": "api", "path": "Awards" },
+    "plot": { "source": "api", "path": "Plot" },
+    "actors": { "source": "api", "path": "Actors" },
+    "writer": { "source": "api", "path": "Writer" },
+    "director": { "source": "api", "path": "Director" },
+    "totalSeasons": { "source": "api", "path": "totalSeasons" },
+
+
+    "synopsisTitle":    { "source": "string",   "key": "series_detail.synopsis_title" },
+    "creditsTitle":     { "source": "string",   "key": "series_detail.credits_title" },
+    "seasonsTitle":     { "source": "string",   "key": "series_detail.seasons_title" },
+    "imdbPrefix":       { "source": "string",   "key": "series_detail.imdb_prefix" },
+    "runtimeLabel":     { "source": "string",   "key": "series_detail.runtime_label" },
+    "awardsLabel":      { "source": "string",   "key": "series_detail.awards_label" },
+    "castLabel":        { "source": "string",   "key": "series_detail.cast_label" },
+    "writerLabel":      { "source": "string",   "key": "series_detail.writer_label" },
+    "directorLabel":    { "source": "string",   "key": "series_detail.director_label" },
+    "seasonLabel":      { "source": "string",   "key": "series_detail.season_label" },
+    "seasonCountLabel": { "source": "string",   "key": "series_detail.season_count_label" },
+
+    "headerSubtitle":   {"source": "template", "template": "{{year}} • {{genre}}"},
+    "ratingText":       { "source": "template", "template": "{{imdbPrefix}} {{rating}}" },
+    "runtimeText":      { "source": "template", "template": "{{runtimeLabel}} {{runtime}}" },
+    "seasonCountText":  { "source": "template", "template": "{{seasonCountLabel}} {{totalSeasons}}" },
+    "awardsText":       { "source": "template", "template": "{{awardsLabel}} {{awards}}" },
+    "actorsText":       { "source": "template", "template": "{{castLabel}} {{actors}}" },
+    "writerText":       { "source": "template", "template": "{{writerLabel}} {{writer}}" },
+    "directorText":     { "source": "template", "template": "{{directorLabel}} {{director}}" }
+  },
+
   "dataSource": {
     "type": "remote",
     "request": {
@@ -12,22 +51,10 @@
     "response": {
       "type": "object",
       "fieldMapping": {
-        "id": "imdbID",
-        "title": "Title",
-        "year": "Year",
-        "genre": "Genre",
-        "posterURL": "Poster",
-        "rating": "imdbRating",
-        "runtime": "Runtime",
-        "awards": "Awards",
-        "plot": "Plot",
-        "actors": "Actors",
-        "writer": "Writer",
-        "director": "Director",
-        "totalSeasons": "totalSeasons"
       }
     }
   },
+
   "type": "scroll",
   "children": [
     {
@@ -71,7 +98,7 @@
             "mergeDescendants": true
           },
           "titleTemplate": "{{title}}",
-          "subtitleTemplate": "{{year}} • {{genre}}",
+          "subtitleTemplate": "{{headerSubtitle}}",
           "style": {
             "spacing": 4,
             "padding": 0,
@@ -143,9 +170,9 @@
                     {
                       "id": "detailRating",
                       "type": "text",
-                      "template": "IMDb {{rating}}",
+                      "dataBinding": "ratingText",
                       "accessibility": {
-                        "importantForAccessibility": true
+                        "importantForAccessibility": false
                       },
                       "style": {
                         "fontSize": 15,
@@ -158,9 +185,9 @@
                 {
                   "id": "runtime",
                   "type": "text",
-                  "template": "Runtime: {{runtime}}",
+                  "dataBinding": "runtimeText",
                   "accessibility": {
-                    "importantForAccessibility": true
+                    "importantForAccessibility": false
                   },
                   "style": {
                     "fontSize": 14,
@@ -170,9 +197,9 @@
                 {
                   "id": "seasons",
                   "type": "text",
-                  "template": "Seasons: {{totalSeasons}}",
+                  "dataBinding": "seasonCountText",
                   "accessibility": {
-                    "importantForAccessibility": true
+                    "importantForAccessibility": false
                   },
                   "style": {
                     "fontSize": 14,
@@ -182,9 +209,9 @@
                 {
                   "id": "awards",
                   "type": "text",
-                  "template": "Awards: {{awards}}",
+                  "dataBinding": "awardsText",
                   "accessibility": {
-                    "importantForAccessibility": true
+                    "importantForAccessibility": false
                   },
                   "style": {
                     "fontSize": 14,
@@ -217,7 +244,7 @@
             {
               "id": "plotTitle",
               "type": "text",
-              "text": "Synopsis",
+              "dataBinding": "synopsisTitle",
               "accessibility": {
                 "importantForAccessibility": false
               },
@@ -258,7 +285,7 @@
             {
               "id": "creditsTitle",
               "type": "text",
-              "text": "Credits",
+              "dataBinding": "creditsTitle",
               "accessibility": {
                 "importantForAccessibility": false
               },
@@ -271,7 +298,7 @@
             {
               "id": "actors",
               "type": "text",
-              "template": "Cast: {{actors}}",
+              "dataBinding": "actorsText",
               "accessibility": {
                 "importantForAccessibility": false
               },
@@ -283,7 +310,7 @@
             {
               "id": "writer",
               "type": "text",
-              "template": "Writer: {{writer}}",
+              "dataBinding": "writerText",
               "accessibility": {
                 "importantForAccessibility": false
               },
@@ -295,7 +322,7 @@
             {
               "id": "director",
               "type": "text",
-              "template": "Director: {{director}}",
+              "dataBinding": "directorText",
               "accessibility": {
                 "importantForAccessibility": false
               },
@@ -320,7 +347,7 @@
             {
               "id": "seasonTitle",
               "type": "text",
-              "text": "Seasons",
+              "dataBinding": "seasonsTitle",
               "accessibility": {
                 "role": "header"
               },
@@ -365,15 +392,13 @@
                     },
                     "style": {
                       "fontSize": 14,
-                      "foregroundColor": "accent",
-                      "frameWidth": 18,
-                      "frameHeight": 18
+                      "foregroundColor": "accent"
                     }
                   },
                   {
                     "id": "seasonLabel",
                     "type": "text",
-                    "template": "Season {{seasonNumber}}",
+                    "template": "{{seasonLabel}} {{seasonNumber}}",
                     "accessibility": {
                       "importantForAccessibility": false
                     },

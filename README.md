@@ -1,6 +1,6 @@
 # MoviesDemoApp
 
-A production-grade Android application built on a fully **Server-Driven UI (SDUI)** engine, **MVI architecture**, and **Clean Architecture** across all modules. Every screen — list and detail — is rendered entirely from JSON definitions. Zero hardcoded API calls or UI layouts exist at the feature level; the engine handles everything.
+> **A production-grade Android application** built on a fully **Server-Driven UI (SDUI)** engine, **MVI architecture**, and **Clean Architecture** across all modules. Every screen — list, detail, and form — is rendered entirely from JSON definitions with zero hardcoded UI layouts at the feature level. Navigation structure, bottom tabs, labels, and localization are all driven by JSON configuration.
 
 ---
 
@@ -13,56 +13,63 @@ A production-grade Android application built on a fully **Server-Driven UI (SDUI
 5. [MVI Architecture](#5-mvi-architecture)
 6. [Server-Driven UI Engine](#6-server-driven-ui-engine)
 7. [SDUI Component System](#7-sdui-component-system)
-8. [Data Pipeline — End to End](#8-data-pipeline--end-to-end)
-9. [Parallel API Execution & Enrichment](#9-parallel-api-execution--enrichment)
-10. [URL Template Resolution](#10-url-template-resolution)
-11. [Data Binding to View](#11-data-binding-to-view)
-12. [Features in Detail](#12-features-in-detail)
-13. [Drag-to-Reorder](#13-drag-to-reorder)
-14. [TalkBack & Accessibility](#14-talkback--accessibility)
-15. [Libraries & Versions](#15-libraries--versions)
-16. [Project File Tree](#16-project-file-tree)
+8. [Binding & Localization System](#8-binding--localization-system)
+9. [Data Pipeline — End to End](#9-data-pipeline--end-to-end)
+10. [Parallel API Execution & Enrichment](#10-parallel-api-execution--enrichment)
+11. [URL Template Resolution](#11-url-template-resolution)
+12. [Data Binding to View](#12-data-binding-to-view)
+13. [Dynamic Tab Navigation](#13-dynamic-tab-navigation)
+14. [Features in Detail](#14-features-in-detail)
+15. [Drag-to-Reorder](#15-drag-to-reorder)
+16. [TalkBack & Accessibility](#16-talkback--accessibility)
+17. [Libraries & Versions](#17-libraries--versions)
+18. [Project File Tree](#18-project-file-tree)
 
 ---
 
 ## 1. Architecture Philosophy
 
-This project is built around one central principle: **the feature module should contain no knowledge of APIs, data models, or UI layouts**. All of that lives in the SDUI engine and its supporting infrastructure.
+This project is built around a single central principle: **the feature module should contain no knowledge of APIs, data models, UI layouts, or display strings**. All of that lives in the SDUI engine, the binding resolver, and their supporting infrastructure.
 
 ```
-Traditional approach              This project
-─────────────────────             ───────────────────────────────────────
-Feature has:                      Feature has:
-  - Retrofit calls                  - ViewModel (dispatches intents)
-  - Domain models                   - Contract (state / intent / effect)
-  - Mappers                         - Screen (SDUIRenderer wrapper)
-  - Repository impls                - NavGraph
+Traditional Android approach          This project
+────────────────────────────          ──────────────────────────────────────────
+Feature has:                          Feature has:
+  - Retrofit calls                      - ViewModel (dispatches intents)
+  - Domain models                       - Contract (state / intent / effect)
+  - Mappers                             - Screen (SDUIRenderer wrapper)
+  - Repository implementations          - NavGraph
   - Use cases
-  - Hardcoded Composables         Everything else lives in:
-                                    - engine:sdui  (render engine + JSON)
-                                    - core:data    (data executor)
-                                    - core:network (HTTP + DTO models)
+  - Hardcoded Composables             Everything else lives in:
+  - Hardcoded string references         - engine:sdui     (render engine)
+  - Hardcoded navigation tabs           - core:data       (data executor)
+                                        - core:network    (HTTP + models)
+                                        - assets/screens/ (JSON definitions)
 ```
 
-Adding a new screen in this architecture = **adding a JSON file**. No Kotlin UI code required.
+**Adding a new screen** = adding a JSON file. No Kotlin UI code required.  
+**Adding a new tab** = editing `tab_config.json`. No Kotlin change required.  
+**Changing a label** = editing a string resource key in JSON. No recompile required in future remote-config scenarios.
 
 ---
 
 ## 2. Module Structure
 
-9 Gradle modules in 4 groups, each with its own `build.gradle.kts` and strict dependency boundaries:
+11 Gradle modules in 5 groups, each with its own `build.gradle.kts` and strict dependency boundaries:
 
 | Group | Module | Role |
 |---|---|---|
-| App shell | `:app` | Entry point, NavHost, bottom navigation |
+| App shell | `:app` | Entry point, NavHost, SDUI-driven bottom navigation |
 | Features | `:feature:movies` | TV series list + detail (UI only) |
-| Features | `:feature:banking` | Placeholder tab |
-| Engines | `:engine:sdui` | JSON → Compose render engine |
+| Features | `:feature:banking` | Multi-step form: personal details, address, financials, review |
+| Features | `:feature:deeplink` | Deep link entry handling |
+| Features | `:feature:analytics` | Firebase/analytics event tracking |
+| Engines | `:engine:sdui` | JSON → Compose render engine + binding resolution |
 | Engines | `:engine:navigation` | Shared routes and navigation contracts |
 | Core | `:core:domain` | BaseViewModel, MVI contracts, Result type |
-| Core | `:core:network` | HTTP client, Retrofit, DTOs, DataSourceModel |
-| Core | `:core:data` | DataSourceExecutor, Room, SDUI data fetching |
-| Core | `:core:ui` | DesignTokens, shared Compose components |
+| Core | `:core:network` | HTTP client, models, `StringResolver` interface, `ScreenSource` |
+| Core | `:core:data` | `DataSourceExecutor`, Room, screen loading |
+| Core | `:core:ui` | `DesignTokens`, shared Compose components |
 
 ---
 
@@ -73,18 +80,23 @@ Adding a new screen in this architecture = **adding a JSON file**. No Kotlin UI 
  ├── :feature:movies
  │    ├── :core:domain        ← BaseViewModel, UiState/Intent/Effect
  │    ├── :core:data          ← DataSourceExecutor
- │    ├── :core:ui            ← DesignTokens (transitively via engine:sdui)
- │    ├── :engine:sdui        ← SDUIRenderer, LoadSDUIScreenUseCase
+ │    ├── :core:ui            ← DesignTokens
+ │    ├── :engine:sdui        ← SDUIRenderer, BindingResolver
  │    └── :engine:navigation  ← Routes
  ├── :feature:banking
+ │    ├── :core:domain
+ │    ├── :core:data
+ │    ├── :engine:sdui
  │    └── :engine:navigation
+ ├── :feature:deeplink
+ ├── :feature:analytics
  ├── :engine:sdui
- │    ├── :core:network       ← DataSourceModel
+ │    ├── :core:network       ← ScreenModel, BindingItem, StringResolver
  │    ├── :core:data          ← DataSourceExecutor, SDUIDataRepository
  │    └── :core:ui            ← DesignTokens, colorFromToken()
  ├── :core:data
- │    └── :core:network       ← NetworkClient, DataSourceModel
- ├── :core:network            (no internal deps)
+ │    └── :core:network       ← NetworkClient, DataSourceModel, ScreenSource
+ ├── :core:network            (no internal project deps)
  ├── :core:domain             (no deps — pure Kotlin)
  └── :core:ui                 (Compose only)
 ```
@@ -92,24 +104,24 @@ Adding a new screen in this architecture = **adding a JSON file**. No Kotlin UI 
 **Hard rules enforced by module boundaries:**
 - Feature modules never depend on each other.
 - `:core:domain` has zero Android or third-party dependencies.
-- Features never import from `:core:network` directly; they go through the engine.
+- `:core:network` defines all shared interfaces and models — both data and engine depend on it, never the reverse.
+- Features never import from `:core:network` directly; they go through the engine and data layers.
 
 ---
 
 ## 4. Module Responsibilities
 
 ### `:core:domain`
-Pure Kotlin. The MVI foundation used by every ViewModel.
+Pure Kotlin. The MVI foundation used by every ViewModel across all features.
 
 ```
 core/domain/
 ├── BaseViewModel.kt    — abstract MVI base: StateFlow, Channel<Effect>, handleIntent()
 ├── UiContract.kt       — UiState, UiIntent, UiEffect marker interfaces
-├── Result.kt           — sealed class: Success<T> | Error(code, message) | Loading
-└── BaseUseCase.kt      — optional single-abstract-method use case base
+└── Result.kt           — sealed class: Success<T> | Error(code, message) | Loading
 ```
 
-`BaseViewModel` is the only shared ViewModel base across the entire project:
+`BaseViewModel` is the single shared ViewModel base:
 
 ```kotlin
 abstract class BaseViewModel<S : UiState, I : UiIntent, E : UiEffect> : ViewModel() {
@@ -120,6 +132,7 @@ abstract class BaseViewModel<S : UiState, I : UiIntent, E : UiEffect> : ViewMode
     val effect: Flow<E> = _effect.receiveAsFlow()
 
     fun handleIntent(intent: I) = viewModelScope.launch { reduce(intent) }
+
     abstract suspend fun reduce(intent: I)
     protected fun setState(reducer: S.() -> S) = _state.update { it.reducer() }
     protected fun setEffect(e: E) = viewModelScope.launch { _effect.send(e) }
@@ -129,80 +142,97 @@ abstract class BaseViewModel<S : UiState, I : UiIntent, E : UiEffect> : ViewMode
 ---
 
 ### `:core:network`
-All HTTP infrastructure and DTO definitions.
+
+All HTTP infrastructure, shared model definitions, and core interfaces.
 
 ```
 core/network/
 ├── di/
-│   └── NetworkModule.kt                        — Hilt: Json, OkHttpClient, Retrofit, OmdbApiService
+│   └── NetworkModule.kt                     — Hilt: Json, OkHttpClient
 ├── model/
-│   ├── DataSourceModel.kt                      — DataSourceModel, RequestModel, ResponseModel
-│   └── OmdbDtos.kt                             — OmdbListResponseDto, SeriesDto, SeriesDetailDto
-├── OmdbApiService.kt                           — Retrofit interface: /search + /detail
-├── NetworkClient.kt                            — interface: suspend fun get(url): String?
-├── NetworkClientImpl.kt                        — OkHttpClient implementation
-└── KotlinxSerializationConverterFactory.kt     — custom Retrofit converter
+│   ├── ScreenModel.kt                       — ScreenModel, ComponentNode, BindingItem,
+│   │                                          StyleModel, ActionModel, AccessibilityModel,
+│   │                                          VisibilityModel, DataSourceModel
+│   └── DataSourceModel.kt                   — DataSourceModel, RequestModel, ResponseModel
+├── StringResolver.kt                        — interface: fun resolve(key: String): String
+├── ScreenSource.kt                          — interface: suspend fun load(screenId): String?
+├── NetworkClient.kt                         — interface: suspend fun get(url): String?
+└── OkHttpNetworkClient.kt                   — OkHttp implementation, Dispatchers.IO
 ```
 
-`DataSourceModel` is the data contract between JSON screen definitions and the data executor. It lives in `:core:network` because it is fundamentally an HTTP descriptor, but both `:core:data` and `:engine:sdui` reference it.
+`StringResolver` is the clean-architecture boundary for localized strings. It lives in `:core:network` (no Android dependency) so both engine and data layers can reference it without importing Android framework types.
 
 ```kotlin
+interface StringResolver {
+    fun resolve(key: String): String
+}
+```
+
+`DataSourceModel` is the data contract between JSON screen definitions and the data executor:
+
+```kotlin
+@Serializable
 data class DataSourceModel(
     val type: String,
     val request: RequestModel? = null,
     val response: ResponseModel? = null,
     val enrichmentDataSource: DataSourceModel? = null,
 ) {
-    val effectiveUrl: String get() = request?.url ?: url ?: ""
+    val effectiveUrl: String get() = request?.url ?: ""
     val fieldMapping: Map<String, String> get() = response?.fieldMapping ?: emptyMap()
+    val effectiveRoot: String? get() = response?.root
 }
 ```
 
 ---
 
 ### `:core:data`
-Data execution layer: drives all SDUI data fetching and local persistence.
+
+Data execution layer — drives all SDUI data fetching and local persistence.
 
 ```
 core/data/
 ├── remote/
 │   ├── SDUIDataRepository.kt       — interface: suspend fun fetch(url): String?
-│   ├── SDUIDataRepositoryImpl.kt   — OkHttp-backed implementation via NetworkClient
-│   └── DataSourceExecutor.kt       — orchestrates main fetch + parallel enrichment
+│   ├── SDUIDataRepositoryImpl.kt   — NetworkClient-backed implementation
+│   └── DataSourceExecutor.kt       — main fetch + parallel enrichment
 ├── local/
 │   ├── AppDatabase.kt              — @Database(WatchlistEntity)
 │   ├── WatchlistDao.kt             — getAll(), insert(), deleteById(), isInWatchlist()
-│   └── WatchlistEntity.kt          — @Entity: imdbID, title, posterUrl, rating, year, genre
+│   ├── WatchlistEntity.kt          — @Entity: imdbID, title, posterUrl, rating, year, genre
+│   └── LocalScreenSource.kt        — reads assets/screens/{screenId}.json
 └── di/
-    └── DataModule.kt               — @Binds SDUIDataRepository, @Provides Room/Dao
+    └── DataModule.kt               — @Binds SDUIDataRepository, ScreenSource; @Provides Room
 ```
 
-`DataSourceExecutor` is the most critical class in the project. It accepts an optional `params` map to resolve URL templates (e.g. `{{seriesId}}`) before execution, enabling both list and detail screens to fetch data with no feature-level code:
+`DataSourceExecutor.execute()` is the most critical class in the project. It accepts an optional `params` map to resolve URL templates before execution, enabling both list and detail screens to fetch data without any feature-level code:
 
 ```kotlin
 suspend fun execute(
     dataSource: DataSourceModel,
-    params: Map<String, String> = emptyMap(),   // resolves {{key}} in main URL
+    params: Map<String, String> = emptyMap(),   // resolves {{key}} placeholders in URL
 ): List<Map<String, String>>
 ```
 
 ---
 
 ### `:core:ui`
+
 Shared design tokens and Compose primitives.
 
 ```
 core/ui/
-├── DesignTokens.kt      — all colors, spacing, typography, radii
-│                           ScreenBackground (#0D0F14), CardBackground (#1A1D27)
-│                           Surface (#1E2132), Accent (#E05C5C)
-│                           SpacingXs(4dp), SpacingSm(8dp), SpacingMd(16dp), SpacingLg(24dp)
-│                           TextSm(12sp) → TextXxl(24sp)
+├── DesignTokens.kt      — all colors, spacing, typography, radii as Compose constants
+│                          ScreenBackground (#0D0F14), CardBackground (#1A1D27)
+│                          Surface (#1E2132), Accent (#E05C5C)
+│                          SpacingXs(4dp) → SpacingXl(32dp)
+│                          TextSm(12sp) → TextXxl(24sp)
 ├── colorFromToken()     — maps SDUI JSON color string → Compose Color at render time
-└── MovieAppTheme.kt     — MaterialTheme wrapper
+├── AndroidStringResolver.kt  — NOT here (lives in engine:sdui — see Section 8)
+└── MovieAppTheme.kt     — MaterialTheme wrapper using DesignTokens
 ```
 
-`colorFromToken()` is the bridge between declarative JSON style tokens and live Compose colors. Every `backgroundColor`, `foregroundColor` string in any JSON file is resolved through this function:
+`colorFromToken()` bridges JSON style tokens and live Compose colors. Every `backgroundColor` and `foregroundColor` in any JSON file is resolved through this function:
 
 ```kotlin
 fun colorFromToken(token: String): Color = when (token) {
@@ -219,101 +249,164 @@ fun colorFromToken(token: String): Color = when (token) {
 ---
 
 ### `:engine:sdui`
-The generic Server-Driven UI engine. It has no knowledge of movies, banking, or any domain.
+
+The generic Server-Driven UI engine. Contains no knowledge of movies, banking, or any domain.
 
 ```
 engine/sdui/
-├── ScreenModel.kt              — data classes: ScreenModel, ComponentNode, StyleModel,
-│                                  ActionModel, VisibilityModel
-├── SDUIRepository.kt           — reads assets/screens/{screenId}.json → ScreenModel
-├── SDUIParser.kt               — JSON parsing helpers
-├── TemplateResolver.kt         — resolves {{key}} placeholders + visibility evaluation
-├── ComponentRegistry.kt        — extensible registry: register("type") { node, data → Composable }
-├── SDUIRenderer.kt             — public @Composable entry point + SDUIRenderEngine
-├── usecase/
-│   └── LoadSDUIScreenUseCase.kt — loads + parses a screen JSON by ID
+├── SDUIRenderer.kt              — public @Composable entry point + SDUIRenderEngine
+│                                  Resolves bindings, merges enrichedData, renders tree
+├── SDUIComponentsDispatcher.kt  — routes ComponentNode.type → built-in renderer
+├── AccessibilityUtils.kt        — Modifier.applyAccessibility(AccessibilityModel?, data)
+│                                  resolveTokens() extension for {{key}} in a11y labels
+├── TemplateResolver.kt          — {{key}} placeholder resolution + visibility evaluation
+├── BindingResolver.kt           — resolveAll(apiData): api → string → template pipeline
+├── AndroidStringResolver.kt     — Context-based StringResolver implementation
+├── StringResolverModule.kt      — Hilt @Provides StringResolver → AndroidStringResolver
+├── FormDataStorage.kt           — singleton form state for multi-step banking forms
+├── ComponentRegistry.kt         — extensible registry for feature-specific components
+├── SduiComponentProvider.kt     — functional interface for Hilt @IntoSet contributions
 └── components/
-    └── SDUIComponents.kt       — all built-in component renderers
+    ├── TopBarComponent.kt
+    ├── HeaderComponent.kt
+    ├── ColumnComponent.kt
+    ├── RowComponent.kt
+    ├── CardComponent.kt
+    ├── ListComponent.kt
+    ├── GeneratedListComponent.kt
+    ├── TextComponent.kt
+    ├── ImageComponent.kt
+    ├── IconComponent.kt
+    ├── ButtonComponent.kt
+    ├── SpacerComponent.kt
+    └── DividerComponent.kt
 ```
 
 ---
 
 ### `:engine:navigation`
-Navigation contracts shared across features.
+
+Navigation contracts shared across all features.
 
 ```
 engine/navigation/
-├── Routes.kt              — MOVIES, SERIES_DETAIL, BANKING route constants
-├── NavigationAction.kt    — NavType (PUSH/REPLACE/POP/DEEP_LINK) + destination
+├── Routes.kt              — MOVIES, SERIES_DETAIL, BANKING_* route constants
+├── NavigationAction.kt    — NavType (PUSH/REPLACE/POP) + destination
 └── NavigationEngine.kt    — navigate(NavController, NavigationAction)
 ```
 
 ---
 
 ### `:feature:movies`
-TV series list and detail. Contains **only UI code** — no API calls, no data models, no use cases.
+
+TV series list and detail. Contains **only UI code** — no API calls, no domain models, no use cases.
 
 ```
 feature/movies/
-└── ui/
-    ├── list/
-    │   ├── MoviesContract.kt        — MoviesState, MoviesIntent, MoviesEffect
-    │   ├── MoviesViewModel.kt       — loads screen JSON, executes dataSource, handles reorder
-    │   └── MoviesScreen.kt          — SDUIRenderer wired to ViewModel state
-    ├── detail/
-    │   ├── SeriesDetailContract.kt  — SeriesDetailState, SeriesDetailIntent, SeriesDetailEffect
-    │   ├── SeriesDetailViewModel.kt — loads series_detail JSON, fetches with seriesId param
-    │   └── SeriesDetailScreen.kt    — SDUIRenderer wired to ViewModel state
-    └── MoviesNavGraph.kt            — composable(MOVIES) + composable(SERIES_DETAIL)
+├── src/main/java/.../feature/movies/ui/
+│   ├── MoviesContract.kt        — MoviesState, MoviesIntent, MoviesEffect
+│   ├── MoviesViewModel.kt       — loads tv_series_list JSON, executes dataSource, reorder
+│   ├── MoviesScreen.kt          — SDUIRenderer wrapper (~35 lines)
+│   ├── SeriesDetailContract.kt  — SeriesDetailState, SeriesDetailIntent, SeriesDetailEffect
+│   ├── SeriesDetailViewModel.kt — loads series_detail JSON, fetches with seriesId param
+│   ├── SeriesDetailScreen.kt    — SDUIRenderer wrapper (~40 lines)
+│   └── MoviesNavGraph.kt        — composable(MOVIES) + composable(SERIES_DETAIL/{id})
+└── src/main/res/values/strings.xml
+    — tv_series_list_* and series_detail_* string resources (resolved via binding system)
 ```
-
-This is the entire feature module. No `domain/`, `data/`, or `di/` packages. The ViewModel injects `LoadSDUIScreenUseCase` and `DataSourceExecutor` — both provided by `engine:sdui` and `core:data` respectively.
 
 ---
 
 ### `:feature:banking`
-Placeholder tab — single `Box { Text("TODO") }` composable. No data layer.
+
+Multi-step onboarding form. All four steps are fully SDUI-driven — no hardcoded form layouts.
+
+```
+feature/banking/
+├── src/main/java/.../feature/banking/ui/
+│   ├── BankingContract.kt
+│   ├── BankingViewModel.kt
+│   ├── BankingScreen.kt         — SDUIRenderer wrapper
+│   └── BankingNavGraph.kt       — step-to-step navigation
+└── src/main/res/values/strings.xml
+```
+
+Screens defined as JSON assets:
+- `personal_details.json` — name, DOB, gender, mobile, email
+- `address_details.json` — street, city, state, ZIP, residence type
+- `financial_information.json` — employment, income, loan amount/tenure, existing loans
+- `review_submit.json` — read-only summary with edit and submit actions
+
+---
+
+### `:feature:deeplink` and `:feature:analytics`
+
+- **deeplink** — `DeepLinkActivity` + `DeepLinkScreen`: handles URI-based navigation into any graph
+- **analytics** — Koin-provided `AnalyticsEngine` wrapping Firebase; fires events from SDUI `analytics` node fields
+
+---
+
+### `:app`
+
+Entry point, navigation host, and SDUI-driven bottom navigation shell.
+
+```
+app/
+├── SplashActivity.kt             — 1.5s branded splash → MainActivity
+├── MainActivity.kt               — deep link handling + setContent { MainScreen }
+├── DeepLinkActivity.kt           — URI intent handler → routes to MainActivity
+├── MainScreen.kt                 — Scaffold + dynamic NavigationBar from TabBarViewModel
+├── ArchitectNavHost.kt           — NavHost(moviesGraph, bankingGraph)
+├── IconMapper.kt                 — icon name string → Material ImageVector
+├── tab/
+│   ├── TabBarConfig.kt           — @Serializable: TabBarConfig, TabItem, ResolvedTab
+│   ├── TabConfigLoader.kt        — @Singleton: loads tab_config.json, resolves bindings
+│   └── TabBarViewModel.kt        — @HiltViewModel: exposes tabs + startDestination
+└── ui/theme/
+    ├── Color.kt
+    ├── Theme.kt
+    └── Type.kt
+```
 
 ---
 
 ## 5. MVI Architecture
 
-Every screen follows the same unidirectional data flow: **Intent → reduce → State/Effect**.
+Every screen follows the same unidirectional data flow: **Intent → reduce → State / Effect**.
 
 ```
-┌──────────────────────────────────────────────────┐
-│                   Composable UI                   │
-│                                                   │
-│   val state by vm.state.collectAsStateWithLifecycle│
-│   LaunchedEffect { vm.effect.collectLatest { } }  │
-│   onClick { vm.handleIntent(SomeIntent) }         │
-└────────────────┬──────────────▲───────────────────┘
-                 │              │
-            Intent           State / Effect
-                 │              │
-┌────────────────▼──────────────┴───────────────────┐
-│                   BaseViewModel                    │
-│                                                    │
-│   handleIntent(intent)                             │
-│     └─ viewModelScope.launch { reduce(intent) }    │
-│           ├─ setState { copy(...) }  → StateFlow   │
-│           └─ setEffect(effect)      → Channel      │
-└────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                     Composable UI                     │
+│                                                       │
+│   val state by vm.state.collectAsStateWithLifecycle() │
+│   LaunchedEffect { vm.effect.collectLatest { ... } }  │
+│   onClick { vm.handleIntent(SomeIntent) }             │
+└──────────────────┬───────────────▲────────────────────┘
+                   │               │
+               Intent          State / Effect
+                   │               │
+┌──────────────────▼───────────────┴────────────────────┐
+│                    BaseViewModel                       │
+│                                                        │
+│   handleIntent(intent)                                 │
+│     └─ viewModelScope.launch { reduce(intent) }        │
+│           ├─ setState { copy(...) }   → StateFlow       │
+│           └─ setEffect(effect)        → Channel        │
+└────────────────────────────────────────────────────────┘
 ```
 
-**State** is an immutable data class; `setState` uses `MutableStateFlow.update{}` — thread-safe and conflict-free.
-
-**Effect** is a `Channel<E>` consumed once with `collectLatest` — used only for one-shot events (navigation, toasts) that must not replay on recomposition.
+- **State** — immutable `data class`; `setState` uses `MutableStateFlow.update{}` — thread-safe.
+- **Effect** — `Channel<E>` consumed exactly once with `collectLatest` — used for navigation, toast messages, and other one-shot events that must not replay on recomposition.
 
 ### Contract example — Series Detail
 
 ```kotlin
 // What the UI renders
 data class SeriesDetailState(
-    val screenModel: ScreenModel? = null,   // SDUI layout tree
+    val screenModel: ScreenModel? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val data: Map<String, String> = emptyMap(), // flat API response data
+    val data: Map<String, String> = emptyMap(),
 ) : UiState
 
 // What the user can do
@@ -322,7 +415,7 @@ sealed interface SeriesDetailIntent : UiIntent {
     data object NavigateBack : SeriesDetailIntent
 }
 
-// One-shot events the UI handles exactly once
+// One-shot events handled exactly once
 sealed interface SeriesDetailEffect : UiEffect {
     data object GoBack : SeriesDetailEffect
 }
@@ -332,16 +425,72 @@ sealed interface SeriesDetailEffect : UiEffect {
 
 ## 6. Server-Driven UI Engine
 
-The SDUI engine translates a JSON file into a live Compose tree. The feature module provides only three inputs: the screen ID, the loading state, and an action callback.
+The SDUI engine translates a JSON file into a live Compose tree. The feature module provides only three inputs: the screen ID, the loading/error state, and an action callback.
+
+### Render Pipeline
+
+```
+assets/screens/{screenId}.json
+        │   LocalScreenSource.load(screenId)
+        ▼
+  raw JSON string
+        │   Json.decodeFromString<ScreenModel>()
+        ▼
+  ScreenModel (in-memory node tree)
+        │   setState { copy(screenModel = it) }
+        ▼
+  SDUIRenderer(screenModel, isLoading, error, dataMap, listData, onAction)
+        │
+        │   ① BindingResolver.resolveAll(dataMap)
+        │       api bindings   → look up raw API field by path
+        │       string bindings → StringResolver.resolve(key)
+        │       template bindings → interpolate {{key}} from combined map
+        │   ② enrichedData = dataMap + resolvedBindings
+        │
+        ▼
+  SDUIRenderEngine.Render(screenModel, enrichedData, listData, onAction)
+        │
+        ▼
+  for each ComponentNode → RenderNode(node, enrichedData, ...)
+        │
+        ├── "scroll"        → Column(verticalScroll)
+        ├── "column"        → Column(spacedBy) + background + padding
+        ├── "row"           → Row(spacedBy) + optional clickable(action)
+        ├── "topBar"        → Row: back icon | title | search icon
+        ├── "header"        → Row: title Text + optional subtitle
+        ├── "text"          → Text (dataBinding | {{template}} | literal)
+        ├── "image"         → Box wrapper → AsyncImage (Coil)
+        ├── "icon"          → Icon (mapped by name string)
+        ├── "list"          → Column with drag-to-reorder
+        ├── "generatedList" → repeat(data[countBinding].toInt()) { i → renderNode(itemLayout) }
+        ├── "button"        → Material Button
+        ├── "textField"     → OutlinedTextField with validation
+        ├── "dateField"     → DatePicker dialog
+        ├── "dropdown"      → DropdownMenu with options
+        ├── "segmentedControl" → Switch/chip group
+        ├── "slider"        → Material Slider
+        ├── "stepperField"  → increment/decrement counter
+        ├── "currencyField" → formatted currency input
+        ├── "toggle"        → Material Switch
+        ├── "card"          → elevated container, optional action
+        ├── "summaryRow"    → label + value pair for review screens
+        └── unknown         → visible placeholder "[unknown: type]"
+```
 
 ### JSON Screen Definition Structure
-
-Every screen is a JSON file in `core/network/src/main/assets/screens/`:
 
 ```json
 {
   "screenId": "series_detail",
   "type": "scroll",
+
+  "bindings": {
+    "synopsisTitle":  { "source": "string",   "key": "series_detail.synopsis_title" },
+    "ratingText":     { "source": "template",  "template": "{{imdbPrefix}} {{rating}}" },
+    "title":          { "source": "api",        "path": "Title" },
+    "rating":         { "source": "api",        "path": "imdbRating" }
+  },
+
   "dataSource": {
     "type": "remote",
     "request": {
@@ -351,174 +500,263 @@ Every screen is a JSON file in `core/network/src/main/assets/screens/`:
     },
     "response": {
       "type": "object",
-      "fieldMapping": {
-        "title": "Title", "year": "Year", "genre": "Genre",
-        "rating": "imdbRating", "plot": "Plot", "totalSeasons": "totalSeasons"
-      }
+      "fieldMapping": {}
     }
   },
+
   "children": [
     {
-      "type": "column",
-      "style": { "padding": 16, "spacing": 14, "backgroundColor": "screenBackground" },
-      "children": [
-        {
-          "type": "topBar",
-          "props": { "leadingIcon": "back" },
-          "style": { "padding": 0, "paddingTop": 4, "paddingBottom": 0 },
-          "action": { "type": "back" }
-        },
-        {
-          "type": "header",
-          "titleTemplate": "{{title}}",
-          "subtitleTemplate": "{{year}} • {{genre}}"
-        },
-        {
-          "type": "generatedList",
-          "countBinding": "totalSeasons",
-          "style": { "spacing": 10 },
-          "itemLayout": {
-            "type": "row",
-            "style": { "padding": 14, "backgroundColor": "cardBackground", "cornerRadius": 18 },
-            "children": [
-              { "type": "icon", "icon": "play.tv.fill", "style": { "foregroundColor": "accent" } },
-              { "type": "text", "template": "Season {{seasonNumber}}", "style": { "fontWeight": "semibold" } }
-            ]
-          }
-        }
-      ]
+      "type": "header",
+      "titleTemplate": "{{title}}",
+      "subtitleTemplate": "{{year}} • {{genre}}"
+    },
+    {
+      "type": "text",
+      "dataBinding": "synopsisTitle",
+      "style": { "fontSize": 18, "fontWeight": "bold" }
+    },
+    {
+      "type": "generatedList",
+      "countBinding": "totalSeasons",
+      "itemLayout": {
+        "type": "row",
+        "accessibility": { "label": "Season {{seasonNumber}}", "role": "button" },
+        "children": [
+          { "type": "text", "template": "{{seasonLabel}} {{seasonNumber}}" }
+        ]
+      }
     }
   ]
 }
 ```
 
-### Render Pipeline
-
-```
-assets/screens/{screenId}.json
-        │   LoadSDUIScreenUseCase.invoke(screenId)
-        ▼
-  SDUIRepository.loadScreen()
-        │   Json.decodeFromString<ScreenModel>()
-        ▼
-  ScreenModel (in-memory tree)
-        │   setState { copy(screenModel = it) }
-        ▼
-  SDUIRenderer(screenModel, isLoading, error, dataMap, listData, onAction)
-        │   SDUIRenderEngine.Render()
-        ▼
-  for each ComponentNode → RenderNode(node, data, listData, onAction)
-        │
-        ├── "scroll"        → Column(verticalScroll)
-        ├── "column"        → Column(spacedBy(spacing)) + background + padding
-        ├── "row"           → Row(spacedBy) + clickable(action)
-        ├── "topBar"        → Row: back icon (Box+clickable) | title | search icon
-        ├── "header"        → Row: title Text + optional subtitle
-        ├── "text"          → Text (dataBinding or {{template}} or literal; native TalkBack)
-        ├── "image"         → AsyncImage(url from data[dataBinding]; contentDescription from props or "Movie poster")
-        ├── "icon"          → Icon (star/search/playCircle; contentDescription "Rating"/"Search"/"Play")
-        ├── "list"          → Column with drag-to-reorder; items: mergeDescendants + "long press to reorder"
-        ├── "generatedList" → repeat(data[countBinding].toInt()) { i → renderNode(itemLayout) }
-        └── unknown         → visible placeholder "[unknown: type]"
-```
-
----
-
-## 7. SDUI Component System
-
-### Component Types
-
-| Type | Description | Key props/bindings | Accessibility (`AccessibilityModel`) |
-|---|---|---|---|
-| `scroll` | Root scrollable container | `children` | transparent — no model needed |
-| `column` | Vertical stack | `style.spacing`, `style.padding`, `style.backgroundColor` | transparent — no model needed |
-| `row` | Horizontal stack, tappable | `action`, `style.cornerRadius` | `{ mergeDescendants: true, role: "button" }` when tappable |
-| `topBar` | App bar with optional back/search | `props.leadingIcon="back"`, `props.trailingIcon="search"` | Back + Search hardcoded (internal elements); outer bar uses node's model |
-| `header` | Title + subtitle row | `titleTemplate`, `subtitleTemplate` | `{ role: "header" }` to mark as heading for screen-reader navigation |
-| `text` | Single text label | `dataBinding`, `template`, `text` | announced natively; no model needed |
-| `image` | Async image | `dataBinding` → URL string | `{ label: "…", role: "image" }` — no built-in fallback |
-| `icon` | System icon | `icon` name: `"star"`, `"search"`, `"play.tv.fill"` | `{ label: "…" }` or `{ importantForAccessibility: false }` for decorative |
-| `list` | Data-bound list with drag-to-reorder | `listDataBinding`, `itemLayout` | `{ mergeDescendants: true, hint: "long press to reorder" }` — applied to every item |
-| `generatedList` | Count-driven repeated layout | `countBinding`, `itemLayout` | delegates to item layout's own model |
-| `card` | Elevated container | `style.cornerRadius`, `action` | `{ mergeDescendants: true, role: "button", hint: "open detail" }` when tappable |
-| `spacer` | Vertical gap | `style.spacing` or `props.height` | transparent — decorative |
-| `divider` | Horizontal rule | — | transparent — decorative |
-| `button` | Tappable text button | `template`, `action` | `{ role: "button" }` — label from child `Text` via merge |
-
-### Style System
-
-Every component node has an optional `style` object. All properties are optional and fall back to safe defaults:
-
-| JSON key | Type | Compose mapping |
-|---|---|---|
-| `backgroundColor` | color token | `Modifier.background(colorFromToken(it), shape)` |
-| `foregroundColor` | color token | text/icon color argument |
-| `cornerRadius` | Float (dp) | `RoundedCornerShape(it.dp)` |
-| `padding` | Float (dp) | `Modifier.padding(all)` |
-| `paddingTop/Bottom` | Float (dp) | `Modifier.padding(top/bottom)` |
-| `spacing` | Float (dp) | `Arrangement.spacedBy(it.dp)` |
-| `frameWidth/Height` | Float (dp) | `Modifier.size(width, height)` |
-| `fontSize` | Float (sp) | `it.sp` |
-| `fontWeight` | String | `"bold"` → Bold, `"semibold"` → SemiBold, `"medium"` → Medium |
-| `lineLimit` | Int | `maxLines = it` |
-
-### Template Resolution
-
-Any string containing `{{key}}` is a template, resolved at render time:
-
-```kotlin
-// JSON:  "template": "Season {{seasonNumber}}"
-// data:  { "seasonNumber": "3" }
-// output: "Season 3"
-
-fun resolve(template: String, data: Map<String, String>): String =
-    templateRegex.replace(template) { data[it.groupValues[1]] ?: it.value }
-```
-
-Templates work in: `text.template`, `header.titleTemplate`, `header.subtitleTemplate`, `action.routeTemplate`.
-
 ### Visibility Rules
 
-A component can declare a conditional visibility guard:
+A component declares a conditional guard:
 
 ```json
 "visibility": { "dataBinding": "awards", "isNotEmpty": true }
 ```
 
-The renderer evaluates this before composing the node. If `data["awards"]` is empty or `"N/A"`, the node is skipped. No placeholder is rendered — the space simply does not exist.
+Evaluated before the node is composed. If `data["awards"]` is empty or `"N/A"`, the node is skipped entirely — no placeholder, no layout space.
 
 ### Action Dispatch
 
-Actions are resolved at tap time and forwarded to the ViewModel as `(actionId, params)`:
+```
+JSON action on a list item row:
+  "action": { "type": "navigate", "routeTemplate": "series_detail/{{id}}" }
 
-```kotlin
-// JSON action on a list item row:
-// "action": { "type": "navigate", "routeTemplate": "series_detail/{{id}}" }
-
-ActionModel.dispatch(data, onAction):
-  1. Resolve routeTemplate: "series_detail/{{id}}" → "series_detail/tt1234567"
-  2. Call: onAction("navigate", { "route": "series_detail/tt1234567" })
-  3. ViewModel: setEffect(Navigate("series_detail/tt1234567"))
-  4. Screen: navController.navigate("series_detail/tt1234567")
+Runtime resolution:
+  1. routeTemplate substituted: "series_detail/{{id}}" → "series_detail/tt0903747"
+  2. onAction("navigate", { "route": "series_detail/tt0903747" }) called
+  3. ViewModel: setEffect(Navigate("series_detail/tt0903747"))
+  4. Screen: navController.navigate("series_detail/tt0903747")
 ```
 
 Supported action types: `navigate`, `back`, `search`, `reorder`.
 
-### Extensibility
+### Custom Component Registration
 
-Register a custom component without touching the engine:
+Feature modules register custom components via Hilt multibinding without touching the engine:
 
 ```kotlin
-ComponentRegistry.register("ratingBadge") { node, data, listData, onAction ->
-    RatingBadgeComposable(node.style, data["rating"])
+@Module @InstallIn(SingletonComponent::class)
+object MoviesComponentModule {
+    @Provides @IntoSet
+    fun provideRatingBadge(): SduiComponentProvider = SduiComponentProvider { node, data, _, _ ->
+        // key "type" in when block
+        if (node.type == "ratingBadge") { RatingBadgeComposable(data["rating"]) }
+    }
 }
 ```
 
-Custom types take precedence over built-ins and are resolved before the built-in `when` branch.
+Custom components take precedence over all built-ins.
 
 ---
 
-## 8. Data Pipeline — End to End
+## 7. SDUI Component System
+
+### Built-in Component Reference
+
+| Type | Description | Key fields |
+|---|---|---|
+| `scroll` | Root scrollable container | `children` |
+| `column` | Vertical stack | `style.spacing`, `style.padding`, `style.backgroundColor` |
+| `row` | Horizontal stack, optional tap | `action`, `style.cornerRadius` |
+| `topBar` | App bar: back + title + search | `props.leadingIcon`, `action.type` |
+| `header` | Title + subtitle row | `titleTemplate`, `subtitleTemplate`, `titleBinding`, `subtitleBinding` |
+| `text` | Single label | `dataBinding`, `template`, `text` |
+| `image` | Async image (Coil) | `dataBinding` → URL |
+| `icon` | System vector icon | `icon` name string |
+| `list` | Data-bound list, drag-to-reorder | `listDataBinding`, `itemLayout` |
+| `generatedList` | Count-driven repeated layout | `countBinding`, `itemLayout` |
+| `card` | Elevated container | `style.cornerRadius`, `action` |
+| `button` | Tappable text button | `titleBinding`, `action` |
+| `textField` | Text input with validation | `dataBinding`, `validation.required`, `validation.minLength` |
+| `dateField` | Date picker dialog | `dataBinding` |
+| `dropdown` | Select from options | `dataBinding`, `options[]` |
+| `segmentedControl` | Multi-choice chip group | `dataBinding`, `options[]` |
+| `slider` | Range slider | `dataBinding`, `minValue`, `maxValue`, `step` |
+| `stepperField` | Inc/dec counter | `dataBinding`, `minValue`, `maxValue` |
+| `currencyField` | Formatted currency input | `dataBinding`, `validation.min` |
+| `toggle` | Boolean switch | `dataBinding` |
+| `summaryRow` | Label + value pair | `label`, `dataBinding` |
+| `spacer` | Vertical gap | `style.spacing` |
+| `divider` | Horizontal rule | — |
+
+### Style System
+
+| JSON key | Type | Compose mapping |
+|---|---|---|
+| `backgroundColor` | color token | `Modifier.background(colorFromToken(it), RoundedCornerShape)` |
+| `foregroundColor` | color token | text/icon color |
+| `cornerRadius` | Float dp | `RoundedCornerShape(it.dp)` |
+| `padding` | Float dp | `Modifier.padding(all = it.dp)` |
+| `paddingTop / paddingBottom` | Float dp | `Modifier.padding(top/bottom)` |
+| `paddingStart / paddingEnd` | Float dp | `Modifier.padding(start/end)` |
+| `spacing` | Float dp | `Arrangement.spacedBy(it.dp)` |
+| `frameWidth / frameHeight` | Float dp | `Modifier.size(width, height)` |
+| `fontSize` | Float sp | `it.sp` |
+| `fontWeight` | String | `"bold"` → Bold, `"semibold"` → SemiBold, `"medium"` → Medium |
+| `lineLimit` / `maxLines` | Int | `maxLines = it` |
+| `weight` | Float | `Modifier.weight(it)` |
+
+---
+
+## 8. Binding & Localization System
+
+The binding system resolves three types of dynamic values into the flat data map before any component renders, ensuring all components work through the standard `data[key]` lookup with zero additional logic.
+
+### Architecture
+
+```
+JSON "bindings" block
+        │
+        ▼
+BindingItem(source, key, path, template)
+        │
+        ▼
+BindingResolver.resolveAll(apiData)
+   ┌────────────────────────────────────┐
+   │  Step 1 — "api" source             │
+   │    apiField = item.path ?: item.key │
+   │    resolved[bindingKey] = apiData[apiField] ?: "" │
+   ├────────────────────────────────────┤
+   │  Step 2 — "string" source          │
+   │    resolved[bindingKey] =          │
+   │      StringResolver.resolve(item.key) │
+   ├────────────────────────────────────┤
+   │  Step 3 — "template" source        │
+   │    base = apiData + resolved        │
+   │    resolved[bindingKey] =          │
+   │      item.template.replace({{k}},base[k]) │
+   └────────────────────────────────────┘
+        │
+        ▼
+enrichedData = apiData + resolved
+        │
+        ▼
+SDUIRenderEngine.Render(enrichedData)
+— components use data[key] as always, no extra logic
+```
+
+### Binding Source Types
+
+#### `"api"` — raw API field remapping
+
+Maps a raw API response field (using `path`) to a friendly binding key. Used when `fieldMapping` is empty — the binding layer becomes the field mapper.
+
+```json
+"bindings": {
+  "title":  { "source": "api", "path": "Title" },
+  "rating": { "source": "api", "path": "imdbRating" }
+}
+```
+
+Resolution: `resolved["title"] = apiData["Title"]`
+
+#### `"string"` — localized string resource
+
+Fetches a value from Android string resources. The JSON key uses dot notation; `AndroidStringResolver` converts to underscore notation before calling `getIdentifier`.
+
+```json
+"bindings": {
+  "synopsisTitle": { "source": "string", "key": "series_detail.synopsis_title" }
+}
+```
+
+Resolution chain:
+```
+"series_detail.synopsis_title"
+        │  replace('.' → '_')
+        ▼
+"series_detail_synopsis_title"
+        │  context.resources.getIdentifier(key, "string", packageName)
+        ▼
+ R.string.series_detail_synopsis_title
+        │  context.getString(resId)
+        ▼
+"Synopsis"
+```
+
+#### `"template"` — interpolated composite string
+
+Builds a display string by substituting `{{key}}` placeholders from the combined map of API data and previously resolved bindings. Template bindings are always resolved last (step 3) so they can reference both API values and string-resolved values.
+
+```json
+"bindings": {
+  "imdbPrefix": { "source": "string",   "key": "series_detail.imdb_prefix" },
+  "ratingText": { "source": "template", "template": "{{imdbPrefix}} {{rating}}" }
+}
+```
+
+Resolution:
+```
+Step 2 → resolved["imdbPrefix"] = "IMDb"
+Step 3 → base = apiData + { "imdbPrefix": "IMDb" }
+       → "{{imdbPrefix}} {{rating}}" → "IMDb 9.3"
+       → resolved["ratingText"] = "IMDb 9.3"
+```
+
+### `StringResolver` — Clean Architecture Interface
+
+```
+core:network                 engine:sdui
+──────────────────────       ──────────────────────────────
+StringResolver               AndroidStringResolver
+  interface                    implements StringResolver
+  fun resolve(key): String     - replaces '.' with '_'
+                               - calls context.getIdentifier()
+                               - returns key on miss (never throws)
+
+                             StringResolverModule
+                               @Provides @Singleton
+                               StringResolver → AndroidStringResolver(@ApplicationContext)
+```
+
+`StringResolver` in `:core:network` has no Android imports. `AndroidStringResolver` in `:engine:sdui` has the Android-specific implementation. `core` never depends on the Android framework — only on `StringResolver`.
+
+### String Resource Placement
+
+| Scope | Location | Example key |
+|---|---|---|
+| App-level (tabs) | `app/src/main/res/values/strings.xml` | `tab_movies_title` |
+| Movies feature | `feature/movies/src/main/res/values/strings.xml` | `tv_series_list_header_title` |
+| Series detail | `feature/movies/src/main/res/values/strings.xml` | `series_detail_synopsis_title` |
+| Banking feature | `feature/banking/src/main/res/values/strings.xml` | feature-specific labels |
+| Common | `core/ui/src/main/res/values/strings.xml` | `common_back`, `common_continue` |
+
+All are merged into the final APK. `AndroidStringResolver` looks them up by the unified package name — module boundaries are transparent at runtime.
+
+### `BindingResolver` — Backward Compatibility
+
+- Screens **without** a `bindings` block: `resolveAll()` returns an empty map; the existing `dataBinding` / `template` logic in all components is unchanged.
+- `resolve(key)` (called by existing `SDUIComponentsDispatcher` for `titleBinding` and button labels) reads from the pre-built cache first, then falls back to live resolution for form-source values.
+- All existing component rendering paths are unaffected.
+
+---
+
+## 9. Data Pipeline — End to End
 
 ### Series List (cold launch → rendered list)
 
@@ -526,73 +764,82 @@ Custom types take precedence over built-ins and are resolved before the built-in
 1. MoviesScreen → hiltViewModel() → MoviesViewModel.init
        └── handleIntent(LoadScreen)
 
-2. LoadSDUIScreenUseCase("tv_series_list")
+2. LocalScreenSource.load("tv_series_list")
        └── assets/screens/tv_series_list.json → ScreenModel
        └── setState(screenModel = model, isLoading = true)
-           ▶ SDUIRenderer renders immediately: header + empty list skeleton
+           ▶ SDUIRenderer renders immediately with loading indicator
 
-3. DataSourceExecutor.execute(dataSource)      ← no params needed for list
+3. BindingResolver.resolveAll(emptyMap())          ← no API data yet
+       string bindings: "headerTitle" → "Series Hub"
+       string bindings: "imdbPrefix"  → "IMDb"
+       enrichedData = { "headerTitle": "Series Hub", "imdbPrefix": "IMDb" }
+           ▶ Header shows "Series Hub" and subtitle immediately
 
-   Phase A — Main API call:
-       GET https://www.omdbapi.com/?s=game&type=series&apikey=...
+4. DataSourceExecutor.execute(dataSource)
+   Phase A: GET https://www.omdbapi.com/?s=game&type=series
        Response: { "Search": [ {imdbID, Title, Year, Poster}, ... ] }
-       Parse: root="Search" → extract array
-       Apply fieldMapping: imdbID→id, Title→title, Year→year, Poster→posterURL
+       fieldMapping: imdbID→id, Title→title, Year→year, Poster→posterURL
        Result: List<Map<String,String>> (10 items)
 
-   Phase B — Parallel enrichment (see Section 9):
-       10 concurrent calls → merge rating + genre into each item
+   Phase B: Parallel enrichment (10 concurrent calls)
+       GET https://www.omdbapi.com/?i={{id}}&apikey=...
+       Merges: rating, genre into each item
 
-4. setState(isLoading = false, listData = { "series": [10 enriched items] })
-       ▶ SDUIRenderer re-renders with data bound to each row
+5. setState(isLoading = false, listData = { "series": [10 enriched items] })
+       ▶ SDUIRenderer re-renders; each row binds from per-item data + enrichedData
 
-5. User taps a row:
-       action.routeTemplate = "series_detail/{{id}}"
-       resolved → "series_detail/tt0903747"
-       onAction("navigate", { route: "series_detail/tt0903747" })
-       setEffect(Navigate("series_detail/tt0903747"))
-       navController.navigate("series_detail/tt0903747")
+6. User taps a row:
+       routeTemplate = "series_detail/{{id}}" → "series_detail/tt0903747"
+       onAction("navigate", { "route": "series_detail/tt0903747" })
+       setEffect(Navigate(...)) → navController.navigate(...)
 ```
 
-### Series Detail (seriesId received from nav argument)
+### Series Detail (seriesId from nav argument)
 
 ```
 1. SeriesDetailScreen(seriesId = "tt0903747")
        └── handleIntent(Load("tt0903747"))
 
-2. LoadSDUIScreenUseCase("series_detail")
+2. LocalScreenSource.load("series_detail")
        └── assets/screens/series_detail.json → ScreenModel
        └── setState(screenModel = model, isLoading = true)
-           ▶ SDUIRenderer renders immediately: back button + skeleton
 
 3. DataSourceExecutor.execute(dataSource, params = { "seriesId" → "tt0903747" })
-       URL template: "https://www.omdbapi.com/?i={{seriesId}}&apikey=..."
-       Resolved URL: "https://www.omdbapi.com/?i=tt0903747&apikey=..."
-       Response: { "Title": "Game of Thrones", "imdbRating": "9.3", ... }
-       Apply fieldMapping → Map<String,String>
+       URL resolved: "https://www.omdbapi.com/?i=tt0903747&apikey=..."
+       fieldMapping: {} (empty) → pass-through, raw API field names preserved
+       Response fields in apiData: "Title", "imdbRating", "Runtime", "Awards", etc.
 
-4. setState(isLoading = false, data = { title, year, genre, rating, plot, ... })
-       ▶ SDUIRenderer binds every field to its component via dataBinding/template
-       ▶ generatedList reads data["totalSeasons"].toInt() → renders 8 season rows
+4. BindingResolver.resolveAll(apiData)
+       api step:      "title"  = apiData["Title"]  = "Game of Thrones"
+                      "rating" = apiData["imdbRating"] = "9.3"
+       string step:   "imdbPrefix"    = "IMDb"
+                      "synopsisTitle" = "Synopsis"
+                      "runtimeLabel"  = "Runtime:"
+       template step: "ratingText"    = "IMDb 9.3"
+                      "runtimeText"   = "Runtime: 57 min"
+                      "seasonCountText" = "Seasons: 8"
+       enrichedData = apiData + all resolved values
 
-5. User taps back:
+5. setState(isLoading = false, data = enrichedData)
+       ▶ SDUIRenderer binds every field via dataBinding/template
+       ▶ generatedList reads enrichedData["totalSeasons"].toInt() = 8
+         → renders 8 season rows automatically
+
+6. User taps back:
        topBar action.type = "back"
-       onAction("back", {})
-       handleIntent(NavigateBack)
-       setEffect(GoBack)
-       navController.popBackStack()
+       setEffect(GoBack) → navController.popBackStack()
 ```
 
 ---
 
-## 9. Parallel API Execution & Enrichment
+## 10. Parallel API Execution & Enrichment
 
 The movies list screen requires two API tiers:
 
-- **Main call**: searches OMDb, returns 10 items with basic fields (id, title, year, posterURL)
-- **Enrichment calls**: one detail call per item to fetch rating + genre
+- **Main call** — searches OMDb, returns 10 items with basic fields
+- **Enrichment calls** — one detail call per item to fetch rating and genre
 
-`DataSourceExecutor` fires all enrichment calls concurrently using `coroutineScope + async/awaitAll`:
+`DataSourceExecutor` fires all enrichment calls concurrently:
 
 ```kotlin
 suspend fun execute(
@@ -600,20 +847,15 @@ suspend fun execute(
     params: Map<String, String> = emptyMap(),
 ): List<Map<String, String>> = coroutineScope {
 
-    // Resolve {{key}} placeholders in the main URL (used for detail screen)
     val mainItems = fetchAndMap(dataSource, params)
 
     val enrichment = dataSource.enrichmentDataSource
-        ?: return@coroutineScope mainItems  // no enrichment defined → return as-is
+        ?: return@coroutineScope mainItems
 
-    // Fire all enrichment calls at the same time
     mainItems.map { item ->
         async {
-            val url = item.entries.fold(enrichment.effectiveUrl) { acc, (k, v) ->
-                acc.replace("{{$k}}", v)   // e.g. {{id}} → "tt0903747"
-            }
-            val enrichedFields = fetchAndMap(enrichment.copy(request = ...), emptyMap())
-            item + enrichedFields.firstOrNull().orEmpty()   // merge into single map
+            val enriched = fetchEnrichment(enrichment, item)
+            item + enriched        // merge into single map per item
         }
     }.awaitAll()
 }
@@ -622,590 +864,649 @@ suspend fun execute(
 **Performance impact:**
 
 ```
-Sequential (10 items × 150ms):    1 500ms total
-─────────────────────────────────────────────────
+Sequential (10 items × ~150ms avg):       ~1 500ms
+─────────────────────────────────────────────────────
 main ──150ms──┤
 enrich[0]     ──150ms──┤
 enrich[1]              ──150ms──┤
 ...
-enrich[9]                                ──150ms──┤
+enrich[9]                                 ──150ms──┤
 
 
-Parallel (this implementation):     ~300ms total
-─────────────────────────────────────────────────
-main ──150ms──┤
-enrich[0..9]  ──150ms──┤  (all fire simultaneously)
+Parallel (this implementation):            ~300ms
+─────────────────────────────────────────────────────
+main      ──150ms──┤
+enrich[0..9]        ──150ms──┤  (all fire simultaneously)
 ```
-
-The enriched `List<Map<String, String>>` is stored in `MoviesState.listData["series"]` and the engine binds it directly by key name with no additional mapping.
 
 ---
 
-## 10. URL Template Resolution
+## 11. URL Template Resolution
 
-Both the main URL and enrichment URLs support `{{key}}` placeholders:
+Both the main URL and enrichment URLs support `{{key}}` placeholders resolved at execution time:
 
 ```
 Main URL (resolved from ViewModel params):
-  Template: "https://www.omdbapi.com/?i={{seriesId}}&apikey=..."
-  params:   { "seriesId": "tt0903747" }
-  Resolved: "https://www.omdbapi.com/?i=tt0903747&apikey=..."
+  Template:  "https://www.omdbapi.com/?i={{seriesId}}&apikey=..."
+  params:    { "seriesId": "tt0903747" }
+  Resolved:  "https://www.omdbapi.com/?i=tt0903747&apikey=..."
 
-Enrichment URL (resolved from item data):
-  Template: "https://www.omdbapi.com/?i={{id}}&apikey=..."
-  item:     { "id": "tt0903747", "title": "Game of Thrones", ... }
-  Resolved: "https://www.omdbapi.com/?i=tt0903747&apikey=..."
+Enrichment URL (resolved from each item's data):
+  Template:  "https://www.omdbapi.com/?i={{id}}&apikey=..."
+  item data: { "id": "tt0903747", "title": "Game of Thrones", ... }
+  Resolved:  "https://www.omdbapi.com/?i=tt0903747&apikey=..."
 ```
 
-`DataSourceExecutor.fetchAndMap()` applies param substitution before the HTTP call:
-
-```kotlin
-private suspend fun fetchAndMap(
-    ds: DataSourceModel,
-    params: Map<String, String>,
-): List<Map<String, String>> {
-    val url = params.entries.fold(ds.effectiveUrl) { acc, (k, v) ->
-        acc.replace("{{$k}}", v)
-    }.ifEmpty { return emptyList() }
-    ...
-}
-```
-
-This single mechanism powers both the list detail calls (enrichment with item data) and the detail screen call (ViewModel-provided `seriesId`).
+The same mechanism powers detail screen fetches (ViewModel params) and enrichment fetches (item data). No separate resolution code paths exist.
 
 ---
 
-## 11. Data Binding to View
+## 12. Data Binding to View
 
-Once data is in state, `SDUIRenderer` passes the flat `Map<String, String>` into the component tree. Each node resolves its value independently:
+Once data is in `enrichedData`, `SDUIRenderer` passes the flat `Map<String, String>` into the component tree. Each node resolves its value independently:
 
 ```
-state.data = {
-  "title":        "Game of Thrones",
-  "year":         "2011–2019",
-  "genre":        "Action, Adventure, Drama",
-  "rating":       "9.3",
-  "plot":         "Nine noble families ...",
-  "totalSeasons": "8",
-  "posterURL":    "https://...",
-  "runtime":      "57 min",
-  "actors":       "Emilia Clarke, Peter Dinklage ..."
+enrichedData = {
+  "title":           "Game of Thrones",
+  "year":            "2011–2019",
+  "genre":           "Action, Adventure, Drama",
+  "rating":          "9.3",
+  "ratingText":      "IMDb 9.3",          ← template binding
+  "runtimeText":     "Runtime: 57 min",   ← template binding
+  "seasonCountText": "Seasons: 8",        ← template binding
+  "synopsisTitle":   "Synopsis",          ← string binding
+  "creditsTitle":    "Credits",           ← string binding
+  "plot":            "Nine noble families...",
+  "totalSeasons":    "8",
+  "posterURL":       "https://...",
+  "actors":          "Emilia Clarke...",
+  "actorsText":      "Cast: Emilia Clarke..."  ← template binding
 }
 
-JSON node                                Compose output
-──────────────────────────────────────────────────────────────────
+JSON node                                    Compose output
+────────────────────────────────────────────────────────────────────
 { type:"header", titleTemplate:"{{title}}" }
   → Text("Game of Thrones", fontSize=24sp, fontWeight=Bold)
 
-{ type:"header", subtitleTemplate:"{{year}} • {{genre}}" }
-  → Text("2011–2019 • Action, Adventure, Drama", fontSize=14sp)
+{ type:"text", dataBinding:"ratingText" }
+  → Text("IMDb 9.3", fontWeight=SemiBold)
+
+{ type:"text", dataBinding:"runtimeText" }
+  → Text("Runtime: 57 min")
+
+{ type:"text", dataBinding:"synopsisTitle", fontWeight:"bold" }
+  → Text("Synopsis")
 
 { type:"image", dataBinding:"posterURL" }
   → AsyncImage(model="https://...", contentScale=Crop)
 
-{ type:"text", template:"IMDb {{rating}}" }
-  → Text("IMDb 9.3", fontWeight=SemiBold)
-
 { type:"generatedList", countBinding:"totalSeasons" }
-  data["totalSeasons"].toInt() = 8
-  → renders 8 season rows, each with { "seasonNumber": "1" } ... { "seasonNumber": "8" }
-    { type:"text", template:"Season {{seasonNumber}}" } → Text("Season 1") ... Text("Season 8")
+  enrichedData["totalSeasons"].toInt() = 8
+  → renders 8 rows with { "seasonNumber": "1" } ... { "seasonNumber": "8" }
+  → { type:"text", template:"{{seasonLabel}} {{seasonNumber}}" }
+  → Text("Season 1") ... Text("Season 8")
 
-{ type:"text", dataBinding:"awards", visibility:{ isNotEmpty:true } }
-  data["awards"] = "Won 59 Primetime Emmys"
-  → Text("Won 59 Primetime Emmys") rendered
-  (if data["awards"] == "N/A" → node skipped entirely)
+{ type:"text", dataBinding:"awardsText",
+  visibility:{ dataBinding:"awards", isNotEmpty:true } }
+  awards = "Won 59 Primetime Emmys" → rendered
+  (if awards = "N/A" → node skipped entirely)
 ```
 
-There is no mapping code at any layer between the API response and the rendered text. The JSON `fieldMapping` maps API keys to SDUI keys once; the component tree binds those SDUI keys directly.
+There is no mapping code at any layer between the API response and the rendered text. Bindings map API fields once; component nodes reference those binding keys directly.
 
 ---
 
-## 12. Features in Detail
+## 13. Dynamic Tab Navigation
 
-### Series List Screen
+The bottom navigation bar is fully driven by `tab_config.json`. No tab data is hardcoded anywhere in the app.
 
-**Entry**: `MoviesScreen.kt` — a 35-line file that does nothing but pass ViewModel state into `SDUIRenderer`.
+### Configuration File
 
-**ViewModel** (`MoviesViewModel`):
+`core/network/src/main/assets/screens/tab_config.json`:
+
+```json
+{
+  "type": "tabBar",
+  "defaultSelectedTab": "movies",
+  "bindings": {
+    "moviesTabTitle":  { "source": "string", "key": "tab.movies.title" },
+    "bankingTabTitle": { "source": "string", "key": "tab.banking.title" }
+  },
+  "tabs": [
+    {
+      "id": "movies",
+      "titleBinding": "moviesTabTitle",
+      "icon": "film",
+      "rootScreenId": "tv_series_list"
+    },
+    {
+      "id": "banking",
+      "titleBinding": "bankingTabTitle",
+      "icon": "building.columns",
+      "rootScreenId": "personal_details"
+    }
+  ]
+}
 ```
-init → LoadScreen intent
-     → LoadSDUIScreenUseCase("tv_series_list")  → ScreenModel
-     → DataSourceExecutor.execute(dataSource)    → 10 enriched items
-     → setState(listData = { "series": items })
+
+### Resolution Architecture
+
+```
+tab_config.json
+        │ Json.decodeFromString<TabBarConfig>()
+        ▼
+TabBarConfig { defaultSelectedTab, bindings, tabs[] }
+        │
+        ▼
+TabConfigLoader (@Singleton)
+  ├── lazy { load + parse }           ← file read happens exactly once
+  ├── resolveTitle(cfg, titleBinding)
+  │     binding.source = "string"
+  │     → stringResolver.resolve("tab.movies.title")
+  │     → "tab_movies_title" → R.string.tab_movies_title → "Movies"
+  ├── resolvedTabs: List<ResolvedTab>
+  │     ResolvedTab(id="movies", title="Movies",
+  │                 icon="film", graphRoute="movies_graph")
+  └── defaultTabRoute: "movies_graph"   ← "${defaultSelectedTab}_graph"
+        │
+        ▼
+TabBarViewModel (@HiltViewModel)
+  ├── tabs: List<ResolvedTab>
+  └── startDestination: String
+        │
+        ▼
+MainScreen
+  ├── hiltViewModel<TabBarViewModel>()
+  ├── NavigationBar → tabs.forEach { NavigationBarItem(...) }
+  └── ArchitectNavHost(startDestination = viewModel.startDestination)
 ```
 
-**JSON screen** (`tv_series_list.json`):
-- `type: "list"` with `listDataBinding: "series"` — renders one row per item
-- Each row has `action: { type: "navigate", routeTemplate: "series_detail/{{id}}" }`
-- Row children: poster image + title + year•type + genre + IMDb rating
-- `enrichmentDataSource` defined → triggers parallel enrichment for rating + genre
+### Graph Route Convention
 
-**Supported actions from ViewModel:**
+Tab `id` maps to navigation graph route as `"${id}_graph"`:
 
-| Action | Trigger | Result |
+| JSON `id` | Derived `graphRoute` | Navigation graph |
+|---|---|---|
+| `"movies"` | `"movies_graph"` | `moviesGraph(navController)` in `ArchitectNavHost` |
+| `"banking"` | `"banking_graph"` | `bankingGraph(navController)` in `ArchitectNavHost` |
+
+**Adding a new tab** requires:
+1. Add an entry in `tab_config.json`
+2. Add a string resource for the title
+3. Register the navigation graph in `ArchitectNavHost`
+
+No changes to `MainScreen`, `TabConfigLoader`, or `TabBarViewModel`.
+
+### Icon Mapping
+
+`IconMapper` maps JSON icon names (SF Symbol–style) to Material3 `ImageVector`:
+
+| JSON `icon` | Material icon | Usage |
+|---|---|---|
+| `"film"` | `Icons.Default.VideoLibrary` | Movies tab |
+| `"building.columns"` | `Icons.Default.AccountBalance` | Banking tab |
+| `"movie"` | `Icons.Default.Movie` | Legacy |
+| `"account_balance"` | `Icons.Default.AccountBalance` | Legacy |
+
+---
+
+## 14. Features in Detail
+
+### Movies — Series List Screen
+
+**Entry**: `MoviesScreen.kt` — ~35 lines, purely a ViewModel-state-to-`SDUIRenderer` bridge.
+
+**JSON** (`tv_series_list.json`):
+- `type: "list"` with `listDataBinding: "series"` — one row per enriched API item
+- Row action: `routeTemplate: "series_detail/{{id}}"` — navigates to detail on tap
+- Row children: poster image + title + year•type + genre + IMDb rating (from binding)
+- Header uses `titleBinding` / `subtitleBinding` — resolved from string resources
+
+**Supported ViewModel actions:**
+
+| Action | Source | Result |
 |---|---|---|
 | `navigate` | Row tap | `setEffect(Navigate(route))` → `navController.navigate()` |
-| `reorder` | Long-press drag end | `reorderList(binding, from, to)` in-memory state update |
-| `search` | (Phase 3) | reserved |
+| `reorder` | Long-press drag end | `reorderList(binding, from, to)` in-memory update |
+| `search` | Search icon | reserved for Phase 3 |
 
 ---
 
-### Series Detail Screen
+### Movies — Series Detail Screen
 
-**Entry**: `SeriesDetailScreen.kt` — a 40-line file. The ViewModel receives `seriesId` from the nav argument and does everything else.
+**Entry**: `SeriesDetailScreen.kt` — ~40 lines. `seriesId` arrives as a nav argument.
 
-**ViewModel** (`SeriesDetailViewModel`):
+**JSON** (`series_detail.json`):
+- `bindings` block with 7 "api" bindings, 11 "string" bindings, 7 "template" bindings
+- Empty `fieldMapping` — API field remapping handled entirely by bindings
+- Back button: `topBar` with `action.type: "back"`
+- Header: `titleTemplate: "{{title}}"`, `subtitleTemplate: "{{year}} • {{genre}}"`
+- Hero card: poster + ratingText + runtimeText + seasonCountText + awardsText (visibility-guarded)
+- Synopsis section: `dataBinding: "synopsisTitle"` + `dataBinding: "plot"`
+- Credits section: `actorsText`, `writerText`, `directorText`
+- Seasons: `generatedList` + `countBinding: "totalSeasons"` → dynamic season rows
+
+---
+
+### Banking — Multi-Step Form
+
+Four SDUI screens forming a guided onboarding flow. All form components use `FormDataStorage` (singleton in `engine:sdui`) to hold cross-step state and run validation.
+
+| Step | JSON screen | Key components |
+|---|---|---|
+| 1 | `personal_details.json` | `textField`, `dateField`, `segmentedControl`, `dropdown` |
+| 2 | `address_details.json` | `textField`, `dropdown` |
+| 3 | `financial_information.json` | `dropdown`, `currencyField`, `slider`, `stepperField` |
+| 4 | `review_submit.json` | `summaryRow` (read-only), `button` (edit + submit) |
+
+Validation is declarative in JSON:
+
+```json
+{
+  "type": "textField",
+  "dataBinding": "fullName",
+  "label": "Full Name",
+  "validation": { "required": true, "minLength": 2 }
+}
 ```
-Load(seriesId) intent
-  → LoadSDUIScreenUseCase("series_detail")       → ScreenModel
-  → DataSourceExecutor.execute(dataSource,
-       params = { "seriesId": seriesId })         → single detail object
-  → setState(data = items.firstOrNull())
-```
 
-**JSON screen** (`series_detail.json`):
-- Back button via `topBar` with `props.leadingIcon: "back"` → `action.type: "back"`
-- Title + subtitle via `header` with `titleTemplate`/`subtitleTemplate`
-- Hero card: poster image + rating + runtime + seasons count + awards (visibility-guarded)
-- Synopsis card: plot text
-- Credits card: cast, writer, director
-- Seasons: `generatedList` with `countBinding: "totalSeasons"` — auto-generates N season rows from data, no loop code anywhere
-
-**No Kotlin UI code** describes what the detail screen looks like. The layout, spacing, colors, and data bindings are all declared in `series_detail.json`.
+The `button` with `titleBinding: "Submit"` triggers `FormDataStorage.validateForm()` before firing the navigation action.
 
 ---
 
-### Banking Screen
+### Deep Link Handling
 
-Placeholder — `Box { Text("TODO") }`. No ViewModel, no network, no domain layer. Reserved for future implementation.
+`DeepLinkActivity` receives URI intents, extracts the `lastPathSegment` and query parameters, and routes to `MainActivity` with a `"route"` extra. `MainActivity` navigates to the appropriate graph before handing off to `MainScreen`.
+
+Supported deep link patterns: any route constant defined in `Routes.kt`.
 
 ---
 
-## 13. Drag-to-Reorder
+## 15. Drag-to-Reorder
 
-The series list supports long-press drag-to-reorder. Implementation lives entirely in `SDUIComponents.RenderList` since the list is inside a `verticalScroll` Column (LazyColumn cannot be used inside a scrollable ancestor).
+The series list supports long-press drag-to-reorder. Implementation lives in `SDUIComponentsDispatcher.RenderList` (or `ListComponent.kt`) because the list is inside a `verticalScroll` Column — `LazyColumn` cannot be nested in a scrollable ancestor.
 
 ```
 User long-presses a row
   └── detectDragGesturesAfterLongPress
         onDragStart: draggingIndex = index, dragOffsetY = 0f
         onDrag:      dragOffsetY += dragAmount.y
-                     graphicsLayer { translationY = dragOffsetY }  ← visual only, no layout change
-                     zIndex = 1f                                    ← float above siblings
-                     scaleX/Y = 1.03f                              ← lift effect
+                     graphicsLayer { translationY = dragOffsetY }  ← visual float
+                     zIndex = 1f, scaleX/Y = 1.03f                 ← lift effect
         onDragEnd:
-          targetIndex = (draggingIndex + dragOffsetY / avgItemHeight).roundToInt()
-                          .coerceIn(list.indices)
+          targetIndex = (draggingIndex + dragOffsetY / avgItemHeight)
+                          .roundToInt().coerceIn(list.indices)
           onAction("reorder", { binding, from, to })
-          draggingIndex = -1, dragOffsetY = 0f
 
 ViewModel.handleAction("reorder"):
-  reorderList(binding, from, to):
-    val list = listData[binding].toMutableList()
-    list.add(to, list.removeAt(from))
-    setState { copy(listData = listData + (binding to list)) }
+  val list = listData[binding].toMutableList()
+  list.add(to, list.removeAt(from))
+  setState { copy(listData = listData + (binding to list)) }
 ```
 
-Non-dragged items that should make room for the dragged item are visually shifted with the same `graphicsLayer { translationY }` approach — no layout recomposition, just a transform.
-
-`key(itemData["id"])` ensures Compose tracks each item by its series ID rather than list position, so gesture state survives reorders correctly.
-
-**Persistence**: The order lives in `MoviesState.listData` — a `StateFlow` in memory. It resets when the process is killed. This is intentional; no SharedPreferences or Room writes are performed.
+- Non-dragged items use the same `graphicsLayer { translationY }` approach for visual shift — no layout recomposition.
+- `key(itemData["id"])` ensures Compose tracks each item by series ID through reorders.
+- **Persistence**: order lives in `MoviesState.listData` (a `StateFlow`). Resets on process kill — intentional design choice.
 
 ---
 
-## 14. TalkBack & Accessibility
+## 16. TalkBack & Accessibility
 
-Both the list and detail screens are fully compatible with Android TalkBack (screen reader) and all other accessibility services that consume the Compose semantics tree.
+Both the list and detail screens are fully compatible with Android TalkBack and all accessibility services that consume the Compose semantics tree. No `<uses-permission>` entry is required.
 
-### Design principle
+### Design Principle
 
-Accessibility is a **first-class field on every `ComponentNode`**, not a side-channel through `props`. Every component renderer calls a single extension function; the JSON screen definition drives what TalkBack announces.
+Accessibility is a **first-class field on every `ComponentNode`**, not a side-channel through `props`. Every component renderer calls a single Modifier extension; the JSON screen definition drives what TalkBack announces.
 
 ```
 JSON screen definition
-  └── ComponentNode.accessibility: AccessibilityModel
-        └── Modifier.applyAccessibility(model)   ← single utility
-              └── Compose semantics tree
-                    └── TalkBack / a11y services
+  └── ComponentNode.screenAccessibility: AccessibilityModel
+        └── Modifier.applyAccessibility(model, data)
+              ├── Token resolution: "{{title}} poster" → "Game of Thrones poster"
+              ├── clearAndSetSemantics {}   (importantForAccessibility = false)
+              ├── semantics(mergeDescendants = true)
+              ├── contentDescription = resolvedLabel
+              ├── role = Role.Button / Role.Image / heading() / ...
+              └── onClick(label = hint)     (TalkBack "double-tap to ...")
 ```
 
-### No permissions required
-
-TalkBack is a system service toggled from **Settings → Accessibility**. No `<uses-permission>` entry is needed; `android.permission.INTERNET` (already declared) remains the only manifest permission.
-
----
-
-### Data model — `AccessibilityModel`
-
-Defined in `core/network/src/main/java/.../model/ScreenModel.kt` alongside all other node models:
+### `AccessibilityModel` Data Class
 
 ```kotlin
 @Serializable
 data class AccessibilityModel(
-    // Overrides what TalkBack announces.
-    // Omit when child Text nodes already carry the full meaning.
-    val label: String? = null,
-
-    // Action label — TalkBack says "double-tap to <hint>".
-    val hint: String? = null,
-
-    // Semantic role: "button" | "image" | "checkbox" | "switch" | "tab" | "header"
-    val role: String? = null,
-
-    // Collapse all descendant nodes into one focus stop.
-    val mergeDescendants: Boolean? = null,
-
-    // false → node is removed from the accessibility tree entirely.
-    val importantForAccessibility: Boolean? = null,
+    val label: String? = null,                    // overrides TalkBack announcement
+    val hint: String? = null,                     // "double-tap to <hint>"
+    val role: String? = null,                     // "button"|"image"|"header"|...
+    val mergeDescendants: Boolean? = null,         // collapse descendants into one focus stop
+    val importantForAccessibility: Boolean? = null // false → removed from a11y tree
 )
 ```
 
-`ComponentNode` carries it as an optional field:
+### `Modifier.applyAccessibility`
 
 ```kotlin
-data class ComponentNode(
-    ...
-    val accessibility: AccessibilityModel? = null,
-)
-```
-
----
-
-### The utility — `Modifier.applyAccessibility`
-
-`engine/sdui/src/main/java/.../engine/sdui/AccessibilityUtils.kt`
-
-```kotlin
-fun Modifier.applyAccessibility(model: AccessibilityModel?): Modifier {
-    model ?: return this                                          // null → no-op
+fun Modifier.applyAccessibility(
+    model: AccessibilityModel?,
+    data: Map<String, String> = emptyMap(),
+): Modifier {
+    model ?: return this
 
     if (model.importantForAccessibility == false)
-        return clearAndSetSemantics {}                           // remove from tree
+        return this.clearAndSetSemantics {}
+
+    val resolvedLabel = model.label?.resolveTokens(data)  // {{key}} substitution
+    val resolvedHint  = model.hint?.resolveTokens(data)
 
     return semantics(mergeDescendants = model.mergeDescendants == true) {
-        model.label?.let { contentDescription = it }
-
-        model.role?.let { r ->
-            when (r.lowercase()) {
+        resolvedLabel?.let { contentDescription = it }
+        model.role?.let {
+            when (it.lowercase()) {
                 "button"   -> role = Role.Button
                 "image"    -> role = Role.Image
                 "checkbox" -> role = Role.Checkbox
                 "switch"   -> role = Role.Switch
                 "tab"      -> role = Role.Tab
-                "header"   -> heading()                         // no Role.Header in Compose
+                "header"   -> heading()
             }
         }
-
-        model.hint?.let { hint -> onClick(label = hint) { false } }
+        resolvedHint?.let { hint -> onClick(label = hint) { false } }
     }
 }
 ```
 
-**Decision table:**
+### Decision Table
 
-| `AccessibilityModel` state | Result |
+| `AccessibilityModel` state | Compose result |
 |---|---|
-| `null` | No-op — component is transparent to the semantics tree |
-| `importantForAccessibility = false` | `clearAndSetSemantics {}` — node removed from tree; short-circuits everything else |
-| `mergeDescendants = true` | All descendant semantics collapse into one focus stop |
-| `label` present | Sets `contentDescription`; omit when visible `Text` children are already sufficient |
-| `role` present | Maps string → `Role.*`; `"header"` maps to `heading()` (Compose has no `Role.Header`) |
-| `hint` present | Registers `onClick(label = hint)` — TalkBack announces "double-tap to `<hint>`" |
+| `null` | No-op — transparent to semantics tree |
+| `importantForAccessibility = false` | `clearAndSetSemantics {}` — node and all descendants removed |
+| `mergeDescendants = true` | All descendant semantics collapsed into one TalkBack focus stop |
+| `label` present with `{{key}}` tokens | Tokens resolved from current `data` map at render time |
+| `role = "header"` | `heading()` — Compose has no `Role.Header` |
+| `hint` present | `onClick(label = hint)` — TalkBack: "double-tap to `<hint>`" |
 
-**label vs. visible text:**
-Set `label` only when there is no visible text (image, icon-only button). For containers whose child `Text` nodes already carry the full meaning, set `mergeDescendants = true` and omit `label` — TalkBack merges and reads the visible text without duplication.
-
----
-
-### Component-by-component breakdown
-
-Every built-in component calls `.applyAccessibility(node.accessibility)` on its root modifier. Accessibility is fully driven by the JSON; no Kotlin change is needed when labels or roles change.
-
-#### `image` (`ImageComponent.kt`)
+### Image Accessibility Pattern
 
 ```kotlin
-val mod = ...clip(...).applyAccessibility(node.accessibility)
-
-AsyncImage(
-    model = url,
-    contentDescription = null,  // semantics come from applyAccessibility via modifier
-    modifier = mod,
-)
+// Box owns the semantics; AsyncImage is silenced entirely
+Box(modifier = sizeMod.semantics {
+    contentDescription = resolvedLabel
+    role = Role.Image
+}) {
+    AsyncImage(
+        model = url,
+        contentDescription = null,
+        modifier = Modifier.matchParentSize().clearAndSetSemantics {},
+    )
+}
 ```
 
-`contentDescription = null` is intentional — the `AsyncImage` parameter is bypassed; semantics are owned exclusively by `applyAccessibility`.
+Coil 3 adds its own internal semantics modifier. Without `clearAndSetSemantics {}` on `AsyncImage`, two competing semantic nodes exist and TalkBack reads both.
 
-#### `icon` (`IconComponent.kt`)
+### Duplicate Reading Prevention
 
-```kotlin
-Icon(
-    imageVector = icon,
-    contentDescription = null,  // semantics come from applyAccessibility via modifier
-    modifier = Modifier.size(size).applyAccessibility(node.accessibility),
-)
-```
+Components that sit inside a `mergeDescendants = true` parent and have `importantForAccessibility = false` set:
 
-#### `list` (`ListComponent.kt`)
+- `TextComponent` — `.applyAccessibility(node.screenAccessibility, data)` on the Text modifier → `clearAndSetSemantics {}` prevents Text's internal `text` property from duplicating the parent's `contentDescription`
+- `ColumnComponent`, `RowComponent`, `HeaderComponent`, `GeneratedListComponent` — same pattern on root modifier
 
-The item `Box` applies the list node's `AccessibilityModel` (set once in JSON, applied to every item):
+Without this, a season row with `label: "Season 1"` and `mergeDescendants: true` would produce: **"Season 1 Season 1"** (parent's `contentDescription` + child Text's `text` property merged together).
 
-```kotlin
-Box(
-    modifier = Modifier
-        .fillMaxWidth()
-        .applyAccessibility(node.accessibility)   // e.g. mergeDescendants=true, hint="long press to reorder"
-        ...
-)
-```
-
-The drag-handle icon retains a hardcoded `clearAndSetSemantics {}` — it is a structural element, not a `ComponentNode`, and must always be excluded from the merged item node:
-
-```kotlin
-Icon(
-    imageVector = Icons.Default.DragHandle,
-    contentDescription = "Drag to reorder",
-    modifier = Modifier...clearAndSetSemantics {},   // excluded from merged parent
-)
-```
-
-#### `card` (`CardComponent.kt`)
-
-```kotlin
-var mod = Modifier
-    .fillMaxWidth()
-    .padding(...)
-    .applyAccessibility(node.accessibility)
-if (action != null) mod = mod.clickable { ... }
-```
-
-JSON for a tappable card:
-```json
-"accessibility": { "mergeDescendants": true, "role": "button", "hint": "open detail" }
-```
-
-#### `button` (`ButtonComponent.kt`)
-
-```kotlin
-Box(
-    modifier = Modifier
-        .padding(...)
-        .applyAccessibility(node.accessibility)
-        .clickable { ... },
-) { Text(label) }
-```
-
-JSON: `"accessibility": { "role": "button" }` — `label` can be omitted because the child `Text` carries the announcement text.
-
-#### `row` (`RowComponent.kt`)
-
-```kotlin
-var mod = Modifier.fillMaxWidth().applyAccessibility(node.accessibility)
-if (action != null) mod = mod.clickable { ... }
-```
-
-JSON for a tappable season row:
-```json
-"accessibility": { "mergeDescendants": true, "role": "button" }
-```
-
-#### `topBar` (`TopBarComponent.kt`)
-
-The outer `Column` receives the node's `AccessibilityModel` via `applyAccessibility`. The **back button** and **search icon** are internal hardcoded elements (not separate `ComponentNode`s), so their semantics are hardcoded directly — not via `props`:
-
-| Element | How semantics are set |
-|---|---|
-| Outer `Column` | `applyAccessibility(node.accessibility)` |
-| Back button `Box` | Hardcoded: `role = Role.Button`, `contentDescription = "Navigate back"` |
-| Arrow `Icon` inside back | `contentDescription = null` — suppressed to prevent double-announcement |
-| Search `IconButton` | Hardcoded: `contentDescription = "Search"` (Material sets role automatically) |
-| Title `Text` | Announced natively |
-| Subtitle `Text` | Announced natively |
-
-#### `header` / `text`
-
-Both render standard Compose `Text`. TalkBack announces visible text natively. Set `"accessibility": { "role": "header" }` on a `header` node to mark section headings for screen reader navigation.
-
----
-
-### JSON authoring guide
+### JSON Authoring Guide
 
 ```json
-// Image with explicit label
+// Image with label containing data token
 {
   "type": "image",
   "dataBinding": "posterURL",
-  "accessibility": { "label": "Series poster", "role": "image" }
+  "accessibility": { "label": "{{title}} poster", "role": "image" }
 }
 
-// Tappable card — merge all child text into one focus stop
+// Tappable row — merge all child text into one focus stop
 {
-  "type": "card",
+  "type": "row",
   "action": { "type": "navigate", "routeTemplate": "series_detail/{{id}}" },
-  "accessibility": { "mergeDescendants": true, "role": "button", "hint": "open detail" }
+  "accessibility": {
+    "mergeDescendants": true,
+    "role": "button",
+    "hint": "open detail"
+  }
 }
 
-// Icon that decorates a rating — excluded from accessibility tree
+// Decorative icon — excluded from accessibility tree
 {
   "type": "icon",
-  "icon": "star",
+  "icon": "star.fill",
   "accessibility": { "importantForAccessibility": false }
 }
 
-// Draggable list — each item merges descendants + announces drag hint
+// Section heading — navigable via TalkBack heading shortcut
 {
-  "type": "list",
-  "listDataBinding": "series",
-  "accessibility": { "mergeDescendants": true, "hint": "long press to reorder" }
-}
-
-// Section header — navigable via TalkBack headings shortcut
-{
-  "type": "header",
-  "titleTemplate": "Synopsis",
+  "type": "text",
+  "dataBinding": "synopsisTitle",
   "accessibility": { "role": "header" }
 }
+
+// Generated season row with dynamic label
+{
+  "type": "row",
+  "accessibility": {
+    "label": "Season {{seasonNumber}}",
+    "role": "button",
+    "hint": "view season details",
+    "mergeDescendants": true
+  }
+}
 ```
 
----
-
-### Focus traversal — List screen
+### TalkBack Focus Traversal — List Screen
 
 ```
-TalkBack swipe-right order:
-  1. "Series Hub"                    ← header title (native Text)
-  2. "Top rated series"              ← header subtitle (native Text)
-  3. "Search" button                 ← IconButton, hardcoded contentDescription
-  4–N. Each series item              ← merged node: all child text + "double-tap to open detail"
-       drag handle excluded          ← clearAndSetSemantics {} suppresses it
+Swipe-right order:
+  1. "Series Hub"                   ← header title (native Text)
+  2. "Live OMDB data..."            ← header subtitle (native Text)
+  3. "Search" button                ← hardcoded contentDescription
+  4–N. Each series item (merged)    ← title + year + genre + rating merged
+       "double-tap to open detail"  ← from hint
+       drag handle excluded         ← clearAndSetSemantics {}
 ```
 
-### Focus traversal — Detail screen
+### TalkBack Focus Traversal — Detail Screen
 
 ```
-TalkBack swipe-right order:
-  1. "Navigate back" button          ← hardcoded role=Button
-  2. "Game of Thrones"               ← header title (native Text)
-  3. "2011–2019 • Action, Drama"     ← header subtitle (native Text)
-  4. Hero card                       ← mergeDescendants: poster + rating + runtime + seasons
-  5. "Won 59 Primetime Emmys"        ← conditional, skipped when empty
-  6. "Synopsis"                      ← role=header, navigable via heading shortcut
+Swipe-right order:
+  1. "Navigate back" button         ← hardcoded role=Button
+  2. "Game of Thrones"              ← header title
+  3. "2011–2019 • Action, Drama"    ← header subtitle
+  4. Hero card (merged)             ← title + IMDb rating + runtime + seasons
+  5. "Won 59 Primetime Emmys"       ← conditional, skipped when empty
+  6. "Synopsis" heading             ← role=header, navigable via heading shortcut
   7. <plot text>
-  8. "Cast: …"
-  9–N. "Season 1" … "Season N"      ← role=button each, "double-tap to open"
+  8. "Credits" heading
+  9. "Cast: Emilia Clarke..."
+  10. "Writer: ..."
+  11. "Director: ..."
+  12. "Seasons" heading
+  13–N. "Season 1" button ... "Season N" button
 ```
 
 ---
 
-## 15. Libraries & Versions
+## 17. Libraries & Versions
 
 | Library | Version | Purpose |
 |---|---|---|
 | Kotlin | 2.0.21 | Language |
-| AGP | 8.13.2 | Android Gradle Plugin |
+| Android Gradle Plugin | 8.x | Build toolchain |
 | KSP | 2.0.21-1.0.28 | Annotation processor (Hilt, Room) |
 | Jetpack Compose BOM | 2024.09.00 | Compose UI toolkit |
-| Material 3 | (BOM) | Design system |
+| Material 3 | (via BOM) | Design system |
 | Hilt | 2.51.1 | Dependency injection |
+| hilt-navigation-compose | — | `hiltViewModel()` in Compose |
 | Compose Navigation | 2.8.3 | Type-safe screen navigation |
-| Retrofit | 2.11.0 | REST adapter |
 | OkHttp | 4.12.0 | HTTP engine + logging interceptor |
-| kotlinx.serialization | 1.7.3 | JSON parsing (custom Retrofit converter) |
+| kotlinx.serialization | 1.7.3 | JSON parsing, `@Serializable` models |
 | Room | 2.6.1 | SQLite for local watchlist |
 | Coil 3 | 3.0.4 | Async image loading |
-| Kotlin Coroutines | 1.8.1 | async/await, Flow, StateFlow, Channel |
+| Koin | 3.5.6 | DI for analytics module (alongside Hilt) |
+| Kotlin Coroutines | 1.8.1 | `async`/`awaitAll`, `Flow`, `StateFlow`, `Channel` |
+| Material Icons Extended | — | Full Material icon set for SDUI icon mapping |
 
 ---
 
-## 16. Project File Tree
+## 18. Project File Tree
 
 ```
 MoviesDemoAPP/
+│
 ├── app/
-│   └── src/main/java/.../app/
-│       ├── MainActivity.kt
-│       ├── MainNavHost.kt
-│       └── di/AppModule.kt
+│   ├── build.gradle.kts
+│   └── src/main/
+│       ├── java/com/example/moviesdemoapp/app/
+│       │   ├── App.kt                         — @HiltAndroidApp + Koin init
+│       │   ├── MainActivity.kt                — deep link routing + setContent
+│       │   ├── SplashActivity.kt              — 1.5s branded splash
+│       │   ├── DeepLinkActivity.kt            — URI intent → MainActivity
+│       │   ├── MainScreen.kt                  — Scaffold + dynamic NavigationBar
+│       │   ├── ArchitectNavHost.kt            — NavHost(startDestination, graphs)
+│       │   ├── IconMapper.kt                  — icon name string → ImageVector
+│       │   └── tab/
+│       │       ├── TabBarConfig.kt            — TabBarConfig, TabItem, ResolvedTab
+│       │       ├── TabConfigLoader.kt         — @Singleton JSON loader + binding resolver
+│       │       └── TabBarViewModel.kt         — @HiltViewModel: tabs + startDestination
+│       ├── res/values/strings.xml             — app_name, tab_movies_title, tab_banking_title
+│       └── AndroidManifest.xml
 │
 ├── core/
-│   ├── domain/src/main/java/.../core/domain/
-│   │   ├── BaseViewModel.kt
-│   │   ├── UiContract.kt
-│   │   ├── Result.kt
-│   │   └── BaseUseCase.kt
+│   ├── domain/
+│   │   ├── build.gradle.kts
+│   │   └── src/main/java/.../core/domain/
+│   │       ├── BaseViewModel.kt               — abstract MVI base
+│   │       ├── UiContract.kt                  — UiState, UiIntent, UiEffect markers
+│   │       └── Result.kt                      — Success | Error | Loading
 │   │
-│   ├── network/src/main/
-│   │   ├── assets/screens/
-│   │   │   ├── tv_series_list.json      ← SDUI: movies list screen + data source
-│   │   │   └── series_detail.json       ← SDUI: detail screen + data source
-│   │   └── java/.../core/network/
-│   │       ├── di/NetworkModule.kt
-│   │       ├── model/DataSourceModel.kt
-│   │       ├── model/ScreenModel.kt         ← ComponentNode, AccessibilityModel, StyleModel, ActionModel, VisibilityModel
-│   │       ├── model/OmdbDtos.kt
-│   │       ├── OmdbApiService.kt
-│   │       ├── NetworkClient.kt
-│   │       ├── NetworkClientImpl.kt
-│   │       └── KotlinxSerializationConverterFactory.kt
+│   ├── network/
+│   │   ├── build.gradle.kts
+│   │   ├── src/main/assets/screens/
+│   │   │   ├── tab_config.json                — SDUI: bottom nav tab configuration
+│   │   │   ├── tv_series_list.json            — SDUI: movies list screen + bindings
+│   │   │   ├── series_detail.json             — SDUI: detail screen + bindings
+│   │   │   ├── personal_details.json          — SDUI: banking step 1
+│   │   │   ├── address_details.json           — SDUI: banking step 2
+│   │   │   ├── financial_information.json     — SDUI: banking step 3
+│   │   │   └── review_submit.json             — SDUI: banking step 4
+│   │   └── src/main/java/.../core/network/
+│   │       ├── di/NetworkModule.kt            — Hilt: Json, OkHttpClient
+│   │       ├── model/ScreenModel.kt           — ScreenModel, ComponentNode, BindingItem,
+│   │       │                                    AccessibilityModel, StyleModel,
+│   │       │                                    ActionModel, VisibilityModel
+│   │       ├── model/DataSourceModel.kt       — DataSourceModel, RequestModel, ResponseModel
+│   │       ├── StringResolver.kt              — interface (no Android dependency)
+│   │       ├── ScreenSource.kt                — interface: load(screenId): String?
+│   │       ├── NetworkClient.kt               — interface: get(url): String?
+│   │       └── OkHttpNetworkClient.kt         — OkHttp implementation
 │   │
-│   ├── data/src/main/java/.../core/data/
-│   │   ├── remote/
-│   │   │   ├── SDUIDataRepository.kt        ← interface: fetch(url) → String?
-│   │   │   ├── SDUIDataRepositoryImpl.kt    ← OkHttp impl
-│   │   │   └── DataSourceExecutor.kt        ← main fetch + parallel enrichment
-│   │   ├── local/
-│   │   │   ├── AppDatabase.kt
-│   │   │   ├── WatchlistDao.kt
-│   │   │   └── WatchlistEntity.kt
-│   │   └── di/DataModule.kt
+│   ├── data/
+│   │   ├── build.gradle.kts
+│   │   └── src/main/java/.../core/data/
+│   │       ├── remote/
+│   │       │   ├── SDUIDataRepository.kt      — interface: fetch(url): String?
+│   │       │   ├── SDUIDataRepositoryImpl.kt  — NetworkClient-backed impl
+│   │       │   └── DataSourceExecutor.kt      — main fetch + parallel enrichment
+│   │       ├── local/
+│   │       │   ├── AppDatabase.kt             — @Database(WatchlistEntity)
+│   │       │   ├── WatchlistDao.kt
+│   │       │   ├── WatchlistEntity.kt
+│   │       │   └── LocalScreenSource.kt       — assets/screens/{id}.json → String
+│   │       └── di/DataModule.kt               — @Binds repos + @Provides Room
 │   │
-│   └── ui/src/main/java/.../core/ui/
-│       ├── DesignTokens.kt
-│       ├── MovieAppTheme.kt
-│       └── colorFromToken.kt
+│   └── ui/
+│       ├── build.gradle.kts
+│       └── src/main/
+│           ├── java/.../core/ui/
+│           │   ├── DesignTokens.kt            — all colors, spacing, typography, radii
+│           │   ├── colorFromToken.kt          — token string → Compose Color
+│           │   └── MovieAppTheme.kt           — MaterialTheme wrapper
+│           └── res/values/strings.xml         — common_back, common_continue, common_currency_symbol
 │
 ├── engine/
-│   ├── sdui/src/main/java/.../engine/sdui/
-│   │   ├── SDUIRenderer.kt              ← public Composable + SDUIRenderEngine
-│   │   ├── SDUIComponentsDispatcher.kt  ← routes type → built-in renderer
-│   │   ├── AccessibilityUtils.kt        ← Modifier.applyAccessibility(AccessibilityModel?)
-│   │   ├── TemplateResolver.kt          ← {{key}} resolution + visibility evaluation
-│   │   ├── ComponentRegistry.kt         ← extensible custom component registry
-│   │   ├── usecase/LoadSDUIScreenUseCase.kt
-│   │   └── components/
-│   │       ├── TopBarComponent.kt       ← back (role=Button) + search icon
-│   │       ├── HeaderComponent.kt       ← title + subtitle + optional search
-│   │       ├── ColumnComponent.kt       ← vertical stack
-│   │       ├── RowComponent.kt          ← horizontal stack, role=Button when tappable
-│   │       ├── CardComponent.kt         ← mergeDescendants, role=Button when tappable
-│   │       ├── ListComponent.kt         ← drag-to-reorder, item mergeDescendants
-│   │       ├── GeneratedListComponent.kt← count-driven repeated layout
-│   │       ├── TextComponent.kt         ← text (native TalkBack)
-│   │       ├── ImageComponent.kt        ← contentDescription from props or "Movie poster"
-│   │       ├── IconComponent.kt         ← "Rating" / "Search" / "Play" descriptions
-│   │       ├── ButtonComponent.kt       ← role=Button + label contentDescription
-│   │       ├── SpacerComponent.kt       ← decorative gap (no semantics)
-│   │       └── DividerComponent.kt      ← decorative rule (no semantics)
+│   ├── sdui/
+│   │   ├── build.gradle.kts
+│   │   └── src/main/java/.../engine/sdui/
+│   │       ├── SDUIRenderer.kt                — @Composable entry point + SDUIRenderEngine
+│   │       │                                    SduiEntryPoint (Hilt entry point)
+│   │       │                                    enrichedData = dataMap + resolveAll()
+│   │       ├── SDUIComponentsDispatcher.kt    — routes type → component renderer
+│   │       ├── AccessibilityUtils.kt          — Modifier.applyAccessibility(model, data)
+│   │       │                                    String.resolveTokens(data)
+│   │       ├── TemplateResolver.kt            — {{key}} resolution + isVisible()
+│   │       ├── BindingResolver.kt             — resolveAll(): api→string→template pipeline
+│   │       │                                    resolve(key): cache + fallback
+│   │       ├── AndroidStringResolver.kt       — Context-based StringResolver impl
+│   │       │                                    dot→underscore key conversion
+│   │       ├── StringResolverModule.kt        — @Provides @Singleton StringResolver
+│   │       ├── FormDataStorage.kt             — singleton cross-step form state
+│   │       ├── ComponentRegistry.kt           — extensible custom component registry
+│   │       ├── SduiComponentProvider.kt       — functional interface for @IntoSet
+│   │       └── components/
+│   │           ├── TopBarComponent.kt         — back (role=Button) + search icon
+│   │           ├── HeaderComponent.kt         — title + subtitle, titleBinding support
+│   │           ├── ColumnComponent.kt         — vertical stack + applyAccessibility
+│   │           ├── RowComponent.kt            — horizontal stack + applyAccessibility
+│   │           ├── CardComponent.kt           — elevated container + applyAccessibility
+│   │           ├── ListComponent.kt           — drag-to-reorder + item applyAccessibility
+│   │           ├── GeneratedListComponent.kt  — count-driven repeat + applyAccessibility
+│   │           ├── TextComponent.kt           — text + applyAccessibility (prevents dup)
+│   │           ├── ImageComponent.kt          — Box+AsyncImage pattern (Coil silenced)
+│   │           ├── IconComponent.kt           — Icon(contentDescription=null) + applyAccessibility
+│   │           ├── ButtonComponent.kt         — Material Button + applyAccessibility
+│   │           ├── SpacerComponent.kt         — decorative gap
+│   │           └── DividerComponent.kt        — decorative rule
 │   │
-│   └── navigation/src/main/java/.../engine/navigation/
-│       ├── Routes.kt
-│       ├── NavigationAction.kt
-│       └── NavigationEngine.kt
+│   └── navigation/
+│       ├── build.gradle.kts
+│       └── src/main/java/.../engine/navigation/
+│           ├── Routes.kt                      — MOVIES, SERIES_DETAIL, BANKING_* constants
+│           ├── NavigationAction.kt            — NavType + destination
+│           └── NavigationEngine.kt            — navigate(NavController, NavigationAction)
 │
 └── feature/
-    ├── movies/src/main/java/.../feature/movies/ui/
-    │   ├── list/
-    │   │   ├── MoviesContract.kt        ← MoviesState, MoviesIntent, MoviesEffect
-    │   │   ├── MoviesViewModel.kt       ← SDUI loader + reorder logic
-    │   │   └── MoviesScreen.kt          ← SDUIRenderer wrapper (35 lines)
-    │   ├── detail/
-    │   │   ├── SeriesDetailContract.kt  ← SeriesDetailState, Intent, Effect
-    │   │   ├── SeriesDetailViewModel.kt ← SDUI loader with seriesId param
-    │   │   └── SeriesDetailScreen.kt    ← SDUIRenderer wrapper (40 lines)
-    │   └── MoviesNavGraph.kt
+    ├── movies/
+    │   ├── build.gradle.kts
+    │   └── src/main/
+    │       ├── java/.../feature/movies/ui/
+    │       │   ├── MoviesContract.kt          — MoviesState, MoviesIntent, MoviesEffect
+    │       │   ├── MoviesViewModel.kt         — SDUI loader + enrichment + reorder
+    │       │   ├── MoviesScreen.kt            — SDUIRenderer wrapper (~35 lines)
+    │       │   ├── SeriesDetailContract.kt    — SeriesDetailState, Intent, Effect
+    │       │   ├── SeriesDetailViewModel.kt   — SDUI loader with seriesId param
+    │       │   ├── SeriesDetailScreen.kt      — SDUIRenderer wrapper (~40 lines)
+    │       │   └── MoviesNavGraph.kt          — composable(MOVIES) + SERIES_DETAIL/{id}
+    │       └── res/values/strings.xml
+    │           — tv_series_list_header_title, series_detail_synopsis_title, etc.
     │
-    └── banking/src/main/java/.../feature/banking/ui/
-        ├── BankingScreen.kt             ← Box { Text("TODO") }
-        └── BankingNavGraph.kt
+    ├── banking/
+    │   ├── build.gradle.kts
+    │   └── src/main/
+    │       ├── java/.../feature/banking/ui/
+    │       │   ├── BankingContract.kt
+    │       │   ├── BankingViewModel.kt
+    │       │   ├── BankingScreen.kt           — SDUIRenderer wrapper (multi-step)
+    │       │   └── BankingNavGraph.kt
+    │       └── res/values/strings.xml
+    │
+    ├── deeplink/
+    │   └── src/main/java/.../feature/deeplink/
+    │       └── DeepLinkScreen.kt
+    │
+    └── analytics/
+        └── src/main/java/.../feature/analytics/
+            ├── AnalyticsEngine.kt             — Koin-provided Firebase wrapper
+            └── di/AnalyticsModule.kt
 ```
+
+---
+
+*This document reflects the full production state of the MoviesDemoApp codebase.*  
+*For questions or contributions, open an issue or pull request on the project repository.*
