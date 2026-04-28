@@ -124,7 +124,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         resolver.isVisible(node, data)
     private var activityScreenName:String? = null
     private val formDataStoreAndValidation = FormDataStorage.formDataStoreAndValidation
-    fun readAndSetValue(key: String?) = FormDataStorage.readAndSetValue(key)
+    fun readAndSetValue(screenName: String?, key: String?) = FormDataStorage.readAndSetValue(screenName,key)
     private fun validateForm() = FormDataStorage.validateForm()
 
     @SuppressLint("ConfigurationScreenWidthHeight")
@@ -242,7 +242,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
         LaunchedEffect(Unit) {
             if(isRequired &&  (formDataStoreAndValidation[component.dataBinding] == null || formDataStoreAndValidation[component.dataBinding]?.isEmpty() == true)){
-                formDataStoreAndValidation[component.dataBinding ?: ""] = readAndSetValue(component.dataBinding)
+                formDataStoreAndValidation[component.dataBinding ?: ""] = readAndSetValue( activityScreenName,component.dataBinding)
             }
         }
         val numericValue = rawValue.toLongOrNull() ?: 0
@@ -789,7 +789,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         val pad = component.style?.padding?.dp ?: 0.dp
         LaunchedEffect(Unit) {
             if(component.validation?.required == true &&  (formDataStoreAndValidation[component.dataBinding] == null || formDataStoreAndValidation[component.dataBinding]?.isEmpty() == true)){
-                formDataStoreAndValidation[component.dataBinding ?: ""] = readAndSetValue(component.dataBinding)
+                formDataStoreAndValidation[component.dataBinding ?: ""] = readAndSetValue( activityScreenName,component.dataBinding)
             }
         }
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -825,6 +825,10 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                                     if (component.validation?.required == true) {
                                         formDataStoreAndValidation[component.dataBinding ?: ""] =
                                             option.value
+
+                                        activityScreenName?.let { screenName ->
+                                            FormDataStorage.updateFormData(screenName ?: "", component.dataBinding ?: "", option.value)
+                                        }
                                     }
                                 }
 
@@ -879,7 +883,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 selectedValue.isNullOrEmpty()
         LaunchedEffect(Unit) {
             if (component.validation?.required == true &&  (formDataStoreAndValidation[component.dataBinding] == null || formDataStoreAndValidation[component.dataBinding]?.isEmpty() == true)) {
-                formDataStoreAndValidation[component.dataBinding ?: ""] = readAndSetValue(component.dataBinding)
+                formDataStoreAndValidation[component.dataBinding ?: ""] = readAndSetValue( activityScreenName,component.dataBinding)
             }
         }
 
@@ -1078,6 +1082,9 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                             val dateString: String? = formatter.format(java.util.Date(millis))
                             dateString?.let {
                                 changedText = dateString
+                                activityScreenName?.let { screenName ->
+                                    node.dataBinding?.let { it1 -> FormDataStorage.updateFormData(screenName ?: "", it1, changedText ?: "") }
+                                }
                             }
                         }
                         isClicked  = false
@@ -1143,7 +1150,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         val minLength = node.validation?.minLength as? Int ?: 0
         LaunchedEffect(Unit) {
             if(isRequired &&  (formDataStoreAndValidation[node.dataBinding] == null || formDataStoreAndValidation[node.dataBinding]?.isEmpty() == true)){
-                formDataStoreAndValidation[node.dataBinding ?: ""] = readAndSetValue(node.dataBinding)
+                formDataStoreAndValidation[node.dataBinding ?: ""] = readAndSetValue( activityScreenName,node.dataBinding)
             }
         }
 
@@ -1178,6 +1185,9 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                     node.dataBinding?.let { key->
                         formState[key] =  data
                         formDataStoreAndValidation[node.dataBinding ?: ""] = data
+                        activityScreenName?.let { screenName ->
+                            FormDataStorage.updateFormData(screenName ?: "", key, data)
+                        }
                     }
 
                 },
@@ -1248,7 +1258,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         val text = node.template?.let { resolver.resolve(it, data) }
             ?: node.dataBinding?.let { data[it] }
             ?: node.text
-            ?: node.props["text"] ?: ""
+            ?: node.props["text"]
+            ?: ""
         val color = (node.style?.foregroundColor ?: node.style?.textColor)
             ?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
         val fontSize = node.style?.fontSize?.sp ?: DesignTokens.TextMd
@@ -1275,12 +1286,12 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         var title = node.titleTemplate?.let { resolver.resolve(it, data) }
             ?: node.props["title"] ?: ""
         if (title.isEmpty() && !node.titleBinding.isNullOrEmpty()) {
-            title = bindingResolver.resolve(node.titleBinding)
+            title = bindingResolver.resolve(activityScreenName,node.titleBinding)
         }
         var subtitle: String? = node.subtitleTemplate?.let { resolver.resolve(it, data) }
             ?: node.props["subtitle"]
         if (subtitle.isNullOrEmpty() && !node.subtitleBinding.isNullOrEmpty()) {
-            subtitle = bindingResolver.resolve(node.subtitleBinding)
+            subtitle = bindingResolver.resolve(activityScreenName,node.subtitleBinding)
         }
         val hasSearch = node.action?.type == "search"
         val isleadingIcon = !node.leadingIcon.isNullOrEmpty()
@@ -1368,7 +1379,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 } else {
                     if(validateForm()){
                         activityScreenName?.let { eventName ->
-                            sduiViewModel.markFormCompleted(eventName, null)
+                            sduiViewModel.markFormCompleted(eventName, FormDataStorage.getFormJsonData(eventName))
                             component.analytics?.let {
                                 analyticsEngine.track(
                                     AnalyticsEvent(
@@ -1394,7 +1405,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             modifier = modifier
                 .semantics {
                     contentDescription =
-                        (component.screenAccessibility?.label ?: bindingResolver.resolve( component.titleBinding ?: "")).toString()
+                        (component.screenAccessibility?.label ?: bindingResolver.resolve( activityScreenName,component.titleBinding ?: "")).toString()
                 },
             shape = RoundedCornerShape(cornerRadius),
             colors = ButtonDefaults.buttonColors(
@@ -1403,7 +1414,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         ) {
 
             Text(
-                text = bindingResolver.resolve( component.titleBinding ?: ""),
+                text = bindingResolver.resolve( activityScreenName,component.titleBinding ?: ""),
                 color = textColor
             )
         }
@@ -1431,12 +1442,12 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         val context = LocalContext.current
         Button(
             onClick = {
-                if(bindingResolver.resolve( component.titleBinding?: "").equals("Back", ignoreCase = true)) {
+                if(bindingResolver.resolve( activityScreenName,component.titleBinding?: "").equals("Back", ignoreCase = true)) {
                     component.action?.dispatch(data, onAction)
                 } else {
                     if(validateForm()){
                         activityScreenName?.let { eventName ->
-                            sduiViewModel.markFormCompleted(eventName, null)
+                            sduiViewModel.markFormCompleted(eventName, FormDataStorage.getFormJsonData(eventName))
                             component.analytics?.let {
                                 analyticsEngine.track(
                                     AnalyticsEvent(
@@ -1465,7 +1476,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 .height(height)
                 .semantics {
                     contentDescription =
-                        (component.accessibility?.label ?: bindingResolver.resolve( component.titleBinding))
+                        (component.accessibility?.label ?: bindingResolver.resolve( activityScreenName,component.titleBinding))
                 },
             shape = RoundedCornerShape(cornerRadius),
             colors = ButtonDefaults.buttonColors(
@@ -1474,7 +1485,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         ) {
 
             Text(
-                text = bindingResolver.resolve( component.titleBinding ?: ""),
+                text = bindingResolver.resolve( activityScreenName,component.titleBinding ?: ""),
                 color = textColor
             )
         }
@@ -1483,7 +1494,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun bindAnalyticsDataParam(it: Analytics): Map<String, String?> {
         val params = mutableMapOf<String, String?>()
         it.params?.forEach { param ->
-            val value = FormDataStorage.readAndSetValue(param.value.replace("{", "")?.replace("}", "") ?: "")
+            val value = FormDataStorage.readAndSetValue( activityScreenName,param.value.replace("{", "")?.replace("}", "") ?: "")
             params[param.key] = value
         }
         return params

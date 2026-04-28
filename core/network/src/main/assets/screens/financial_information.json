@@ -1,33 +1,25 @@
 {
   "screenId": "financial_information",
   "title": "Financial Information",
-  "formStatus": [
-    {
-      "personal_details": {
-        "status": "incomplete"
-      }
+  "formStatus": {
+    "personal_details": {
+      "status": "incomplete"
     },
-    {
-      "address_details": {
-        "status": "incomplete"
-      }
-    },
-    {
-      "financial_information": {
-        "status": "incomplete"
-      }
-    },
-    {
-      "review_submit": {
-        "status": "complete",
-        "formNeedTobeDeleteAfterSubmit": [
-          "personal_details",
-          "address_details",
-          "financial_information"
-        ]
-      }
+    "address_details": {
+      "status": "incomplete"
     }
-  ],
+  },
+  "financial_information": {
+    "status": "incomplete"
+  },
+  "review_submit": {
+    "status": "complete",
+    "formNeedTobeDeleteAfterSubmit": [
+      "personal_details",
+      "address_details",
+      "financial_information"
+    ]
+  },
   "bindings": {
     "headerTitle": { "source": "string", "key": "financial_information.header_title" },
     "employmentStatusLabel": { "source": "string", "key": "financial_information.employment_status_label" },

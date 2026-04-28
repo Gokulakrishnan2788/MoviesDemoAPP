@@ -78,7 +78,7 @@ class BindingResolver(private val stringResolver: StringResolver) {
      * [resolveAll] was not called before this composable renders (e.g. for
      * screens that use [titleBinding] / button labels in legacy components).
      */
-    fun resolve(key: String?): String {
+    fun resolve(screenName: String?, key: String?): String {
         if (key.isNullOrEmpty()) return ""
 
         // Fast path: use pre-resolved cache
@@ -89,7 +89,7 @@ class BindingResolver(private val stringResolver: StringResolver) {
             val item = bindings[key] ?: return key
             when (item.source) {
                 "string" -> stringResolver.resolve(item.key)
-                "form"   -> FormDataStorage.readAndSetValue(key)
+                "form" -> FormDataStorage.readAndSetValue(screenName, key)
                 else     -> key
             }
         } catch (e: Exception) {

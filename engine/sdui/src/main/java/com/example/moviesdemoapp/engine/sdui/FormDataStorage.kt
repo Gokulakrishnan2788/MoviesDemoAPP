@@ -1,18 +1,36 @@
 package com.example.moviesdemoapp.engine.sdui
 
 import androidx.compose.runtime.mutableStateMapOf
+import com.example.moviesdemoapp.core.network.model.FormStatusDetail
+import com.google.gson.Gson
 
 object FormDataStorage {
+    var formStatus: Map<String, FormStatusDetail>? = null
+    var formData: Map<String, String>? = null
     val formDataStoreAndValidation = mutableStateMapOf<String, String>()
     fun clearFormData() = formDataStoreAndValidation.clear()
-    fun getFormData(): Map<String, String> = formDataStoreAndValidation
-    fun readAndSetValue(key: String?): String {
-        return formDataStoreAndValidation[key] ?: ""
+    fun getCurrentFormData(): Map<String, String> = formDataStoreAndValidation
+    fun readAndSetValue(screenName: String?, key: String?): String {
+        return formDataStoreAndValidation[key] ?: formData?.get(key)
+        ?: formStatus?.get(screenName)?.formData?.get(key) ?: ""
     }
+
+    fun readAndSetValue(key: String?): String = readAndSetValue(null, key)
     fun validateForm(): Boolean {
         if(formDataStoreAndValidation.isEmpty()){
             return true
         }
         return formDataStoreAndValidation.values.all { it.isNotEmpty() && it.isNotBlank() }
     }
+
+    fun updateFormData(screenName: String, key: String, value: String) {
+        formStatus?.get(screenName)?.let {
+            formDataStoreAndValidation[key] = value
+        }
+    }
+
+    fun getFormJsonData(screenName: String): String {
+       return Gson().toJson(formStatus?.getOrDefault(screenName,  ""))
+    }
+
 }

@@ -21,6 +21,10 @@ class TemplateResolver @Inject constructor() {
         return result
     }
 
+    fun resolveKey(screenName:String, template: String, data: Map<String, String>): String {
+        return FormDataStorage.formData?.get(screenName)?: resolve(template, data)
+    }
+
     /** Return the value for [key] in [data], or null if absent. */
     fun resolveBinding(key: String?, data: Map<String, String>): String? =
         key?.let { data[it] }

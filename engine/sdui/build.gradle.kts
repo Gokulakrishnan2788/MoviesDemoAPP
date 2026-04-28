@@ -46,4 +46,5 @@ dependencies {
 
     // Koin dependency injection
     implementation("io.insert-koin:koin-android:3.5.6")
+    implementation(libs.gson)
 }

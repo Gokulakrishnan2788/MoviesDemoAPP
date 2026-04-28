@@ -58,28 +58,22 @@ fun SDUIRenderer(
     onAction: (actionId: String, params: Map<String, String>) -> Unit,
 ) {
     val context = LocalContext.current
-
+    FormDataStorage.formStatus = screenModel?.formStatus
+    FormDataStorage.formData = screenModel?.formStatus?.get(screenModel.screenId)?.formData
     // Pull singleton dependencies from Hilt via the entry point.
     val entryPoint = remember {
         EntryPointAccessors.fromApplication(context.applicationContext, SduiEntryPoint::class.java)
     }
-    val registry       = remember { entryPoint.componentRegistry() }
+    val registry = remember { entryPoint.componentRegistry() }
     val stringResolver = remember { entryPoint.stringResolver() }
 
-    val resolver        = remember { TemplateResolver() }
+    val resolver = remember { TemplateResolver() }
     val analyticsEngine = remember { GlobalContext.get().get<AnalyticsEngine>() }
     val bindingResolver = remember { BindingResolver(stringResolver) }
-    val components      = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver) }
-    val engine          = remember(registry) { SDUIRenderEngine(registry, components) }
-    val resolver = remember { TemplateResolver() }
-    val analyticsEngine = remember {
-        GlobalContext.get().get<AnalyticsEngine>()
-    }
-
-    val bindingResolver = BindingResolver(context)
-    bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
-    val components = remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver, context) }
+    val components =
+        remember { SDUIComponentsDispatcher(resolver, analyticsEngine, bindingResolver, context) }
     val engine = remember(registry) { SDUIRenderEngine(registry, components) }
+    bindingResolver.loadBindings(screenModel?.bindings ?: emptyMap())
 
     // Pre-resolve all bindings whenever the screen definition or API data changes.
     // Resolved values are merged into dataMap so every component can access them

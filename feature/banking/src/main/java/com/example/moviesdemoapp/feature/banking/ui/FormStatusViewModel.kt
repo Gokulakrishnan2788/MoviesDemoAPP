@@ -3,6 +3,7 @@ package com.example.moviesdemoapp.feature.banking.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.moviesdemoapp.core.data.ScreenRepository
+import com.example.moviesdemoapp.core.network.model.FormStatusDetail
 import com.example.moviesdemoapp.core.network.model.ScreenModel
 import com.example.moviesdemoapp.engine.navigation.Routes
 import com.example.moviesdemoapp.feature.banking.data.BankingFormStateRepository
@@ -34,19 +35,17 @@ class FormStatusViewModel @Inject constructor(
 
             // Fallback to server-driven status if local is all complete or empty
             val screenModel = loadScreen("personal_details")
-            val statusList = screenModel?.formStatus ?: listOf(mapOf(Routes.BANKING to com.example.moviesdemoapp.core.network.model.FormStatusDetail("incomplete")))
-            
-            for (map in statusList) {
-                for (entry in map.entries) {
-                    val id = entry.key
-                    val detail = entry.value
-                    val isLocalComplete = bankingFormStateRepository.isFormCompleted(id)
-                    
-                    if (!isLocalComplete && !detail.status.equals("completed", ignoreCase = true)) {
-                        // Found the first incomplete form
-                        formId.value = id
-                        return@launch
-                    }
+            val statusList = screenModel?.formStatus ?: emptyMap<String, Map<String, FormStatusDetail>>()
+
+            for (entry in statusList.entries) {
+                val id = entry.key
+                val detail = entry.value as FormStatusDetail
+                val isLocalComplete = bankingFormStateRepository.isFormCompleted(id)
+
+                if (!isLocalComplete && !detail.status.equals("completed", ignoreCase = true)) {
+                    // Found the first incomplete form
+                    formId.value = id
+                    return@launch
                 }
             }
             

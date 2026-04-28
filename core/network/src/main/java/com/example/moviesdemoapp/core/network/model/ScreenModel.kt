@@ -14,7 +14,7 @@ data class ScreenModel(
     val screenId: String,
     val type: String,
     val title: String? = null,
-    val formStatus: List<Map<String, FormStatusDetail>>? = null,
+    val formStatus: Map<String, FormStatusDetail>? = null,
     val bindings: Map<String, BindingItem>? = null,
     val state: State? = null,
     val accessibility: Accessibility? = null,
@@ -25,6 +25,7 @@ data class ScreenModel(
 @Serializable
 data class FormStatusDetail(
     val status: String,
+    val formData: Map<String, String>? = null,
     val formNeedTobeDeleteAfterSubmit: List<String>? = emptyList()
 )
 
