@@ -24,7 +24,11 @@ data class ScreenModel(
 @Serializable
 data class BindingItem(
     val source: String = "",
-    val key: String = ""
+    val key: String = "",
+    // Used by source = "api": the raw API response field name (e.g. "Title", "imdbRating").
+    val path: String? = null,
+    // Used by source = "template": the {{key}} pattern string to interpolate.
+    val template: String? = null,
 )
 
 // A single renderable UI node: type + optional style, children, data bindings, action.
@@ -56,6 +60,7 @@ data class ComponentNode(
     @SerialName("template") val template: String? = null,
     @SerialName("titleTemplate") val titleTemplate: String? = null,
     @SerialName("subtitleTemplate") val subtitleTemplate: String? = null,
+    @SerialName("subtitleBinding") val subtitleBinding: String? = null,
     @SerialName("listDataBinding") val listDataBinding: String? = null,
     @SerialName("countBinding") val countBinding: String? = null,
     val visibility: VisibilityModel? = null,

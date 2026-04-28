@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">MoviesDemoAPP</string>
+
+    <!-- Bottom navigation tab labels (resolved via tab_config.json bindings) -->
+    <string name="tab_movies_title">Movies</string>
+    <string name="tab_banking_title">Banking</string>
 </resources>

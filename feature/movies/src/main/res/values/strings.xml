@@ -1,0 +1,21 @@
+<resources>
+
+    <!-- tv_series_list screen -->
+    <string name="tv_series_list_header_title">Series Hub</string>
+    <string name="tv_series_list_header_subtitle">Live OMDB data for the game franchise</string>
+    <string name="tv_series_list_imdb_prefix">IMDb</string>
+
+    <!-- series_detail screen -->
+    <string name="series_detail_synopsis_title">Synopsis</string>
+    <string name="series_detail_credits_title">Credits</string>
+    <string name="series_detail_seasons_title">Seasons</string>
+    <string name="series_detail_imdb_prefix">IMDb</string>
+    <string name="series_detail_runtime_label">Runtime:</string>
+    <string name="series_detail_awards_label">Awards:</string>
+    <string name="series_detail_cast_label">Cast:</string>
+    <string name="series_detail_writer_label">Writer:</string>
+    <string name="series_detail_director_label">Director:</string>
+    <string name="series_detail_season_label">Season</string>
+    <string name="series_detail_season_count_label">Seasons:</string>
+
+</resources>

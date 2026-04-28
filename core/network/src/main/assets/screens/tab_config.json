@@ -1,0 +1,28 @@
+{
+  "type": "tabBar",
+  "defaultSelectedTab": "movies",
+  "bindings": {
+    "moviesTabTitle": {
+      "source": "string",
+      "key": "tab.movies.title"
+    },
+    "bankingTabTitle": {
+      "source": "string",
+      "key": "tab.banking.title"
+    }
+  },
+  "tabs": [
+    {
+      "id": "movies",
+      "titleBinding": "moviesTabTitle",
+      "icon": "film",
+      "rootScreenId": "tv_series_list"
+    },
+    {
+      "id": "banking",
+      "titleBinding": "bankingTabTitle",
+      "icon": "building.columns",
+      "rootScreenId": "personal_details"
+    }
+  ]
+}

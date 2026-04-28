@@ -1,0 +1,5 @@
+<resources>
+    <string name="common_back">Back</string>
+    <string name="common_continue">Continue</string>
+    <string name="common_currency_symbol">$</string>
+</resources>

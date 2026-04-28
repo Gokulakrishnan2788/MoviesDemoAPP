@@ -1,6 +1,5 @@
 package com.example.moviesdemoapp.app
 
-import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -10,42 +9,24 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.moviesdemoapp.app.tab.TabBarViewModel
 import com.example.moviesdemoapp.core.ui.DesignTokens
-import com.example.moviesdemoapp.engine.navigation.Routes
-
-/** Describes a single bottom navigation tab. */
-data class BottomNavItem(
-    val route: String,
-    val label: String,
-    val icon: ImageVector,
-)
 
 /**
- * Root shell composable — houses the bottom navigation bar and the nav host.
- * Loads bottom navigation configuration dynamically from JSON.
+ * Root shell composable.
+ *
+ * Tab structure and labels are fully driven by tab_config.json via [TabBarViewModel].
+ * No tab data is hardcoded here — adding or reordering tabs requires only a JSON change.
  */
 @Composable
 fun MainScreen(navController: NavHostController) {
-    val context = LocalContext.current
-    
-    // Load bottom navigation items from JSON configuration
-    val bottomNavItems = remember(context) {
-        val config = BottomNavConfigLoader.loadConfig(context)
-        config.items.map { item ->
-            BottomNavItem(
-                route = item.route,
-                label = item.label,
-                icon = IconMapper.getIcon(item.icon),
-            )
-        }
-    }
+    val viewModel: TabBarViewModel = hiltViewModel()
+    val tabs = viewModel.tabs
 
     Scaffold(
         containerColor = DesignTokens.ScreenBackground,
@@ -53,11 +34,16 @@ fun MainScreen(navController: NavHostController) {
             NavigationBar(containerColor = DesignTokens.CardBackground) {
                 val navBackStack by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStack?.destination?.route
-                bottomNavItems.forEach { item ->
+                tabs.forEach { tab ->
                     NavigationBarItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
-                        selected = currentRoute == item.route,
+                        icon = {
+                            Icon(
+                                imageVector = IconMapper.getIcon(tab.icon),
+                                contentDescription = tab.title,
+                            )
+                        },
+                        label = { Text(tab.title) },
+                        selected = currentRoute == tab.graphRoute,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = DesignTokens.Accent,
                             selectedTextColor = DesignTokens.Accent,
@@ -66,7 +52,7 @@ fun MainScreen(navController: NavHostController) {
                             indicatorColor = DesignTokens.Surface,
                         ),
                         onClick = {
-                            navController.navigate(item.route) {
+                            navController.navigate(tab.graphRoute) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -81,6 +67,7 @@ fun MainScreen(navController: NavHostController) {
     ) { paddingValues ->
         ArchitectNavHost(
             navController = navController,
+            startDestination = viewModel.startDestination,
             modifier = Modifier.padding(paddingValues),
         )
     }

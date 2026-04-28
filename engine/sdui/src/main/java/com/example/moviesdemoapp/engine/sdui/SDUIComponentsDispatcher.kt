@@ -1263,11 +1263,14 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     ) {
         var title = node.titleTemplate?.let { resolver.resolve(it, data) }
             ?: node.props["title"] ?: ""
-        if(title.isEmpty() && node.titleBinding != null){
-            title = bindingResolver.resolve( node.titleBinding ?: "")
+        if (title.isEmpty() && !node.titleBinding.isNullOrEmpty()) {
+            title = bindingResolver.resolve(node.titleBinding)
         }
-        val subtitle = node.subtitleTemplate?.let { resolver.resolve(it, data) }
+        var subtitle: String? = node.subtitleTemplate?.let { resolver.resolve(it, data) }
             ?: node.props["subtitle"]
+        if (subtitle.isNullOrEmpty() && !node.subtitleBinding.isNullOrEmpty()) {
+            subtitle = bindingResolver.resolve(node.subtitleBinding)
+        }
         val hasSearch = node.action?.type == "search"
         val isleadingIcon = !node.leadingIcon.isNullOrEmpty()
         val leadinIcon = node.leadingIcon
