@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.example.moviesdemoapp.core.network.model.ActionModel
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.engine.sdui.TemplateResolver
@@ -15,7 +16,7 @@ import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 internal fun RenderButton(
     node: ComponentNode,
     data: Map<String, String>,
-    onAction: (String, Map<String, String>) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     resolver: TemplateResolver,
 ) {
     val label = node.template?.let { resolver.resolve(it, data) } ?: node.props["label"] ?: ""

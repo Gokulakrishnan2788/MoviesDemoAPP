@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 import androidx.compose.ui.zIndex
+import com.example.moviesdemoapp.core.network.model.ActionModel
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import kotlin.math.roundToInt
@@ -37,7 +38,7 @@ internal fun RenderList(
     node: ComponentNode,
     data: Map<String, String>,
     listData: Map<String, List<Map<String, String>>>,
-    onAction: (String, Map<String, String>) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     renderNode: NodeRenderer,
 ) {
     val binding = node.listDataBinding ?: return
@@ -110,6 +111,7 @@ internal fun RenderList(
                                                     "from"    to draggingIndex.toString(),
                                                     "to"      to to.toString(),
                                                 ),
+                                                node.action
                                             )
                                         }
                                     }

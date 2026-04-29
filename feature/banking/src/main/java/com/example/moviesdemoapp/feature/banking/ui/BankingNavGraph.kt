@@ -1,5 +1,6 @@
 package com.example.moviesdemoapp.feature.banking.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -102,7 +103,23 @@ fun NavGraphBuilder.bankingGraph(
                 }
             }
 
-            BankingIncrementScreen(navController, viewModel, pageDetail = Routes.BANKING_REVIEW_SUBMIT) { _ -> }
+            val loadingStatus = viewModel.loadingStatus.collectAsStateWithLifecycle()
+            if(loadingStatus.value){
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(DesignTokens.ScreenBackground),
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = DesignTokens.Accent,
+                    )
+                }
+            } else {
+                BankingIncrementScreen(navController, viewModel, pageDetail = Routes.BANKING_REVIEW_SUBMIT) { _ -> }
+            }
+
+
         }
     }
 }

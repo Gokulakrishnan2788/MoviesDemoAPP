@@ -1,6 +1,7 @@
 package com.example.moviesdemoapp.engine.sdui
 
 import androidx.compose.runtime.Composable
+import com.example.moviesdemoapp.core.network.model.ActionModel
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -13,7 +14,7 @@ import javax.inject.Singleton
  * @param onAction  (actionId, params) callback when the component is tapped
  */
 typealias ComponentFactory =
-    @Composable (node: ComponentNode, data: Map<String, String>, onAction: (String, Map<String, String>) -> Unit) -> Unit
+    @Composable (node: ComponentNode, data: Map<String, String>,  onAction: (actionId: String, params: Map<String, String>, action: ActionModel) -> Unit) -> Unit
 
 /**
  * Singleton registry mapping SDUI type strings to custom [ComponentFactory] composables.

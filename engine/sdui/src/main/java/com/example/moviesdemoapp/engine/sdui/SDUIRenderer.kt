@@ -1,5 +1,6 @@
 package com.example.moviesdemoapp.engine.sdui
 
+import android.R.id.custom
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.analytics.engine.AnalyticsEngine
 import com.example.moviesdemoapp.core.network.StringResolver
+import com.example.moviesdemoapp.core.network.model.ActionModel
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.network.model.FormStatusDetail
 import com.example.moviesdemoapp.core.network.model.ScreenModel
@@ -55,7 +57,7 @@ fun SDUIRenderer(
     error: String?,
     dataMap: Map<String, String> = emptyMap(),
     listData: Map<String, List<Map<String, String>>> = emptyMap(),
-    onAction: (actionId: String, params: Map<String, String>) -> Unit,
+    onAction: (String, Map<String, String>, action: ActionModel?) -> Unit,
 ) {
     val context = LocalContext.current
     FormDataStorage.formStatus = screenModel?.formStatus
@@ -131,7 +133,7 @@ class SDUIRenderEngine(
         screenModel: ScreenModel,
         data: Map<String, String> = emptyMap(),
         listData: Map<String, List<Map<String, String>>> = emptyMap(),
-        onAction: (actionId: String, params: Map<String, String>) -> Unit = { _, _ -> },
+        onAction: (actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit = { _, _ , _-> },
     ) {
         val base = Modifier
             .fillMaxSize()
@@ -153,7 +155,7 @@ class SDUIRenderEngine(
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>> = emptyMap(),
-        onAction: (actionId: String, params: Map<String, String>) -> Unit = { _, _ -> },
+        onAction: (actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit = { _, _ ,_-> },
     ) {
         // Visibility is evaluated once here — applies to BOTH custom and built-in components.
         // Keeping it here prevents custom components from bypassing JSON visibility rules.
@@ -170,7 +172,7 @@ class SDUIRenderEngine(
             data = data,
             listData = listData,
             onAction = onAction,
-            renderNode = { n, d, l, a -> RenderNode(screenName, n, d, l, a) },
+            renderNode = { n, d, l, a -> RenderNode(screenName, n, d, l, onAction) },
         )
     }
 }

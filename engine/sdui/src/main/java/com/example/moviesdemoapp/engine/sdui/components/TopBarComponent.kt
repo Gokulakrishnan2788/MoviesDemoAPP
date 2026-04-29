@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.moviesdemoapp.core.network.model.ActionModel
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.engine.sdui.TemplateResolver
@@ -32,7 +33,7 @@ import com.example.moviesdemoapp.engine.sdui.TemplateResolver
 internal fun RenderTopBar(
     node: ComponentNode,
     data: Map<String, String>,
-    onAction: (String, Map<String, String>) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     resolver: TemplateResolver,
 ) {
     val title    = node.props["title"] ?: node.titleTemplate?.let { resolver.resolve(it, data) } ?: ""

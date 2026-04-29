@@ -21,19 +21,58 @@
     ]
   },
   "bindings": {
-    "headerTitle": { "source": "string", "key": "review_submit.header_title" },
-    "fullNameLabel": { "source": "string", "key": "review_submit.full_name_label" },
-    "dateOfBirthLabel": { "source": "string", "key": "review_submit.date_of_birth_label" },
-    "addressLabel": { "source": "string", "key": "review_submit.address_label" },
-    "employmentLabel": { "source": "string", "key": "review_submit.employment_label" },
-    "annualIncomeLabel": { "source": "string", "key": "review_submit.annual_income_label" },
-    "loanAmountLabel": { "source": "string", "key": "review_submit.loan_amount_label" },
-    "loanTenureLabel": { "source": "string", "key": "review_submit.loan_tenure_label" },
-    "existingLoansLabel": { "source": "string", "key": "review_submit.existing_loans_label" },
-    "editTitle": { "source": "string", "key": "review_submit.edit_title" },
-    "submitTitle": { "source": "string", "key": "review_submit.submit_title" },
-    "yearsSuffix": { "source": "string", "key": "review_submit.years_suffix" },
-    "currencySymbol": { "source": "string", "key": "common.currency_symbol" },
+    "headerTitle": {
+      "source": "string",
+      "key": "review_submit.header_title"
+    },
+    "fullNameLabel": {
+      "source": "string",
+      "key": "review_submit.full_name_label"
+    },
+    "dateOfBirthLabel": {
+      "source": "string",
+      "key": "review_submit.date_of_birth_label"
+    },
+    "addressLabel": {
+      "source": "string",
+      "key": "review_submit.address_label"
+    },
+    "employmentLabel": {
+      "source": "string",
+      "key": "review_submit.employment_label"
+    },
+    "annualIncomeLabel": {
+      "source": "string",
+      "key": "review_submit.annual_income_label"
+    },
+    "loanAmountLabel": {
+      "source": "string",
+      "key": "review_submit.loan_amount_label"
+    },
+    "loanTenureLabel": {
+      "source": "string",
+      "key": "review_submit.loan_tenure_label"
+    },
+    "existingLoansLabel": {
+      "source": "string",
+      "key": "review_submit.existing_loans_label"
+    },
+    "editTitle": {
+      "source": "string",
+      "key": "review_submit.edit_title"
+    },
+    "submitTitle": {
+      "source": "string",
+      "key": "review_submit.submit_title"
+    },
+    "yearsSuffix": {
+      "source": "string",
+      "key": "review_submit.years_suffix"
+    },
+    "currencySymbol": {
+      "source": "string",
+      "key": "common.currency_symbol"
+    },
     "addressValue": {
       "source": "template",
       "template": "{{form.address.streetAddress}}, {{form.address.city}}, {{form.address.state}} {{form.address.zipCode}}"
@@ -81,7 +120,9 @@
           },
           "accessibility": {
             "label": "Review and Submit screen",
-            "traits": ["header"]
+            "traits": [
+              "header"
+            ]
           }
         },
         {
@@ -179,27 +220,38 @@
               "variant": "success",
               "action": {
                 "type": "api",
+                "method": "post",
                 "endpoint": "submitLoanApplication",
-                "method": "POST",
-                "requestBodyBinding": "form",
-                "onSuccess": {
-                  "type": "navigation",
-                  "destination": "application_success"
+                "subAction": {
+                  "type": "api",
+                  "subtype": "redirect",
+                  "submethod": "get",
+                  "subEndPoint": "getFormJson",
+                  "queryParams": {
+                    "applicationId": "121212121"
+                  },
+                  "endpoint": "submitLoanApplication",
+                  "method": "post",
+                  "requestBodyBinding": "form",
+                  "onSuccess": {
+                    "type": "navigation",
+                    "destination": "application_success"
+                  },
+                  "onFailure": {
+                    "type": "toast",
+                    "message": "Unable to submit application. Please try again."
+                  }
                 },
-                "onFailure": {
-                  "type": "toast",
-                  "message": "Unable to submit application. Please try again."
+                "style": {
+                  "flex": 2,
+                  "weight": 1,
+                  "height": 48,
+                  "cornerRadius": 8
+                },
+                "accessibility": {
+                  "label": "Submit Application",
+                  "hint": "Double tap to submit the application"
                 }
-              },
-              "style": {
-                "flex": 2,
-                "weight": 1,
-                "height": 48,
-                "cornerRadius": 8
-              },
-              "accessibility": {
-                "label": "Submit Application",
-                "hint": "Double tap to submit the application"
               }
             }
           ]

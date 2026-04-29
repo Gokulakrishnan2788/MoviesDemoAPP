@@ -28,6 +28,11 @@ abstract class BaseViewModel<S : UiState, I : UiIntent, E : UiEffect> : ViewMode
     /** Observable UI state. Collect with [collectAsStateWithLifecycle] in composables. */
     val state: StateFlow<S> = _state.asStateFlow()
 
+    private val _loadingState = MutableStateFlow(false)
+
+    /** Observable UI state. Collect with [collectAsStateWithLifecycle] in composables. */
+    val loadingState: StateFlow<Boolean> = _loadingState.asStateFlow()
+
     private val _effect = Channel<E>(Channel.BUFFERED)
 
     /** One-shot UI effects (navigation, toasts). Collect with [LaunchedEffect] in composables. */
@@ -48,6 +53,7 @@ abstract class BaseViewModel<S : UiState, I : UiIntent, E : UiEffect> : ViewMode
 
     /** Enqueue a one-shot [effect] for the UI to consume exactly once. */
     protected fun setEffect(effect: E) {
+        println("Emitting effect: $effect")
         viewModelScope.launch { _effect.send(effect) }
     }
 }

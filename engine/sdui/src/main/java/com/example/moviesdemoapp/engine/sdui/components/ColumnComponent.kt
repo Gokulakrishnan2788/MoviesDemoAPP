@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.moviesdemoapp.core.network.model.ActionModel
 import com.example.moviesdemoapp.core.network.model.ComponentNode
 import com.example.moviesdemoapp.core.ui.colorFromToken
 import com.example.moviesdemoapp.engine.sdui.applyAccessibility
@@ -18,7 +19,7 @@ internal fun RenderColumn(
     node: ComponentNode,
     data: Map<String, String>,
     listData: Map<String, List<Map<String, String>>>,
-    onAction: (String, Map<String, String>) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     renderNode: NodeRenderer,
 ) {
     val bg      = node.style?.backgroundColor?.let { colorFromToken(it) }

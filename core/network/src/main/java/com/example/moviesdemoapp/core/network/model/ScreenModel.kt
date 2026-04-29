@@ -151,10 +151,27 @@ data class StyleModel(
 data class ActionModel(
     val type: String,
     val route: String? = null,
+    val endpoint: String? = null,
+    val method: String? = null,
+    val subAction: SubActionModel? = null,
     val destination: String? = null,
     val routeTemplate: String? = null,
     val params: Map<String, String> = emptyMap(),
 )
+
+
+
+
+// UI action attached to a tappable component (navigate, search, etc.)
+@Serializable
+data class SubActionModel(
+    val type: String,
+    val subtype: String? = null,
+    val submethod: String? = null,
+    val subEndPoint: String? = null,
+    val queryParams: Map<String, String> = emptyMap(),
+)
+
 
 // Controls component visibility based on data presence.
 @Serializable

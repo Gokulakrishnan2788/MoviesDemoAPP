@@ -187,7 +187,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         this.activityScreenName = screenName
@@ -228,7 +228,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderCurrencyField(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     ){
         val formState = remember {mutableStateMapOf<String, String>() }
         val min = component.validation?.min as? Int ?: 0
@@ -342,7 +342,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderToggleField(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     ){
         val formState = remember { ToggleFormState() }
 
@@ -396,7 +396,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderStepperField(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     ){
         val formState = remember { FormState() }
 
@@ -481,7 +481,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderSlider(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     ){
         val formState = remember {mutableStateMapOf<String, Float>() }
         val min = component.minValue?.toFloat() ?: 0.0f
@@ -552,7 +552,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderTopBar(
         node: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, action: ActionModel?) -> Unit,
     ) {
         val title = node.props["title"]
             ?: node.titleTemplate?.let { resolver.resolve(it, data) } ?: ""
@@ -578,7 +578,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
-                                .clickable { node.action?.dispatch(data, onAction) },
+                                .clickable { node.action?.dispatch(data, onAction, node) },
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -600,7 +600,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 )
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
                     if (hasSearch) {
-                        IconButton(onClick = { node.action?.dispatch(data, onAction) }) {
+                        IconButton(onClick = { node.action?.dispatch(data, onAction, node) }) {
                             Icon(Icons.Default.Search, contentDescription = "Search", tint = DesignTokens.PrimaryText)
                         }
                     }
@@ -627,7 +627,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
@@ -664,7 +664,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val formState = remember { mutableStateMapOf<String, Any>() }
@@ -675,13 +675,11 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         var mod: Modifier = Modifier.fillMaxWidth()
         if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
         if (pad > 0.dp) mod = mod.padding(pad)
-        if (node.action != null) mod = mod.clickable { node.action?.dispatch(data, onAction) }
+        if (node.action != null) mod = mod.clickable { node.action?.dispatch(data, onAction, node) }
         val value = formDataStoreAndValidation[node.valueTemplate?.replace("{{", "")?.replace("}}", "")] ?: resolveValue(node.valueTemplate?: "", formState)
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
+            modifier = mod,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
@@ -709,7 +707,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
@@ -719,7 +717,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         var mod: Modifier = Modifier.fillMaxWidth()
         if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
         if (pad > 0.dp) mod = mod.padding(pad)
-        if (node.action != null) mod = mod.clickable { node.action?.dispatch(data, onAction) }
+        if (node.action != null) mod = mod.clickable { node.action?.dispatch(data, onAction, node) }
         Row(modifier = mod, horizontalArrangement = Arrangement.spacedBy(spacing)) {
             node.children.forEach {
                 if (it.type.equals("button", ignoreCase = true) && it.style?.weight != null) {
@@ -740,7 +738,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
         renderNode: NodeRenderer
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) } ?: DesignTokens.CardBackground
@@ -749,7 +747,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         var mod = Modifier
             .fillMaxWidth()
             .padding(horizontal = DesignTokens.SpacingMd, vertical = DesignTokens.SpacingSm)
-        if (node.action != null) mod = mod.clickable { node.action?.dispatch(data, onAction) }
+        if (node.action != null) mod = mod.clickable { node.action?.dispatch(data, onAction, node) }
         Card(
             modifier = mod,
             shape = RoundedCornerShape(radius),
@@ -1281,7 +1279,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderHeader(
         node: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     ) {
         var title = node.titleTemplate?.let { resolver.resolve(it, data) }
             ?: node.props["title"] ?: ""
@@ -1306,7 +1304,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if(isleadingIcon){
-                IconButton(onClick = { node.action?.dispatch(data, onAction) }) {
+                IconButton(onClick = { node.action?.dispatch(data, onAction, node) }) {
                     Icon(Icons.Default.Backspace, contentDescription = "back", tint = DesignTokens.PrimaryText)
                 }
             }
@@ -1315,7 +1313,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 subtitle?.let { Text(text = it, color = DesignTokens.SecondaryText, fontSize = DesignTokens.TextMd) }
             }
             if (hasSearch) {
-                IconButton(onClick = { node.action?.dispatch(data, onAction) }) {
+                IconButton(onClick = { node.action?.dispatch(data, onAction, node) }) {
                     Icon(Icons.Default.Search, contentDescription = "Search", tint = DesignTokens.PrimaryText)
                 }
             }
@@ -1356,7 +1354,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderButton(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
         modifier: Modifier
     ) {
         val cornerRadius = (component.style?.cornerRadius as? Int ?: 8).dp
@@ -1375,7 +1373,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         Button(
             onClick = {
                 if(component.titleBinding?.equals("Back", ignoreCase = true) == true) {
-                    component.action?.dispatch(data, onAction)
+                    component.action?.dispatch(data, onAction, component)
                 } else {
                     if(validateForm(activityScreenName ?: "")){
                         activityScreenName?.let { eventName ->
@@ -1391,7 +1389,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                             }
 
                         }
-                        component.action?.dispatch(data, onAction)
+                        component.action?.dispatch(data, onAction, component)
                     } else {
                         Toast.makeText(
                             context,
@@ -1424,7 +1422,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderButton(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     ) {
         val height = (component.style?.height as? Int ?: 48).dp
         val cornerRadius = (component.style?.cornerRadius as? Int ?: 8).dp
@@ -1443,7 +1441,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         Button(
             onClick = {
                 if(bindingResolver.resolve( activityScreenName,component.titleBinding?: "").equals("Back", ignoreCase = true)) {
-                    component.action?.dispatch(data, onAction)
+                    component.action?.dispatch(data, onAction, component)
                 } else {
                     if(validateForm(activityScreenName?: "")){
                         activityScreenName?.let { eventName ->
@@ -1461,7 +1459,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                         }
 
 
-                        component.action?.dispatch(data, onAction)
+                        component.action?.dispatch(data, onAction, component)
                     } else {
                         Toast.makeText(
                             context,
@@ -1507,7 +1505,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val binding = node.listDataBinding ?: return
@@ -1587,6 +1585,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                                                         "from" to draggingIndex.toString(),
                                                         "to" to to.toString(),
                                                     ),
+                                                    null
                                                 )
                                             }
                                         }
@@ -1623,7 +1622,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val count = node.countBinding?.let { data[it]?.toIntOrNull() } ?: 0
@@ -1647,7 +1646,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
  */
 private fun ActionModel.dispatch(
     data: Map<String, String>,
-    onAction: (String, Map<String, String>) -> Unit,
+    onAction: (String, Map<String, String>, action: ActionModel?) -> Unit,
+    node:ComponentNode
 ) {
     val resolvedRoute = routeTemplate?.let { tpl ->
         var r = tpl
@@ -1662,7 +1662,7 @@ private fun ActionModel.dispatch(
     destination?.let { des->
         params["route"] = des
     }
-    onAction(type, params)
+    onAction(type, params, node.action)
 }
 
 private fun String?.toFontWeight(): FontWeight = when (this) {

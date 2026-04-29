@@ -1,6 +1,6 @@
 {
   "screenId": "personal_details",
-  "title": "Personal Details Screen",
+  "title": "personal_details.header_title",
   "checkFormStatus": {"type": "api", "requestType": "get" ,"endPoint": "getformStatus"},
   "bindings": {
     "headerTitle": { "source": "string", "key": "personal_details.header_title" },

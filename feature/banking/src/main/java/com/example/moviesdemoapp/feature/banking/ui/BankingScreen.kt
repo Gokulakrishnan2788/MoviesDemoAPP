@@ -1,11 +1,21 @@
 package com.example.moviesdemoapp.feature.banking.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.app.Activity
+import androidx.compose.foundation.background
 import androidx.navigation.NavController
+import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.engine.sdui.SDUIRenderer
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageEffect
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageIntent
@@ -18,6 +28,17 @@ fun BankingScreen(
     onFormComplete: (String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val loadingState by viewModel.loadingState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    if(loadingState){
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = DesignTokens.Accent,
+            )
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.handleIntent(BankingPageIntent.LoadPersonalDetailMainPage)
@@ -33,6 +54,11 @@ fun BankingScreen(
                 is BankingPageEffect.AutoNavigate -> {
                     // Handle auto-navigation
                 }
+                is BankingPageEffect.StartActivityAndFinish -> {
+                    val intent = Intent(context, effect.activityClass)
+                    context.startActivity(intent)
+                    (context as? Activity)?.finish()
+                }
             }
         }
     }
@@ -43,11 +69,11 @@ fun BankingScreen(
         error = state.error,
         dataMap = state.dataMap,
         listData = state.listData,
-        onAction = { actionId, params ->
+        onAction = { actionId, params, node ->
             if (actionId.equals("navigate", ignoreCase = true) && params.containsKey("route")) {
                 onFormComplete(params["route"] ?: "")
             }
-            viewModel.handleIntent(BankingPageIntent.OnAction(actionId, params))
+            viewModel.handleIntent(BankingPageIntent.OnAction(actionId, params, node))
         },
     )
 }
@@ -60,6 +86,8 @@ fun BankingIncrementScreen(
     onFormComplete: (String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val loadingStatus by viewModel.loadingStatus.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         if (pageDetail == null) {
@@ -79,22 +107,40 @@ fun BankingIncrementScreen(
                 is BankingPageEffect.AutoNavigate -> {
                     // Handle auto-navigation to next form
                 }
+                is BankingPageEffect.StartActivityAndFinish -> {
+                    val intent = Intent(context, effect.activityClass)
+                    context.startActivity(intent)
+                    (context as? Activity)?.finish()
+                }
             }
         }
     }
+    if(loadingStatus){
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DesignTokens.ScreenBackground),
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = DesignTokens.Accent,
+            )
+        }
+    } else {
+        SDUIRenderer(
+            screenModel = state.screenModel,
+            isLoading = state.isLoading,
+            error = state.error,
+            dataMap = state.dataMap,
+            listData = state.listData,
+            onAction = { actionId, params, node ->
+                if (actionId == "navigate" && params.containsKey("route")) {
+                    onFormComplete(params["route"] ?: "")
+                }
+                viewModel.handleIntent(BankingPageIntent.OnAction(actionId, params, node))
+            },
+        )
+    }
 
-    SDUIRenderer(
-        screenModel = state.screenModel,
-        isLoading = state.isLoading,
-        error = state.error,
-        dataMap = state.dataMap,
-        listData = state.listData,
-        onAction = { actionId, params ->
-            if (actionId == "navigate" && params.containsKey("route")) {
-                onFormComplete(params["route"] ?: "")
-            }
-            viewModel.handleIntent(BankingPageIntent.OnAction(actionId, params))
-        },
-    )
 }
 
