@@ -23,4 +23,10 @@ class SDUIViewModel(context: Context): ViewModel() {
             }
         }
     }
+
+    fun checkFormCompleted(formId: String):String? {
+       return prefs.getString("form_${formId}_data", null)?.let {
+            return it
+        }
+    }
 }

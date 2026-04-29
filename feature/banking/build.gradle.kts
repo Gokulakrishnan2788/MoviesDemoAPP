@@ -30,6 +30,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
     implementation(libs.hilt.android)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.gson)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
 

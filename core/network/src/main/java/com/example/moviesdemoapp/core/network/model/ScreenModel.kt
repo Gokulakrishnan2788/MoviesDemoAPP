@@ -13,14 +13,24 @@ import kotlinx.serialization.Serializable
 data class ScreenModel(
     val screenId: String,
     val type: String,
+    val checkFormStatus: CheckFormStatus? = null,
     val title: String? = null,
-    val formStatus: Map<String, FormStatusDetail>? = null,
+    var formStatus: Map<String, FormStatusDetail>? = null,
     val bindings: Map<String, BindingItem>? = null,
     val state: State? = null,
     val accessibility: Accessibility? = null,
     val children: List<ComponentNode> = emptyList(),
     val dataSource: DataSourceModel? = null,
 )
+
+
+@Serializable
+data class CheckFormStatus(
+    val type: String,
+    val requestType: String,
+    val endPoint: String,
+)
+
 
 @Serializable
 data class FormStatusDetail(

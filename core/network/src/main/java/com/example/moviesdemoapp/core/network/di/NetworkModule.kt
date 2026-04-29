@@ -1,15 +1,20 @@
 package com.example.moviesdemoapp.core.network.di
 
+import com.example.moviesdemoapp.core.network.BankingApi
 import com.example.moviesdemoapp.core.network.NetworkClient
 import com.example.moviesdemoapp.core.network.OkHttpNetworkClient
+import com.google.gson.Gson
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import javax.inject.Singleton
 
 @Module
@@ -35,10 +40,26 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideGson(): Gson = Gson()
+
+    @Provides
+    @Singleton
     fun provideOkHttpClient(): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
             })
             .build()
+
+    @Provides
+    @Singleton
+    fun provideBankingApi(okHttpClient: OkHttpClient, json: Json): BankingApi {
+        val contentType = "application/json".toMediaType()
+        return Retrofit.Builder()
+            .baseUrl("https://bd2e759f-9a31-4529-ba92-b69d005fa5bc.mock.pstmn.io/")
+            .client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory(contentType))
+            .build()
+            .create(BankingApi::class.java)
+    }
 }

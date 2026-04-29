@@ -125,7 +125,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private var activityScreenName:String? = null
     private val formDataStoreAndValidation = FormDataStorage.formDataStoreAndValidation
     fun readAndSetValue(screenName: String?, key: String?) = FormDataStorage.readAndSetValue(screenName,key)
-    private fun validateForm() = FormDataStorage.validateForm()
+    private fun validateForm(screenName: String?) = FormDataStorage.validateForm(screenName, sduiViewModel)
 
     @SuppressLint("ConfigurationScreenWidthHeight")
     @Composable
@@ -1285,7 +1285,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     ) {
         var title = node.titleTemplate?.let { resolver.resolve(it, data) }
             ?: node.props["title"] ?: ""
-        if (title.isEmpty() && !node.titleBinding.isNullOrEmpty()) {
+        if (title.isEmpty() && !node.titleBinding?.isNullOrEmpty()!!) {
             title = bindingResolver.resolve(activityScreenName,node.titleBinding)
         }
         var subtitle: String? = node.subtitleTemplate?.let { resolver.resolve(it, data) }
@@ -1374,10 +1374,10 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
         Button(
             onClick = {
-                if(component.titleBinding.equals("Back", ignoreCase = true)) {
+                if(component.titleBinding?.equals("Back", ignoreCase = true) == true) {
                     component.action?.dispatch(data, onAction)
                 } else {
-                    if(validateForm()){
+                    if(validateForm(activityScreenName ?: "")){
                         activityScreenName?.let { eventName ->
                             sduiViewModel.markFormCompleted(eventName, FormDataStorage.getFormJsonData(eventName))
                             component.analytics?.let {
@@ -1445,7 +1445,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 if(bindingResolver.resolve( activityScreenName,component.titleBinding?: "").equals("Back", ignoreCase = true)) {
                     component.action?.dispatch(data, onAction)
                 } else {
-                    if(validateForm()){
+                    if(validateForm(activityScreenName?: "")){
                         activityScreenName?.let { eventName ->
                             sduiViewModel.markFormCompleted(eventName, FormDataStorage.getFormJsonData(eventName))
                             component.analytics?.let {

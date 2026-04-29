@@ -16,11 +16,17 @@ object FormDataStorage {
     }
 
     fun readAndSetValue(key: String?): String = readAndSetValue(null, key)
-    fun validateForm(): Boolean {
+    fun validateForm(screenName:String?, sduiViewModel:SDUIViewModel): Boolean {
         if(formDataStoreAndValidation.isEmpty()){
             return true
         }
-        return formDataStoreAndValidation.values.all { it.isNotEmpty() && it.isNotBlank() }
+        val  emptyKeys: List<String> = formDataStoreAndValidation.keys.filter { key-> formDataStoreAndValidation[key].isNullOrEmpty()  }.map { key-> formDataStoreAndValidation[key] as String }
+        if(!screenName.isNullOrBlank() && emptyKeys.isNotEmpty()){
+            val formData = sduiViewModel.checkFormCompleted(screenName)
+        }
+
+       // return formDataStoreAndValidation.values.all { it.isNotEmpty() && it.isNotBlank() }
+        return true
     }
 
     fun updateFormData(screenName: String, key: String, value: String) {

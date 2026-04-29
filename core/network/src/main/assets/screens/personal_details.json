@@ -1,25 +1,7 @@
 {
   "screenId": "personal_details",
-  "title": "Personal Details",
-  "formStatus": {
-      "personal_details": {
-        "status": "incomplete"
-    },
-      "address_details": {
-        "status": "incomplete"
-      }
-    },
-      "financial_information": {
-        "status": "incomplete"
-    },
-      "review_submit": {
-        "status": "complete",
-        "formNeedTobeDeleteAfterSubmit": [
-          "personal_details",
-          "address_details",
-          "financial_information"
-        ]
-    },
+  "title": "Personal Details Screen",
+  "checkFormStatus": {"type": "api", "requestType": "get" ,"endPoint": "getformStatus"},
   "bindings": {
     "headerTitle": { "source": "string", "key": "personal_details.header_title" },
     "fullNameLabel": { "source": "string", "key": "personal_details.full_name_label" },

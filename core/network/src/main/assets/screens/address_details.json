@@ -1,32 +1,6 @@
 {
   "screenId": "address_details",
   "title": "Address Details",
-  "formStatus": {
-    "personal_details": {
-      "status": "incomplete"
-    },
-    "address_details": {
-      "status": "incomplete",
-      "formData": {
-        "form.address.streetAddress": "Abc road",
-        "form.address.city": "Bengaluru",
-        "form.address.state": "KARNATAKA",
-        "form.address.zipCode": "001100",
-        "form.address.residenceType": "Resident"
-      }
-    }
-  },
-  "financial_information": {
-    "status": "incomplete"
-  },
-  "review_submit": {
-    "status": "complete",
-    "formNeedTobeDeleteAfterSubmit": [
-      "personal_details",
-      "address_details",
-      "financial_information"
-    ]
-  },
   "bindings": {
     "headerTitle": { "source": "string", "key": "address_details.header_title" },
     "streetAddressLabel": { "source": "string", "key": "address_details.street_address_label" },
