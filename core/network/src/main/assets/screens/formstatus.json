@@ -1,0 +1,34 @@
+{
+  "formOrder": [
+    "personal_details",
+    "address_details",
+    "financial_information",
+    "review_submit"
+  ],
+  "formStatus": {
+    "personal_details": {
+      "status": "filled"
+    },
+    "address_details": {
+      "status": "notfilled",
+      "formData": {
+        "form.address.streetAddress": "Abc road",
+        "form.address.city": "Bengaluru",
+        "form.address.state": "KARNATAKA",
+        "form.address.zipCode": "001100",
+        "form.address.residenceType": "Resident"
+      }
+    },
+    "financial_information": {
+      "status": "notfilled"
+    },
+    "review_submit": {
+      "status": "pendingForSubmit",
+      "formNeedTobeDeleteAfterSubmit": [
+        "personal_details",
+        "address_details",
+        "financial_information"
+      ]
+    }
+  }
+}
