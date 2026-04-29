@@ -1,6 +1,6 @@
 # Lint & Code-Style Setup
 
-This document describes the static-analysis and code-style tooling configured for every module in **MoviesDemoAPP**.  
+This document describes the static-analysis and code-style tooling configured for every module in **MoviesDemoAPP**.
 Follow these instructions when onboarding, adding a new module, or triaging a gate failure.
 
 ---
@@ -150,7 +150,7 @@ When you intentionally accept new pre-existing violations (e.g., after adding a 
 ./gradlew :app:updateLintBaseline
 ```
 
-> **Never add errors to the baseline to silence failures — fix the error instead.**  
+> **Never add errors to the baseline to silence failures — fix the error instead.**
 > The baseline is for pre-existing warnings you cannot fix immediately, not a workaround for correctness violations.
 
 ### Stale baseline entries
@@ -202,6 +202,42 @@ If hooks are missing (e.g., after a fresh clone before a first build):
 ```
 
 Hook source files live in `scripts/` and are committed to the repository so the whole team shares the same gates.
+
+### Temporarily bypassing hooks
+
+Git provides a built-in escape hatch via the `--no-verify` flag. Use it only when genuinely necessary — see the table below.
+
+**Skip the pre-commit hook (KTLint) for one commit:**
+
+```bash
+git commit --no-verify -m "your message"
+```
+
+**Skip the pre-push hook (Android Lint) for one push:**
+
+```bash
+git push --no-verify
+```
+
+**Skip both in one flow:**
+
+```bash
+git commit --no-verify -m "your message"
+git push --no-verify
+```
+
+`--no-verify` is a git-level flag. It does not touch KTLint or Android Lint — it simply tells git's hook runner to skip all scripts in `.git/hooks/` for that single operation. The hooks fire normally on the very next commit or push that does not include the flag.
+
+**When it is acceptable:**
+
+| Situation | Acceptable? |
+|---|---|
+| Emergency hotfix that must ship immediately | Yes — fix violations in a follow-up commit |
+| WIP commit on a personal/feature branch (not main) | Yes — clean up before opening a PR |
+| Committing only generated files or documentation | Yes — no Kotlin changed |
+| Skipping to avoid fixing an actual violation | No — this defeats the gate |
+
+> **Important:** `--no-verify` bypasses local hooks only. CI pipeline checks (GitHub Actions, Bitrise, etc.) and any server-side hooks on the remote repository are **not** affected. Violations skipped locally will still be caught when the branch is built in CI.
 
 ---
 
@@ -294,3 +330,4 @@ Both tasks respect the same `lint.xml`, `.editorconfig`, and baseline that devel
 | Hooks not firing | `.git/hooks/` not populated | Run `./gradlew installGitHooks` |
 | Baseline has stale entries | Issues were fixed | Run `./gradlew :app:updateLintBaseline` |
 | `BUILD FAILED` with `abortOnError` | New error-severity violation introduced | Fix the violation; do not suppress errors into the baseline |
+| Hook ran but I need to skip it once | Emergency or WIP situation | Use `git commit --no-verify` or `git push --no-verify` (see §5) |
