@@ -15,6 +15,7 @@ data class ScreenModel(
     val type: String,
     val checkFormStatus: CheckFormStatus? = null,
     val title: String? = null,
+    val formOrder: List<String>? = emptyList(),
     var formStatus: Map<String, FormStatusDetail>? = null,
     val bindings: Map<String, BindingItem>? = null,
     val state: State? = null,

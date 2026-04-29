@@ -14,8 +14,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import javax.inject.Inject
 
 @HiltViewModel
@@ -28,69 +30,128 @@ class FormStatusViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val formId: MutableStateFlow<String?> = MutableStateFlow(null)
-    val _formId: StateFlow<String?> = formId
+    val _formId: StateFlow<String?> = formId.asStateFlow()
 
-    private val validRoutes = setOf(
-        Routes.BANKING,
-        Routes.BANKING_ADDRESS,
-        Routes.BANKING_FINENCIAL_DETAIL,
-        Routes.BANKING_REVIEW_SUBMIT
-    )
+    private val _statusList = MutableStateFlow<Map<String, FormStatusDetail>>(emptyMap())
+    val statusList: StateFlow<Map<String, FormStatusDetail>> = _statusList.asStateFlow()
+
+    private val _formOrder = MutableStateFlow<List<String>>(emptyList())
+    val formOrder: StateFlow<List<String>> = _formOrder.asStateFlow()
 
     fun checkAndNavigateToNextForm() {
         viewModelScope.launch {
-            // Check persistence first
-            val incompleteFromPrefs = bankingFormStateRepository.getIncompleteFormIds()
-                .filter { it in validRoutes }
-            if (incompleteFromPrefs.isNotEmpty()) {
-                formId.value = incompleteFromPrefs.first()
-                return@launch
-            }
+            // 1. Try to load from local persistence first
+            var currentStatus = bankingFormStateRepository.getFormStatusMap() ?: emptyMap()
+            var currentOrder = bankingFormStateRepository.getFormOrder()
 
-            var statusList: Map<String, FormStatusDetail> = emptyMap()
-            val screenModel = loadScreen("personal_details")
-            
-            val checkFormStatus = screenModel?.checkFormStatus
-            if (checkFormStatus?.type == "api") {
-                statusList = try {
-                    val response = when (checkFormStatus.requestType.lowercase()) {
-                        "post" -> bankingApi.post(checkFormStatus.endPoint, json.parseToJsonElement("{}"))
-                        else -> bankingApi.get(checkFormStatus.endPoint)
+            if (currentStatus.isEmpty() || currentOrder.isEmpty()) {
+                // 2. Fetch from API or ScreenModel if no local state
+                val screenModel = loadScreen("personal_details")
+                val checkFormStatus = screenModel?.checkFormStatus
+                
+                val fetchedData = if (checkFormStatus?.type == "api") {
+                    try {
+                        val response = when (checkFormStatus.requestType.lowercase()) {
+                            "post" -> bankingApi.post(checkFormStatus.endPoint, json.parseToJsonElement("{}"))
+                            else -> bankingApi.get(checkFormStatus.endPoint)
+                        }
+                        
+                        val responseString = response.toString()
+                        val statusType = object : TypeToken<Map<String, FormStatusDetail>>() {}.type
+                        val orderType = object : TypeToken<List<String>>() {}.type
+                        
+                        val rawMap = gson.fromJson<Map<String, Any>>(responseString, object : TypeToken<Map<String, Any>>() {}.type)
+                        
+                        val status = if (rawMap.containsKey("formStatus")) {
+                            gson.fromJson<Map<String, FormStatusDetail>>(gson.toJson(rawMap["formStatus"]), statusType)
+                        } else {
+                            gson.fromJson<Map<String, FormStatusDetail>>(responseString, statusType)
+                        }
+                        
+                        val order = if (rawMap.containsKey("formOrder")) {
+                            gson.fromJson<List<String>>(gson.toJson(rawMap["formOrder"]), orderType)
+                        } else {
+                            screenModel?.formOrder ?: emptyList()
+                        }
+                        
+                        Pair(status, order)
+                    } catch (_: Exception) {
+                        Pair(screenModel?.formStatus ?: emptyMap(), screenModel?.formOrder ?: emptyList())
                     }
-                    
-                    // Handle both wrapped and unwrapped response
-                    val rawMap = gson.fromJson<Map<String, Any>>(response.toString(), object : TypeToken<Map<String, Any>>() {}.type)
-                    if (rawMap.containsKey("formStatus")) {
-                        val nestedType = object : TypeToken<Map<String, FormStatusDetail>>() {}.type
-                        gson.fromJson(gson.toJson(rawMap["formStatus"]), nestedType)
-                    } else {
-                        val type = object : TypeToken<Map<String, FormStatusDetail>>() {}.type
-                        gson.fromJson(response.toString(), type)
-                    }
-                } catch (_: Exception) {
-                    screenModel.formStatus ?: emptyMap()
+                } else {
+                    Pair(screenModel?.formStatus ?: emptyMap(), screenModel?.formOrder ?: emptyList())
                 }
-            } else {
-                statusList = screenModel?.formStatus ?: emptyMap()
+                
+                currentStatus = fetchedData.first
+                currentOrder = fetchedData.second
+                
+                if (currentStatus.isNotEmpty()) {
+                    bankingFormStateRepository.saveFormStatusState(currentStatus, currentOrder)
+                }
             }
-            
-            // Filter only valid routes to avoid navigation crashes
-            statusList = statusList.filterKeys { it in validRoutes }
-            
-            screenModel?.formStatus = statusList
 
-            for (entry in statusList.entries) {
-                val id = entry.key
-                val detail = entry.value
-                val isLocalComplete = bankingFormStateRepository.isFormCompleted(id)
+            _statusList.value = currentStatus
+            _formOrder.value = currentOrder
 
-                if (!isLocalComplete && !detail.status.equals("completed", ignoreCase = true)) {
+            // 3. Determine next form to show based on formOrder and status
+            for (id in currentOrder) {
+                val detail = currentStatus[id]
+                val status = detail?.status?.lowercase() ?: "notfilled"
+                
+                // Redirect to the first one that is NOT "filled" or "completed"
+                if (status != "filled" && status != "completed") {
                     formId.value = id
                     return@launch
                 }
             }
 
-            formId.value = Routes.BANKING
+            // If everything is completed, default to the start or a completion screen
+            formId.value = currentOrder.firstOrNull() ?: Routes.BANKING
+        }
+    }
+
+    /**
+     * Updates the form status and data at runtime and persists it.
+     */
+    fun updateFormStatus(formId: String, status: String, formData: Map<String, String>? = null) {
+        viewModelScope.launch {
+            val current = _statusList.value.toMutableMap()
+            val existing = current[formId] ?: FormStatusDetail(status = status)
+
+            val updatedDetail = existing.copy(
+                status = status,
+                formData = formData ?: existing.formData
+            )
+
+            current[formId] = updatedDetail
+            _statusList.value = current
+
+            // 1. Update local persistence
+            bankingFormStateRepository.saveFormStatusState(current, _formOrder.value)
+
+            // 2. Update Dummy Server (Interceptor)
+            try {
+                val fullPayload = mapOf(
+                    "formOrder" to _formOrder.value,
+                    "formStatus" to current
+                )
+                // Use Gson to convert the map to a JSON string, then parse with kotlinx.serialization.json
+                val jsonString = gson.toJson(fullPayload)
+                val jsonElement = json.parseToJsonElement(jsonString)
+                
+                bankingApi.post("formStatus", jsonElement)
+            } catch (e: Exception) {
+                // Silently handle or log server update failure
+            }
+
+            if (status.equals("completed", ignoreCase = true) || status.equals("filled", ignoreCase = true)) {
+                bankingFormStateRepository.markFormCompleted(formId)
+
+                if (!updatedDetail.formNeedTobeDeleteAfterSubmit.isNullOrEmpty()) {
+                    bankingFormStateRepository.resetForms(updatedDetail.formNeedTobeDeleteAfterSubmit!!)
+                    _statusList.value = bankingFormStateRepository.getFormStatusMap() ?: current
+                }
+            }
         }
     }
 

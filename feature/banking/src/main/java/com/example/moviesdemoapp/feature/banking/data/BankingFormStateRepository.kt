@@ -2,12 +2,16 @@ package com.example.moviesdemoapp.feature.banking.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 import androidx.core.content.edit
 import com.example.moviesdemoapp.core.data.ScreenRepository
+import com.example.moviesdemoapp.core.network.model.FormStatusDetail
 import com.example.moviesdemoapp.engine.navigation.Routes
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Manages persistence of banking form completion state.
@@ -17,6 +21,7 @@ import com.example.moviesdemoapp.engine.navigation.Routes
 class BankingFormStateRepository @Inject constructor(
     @ApplicationContext context: Context,
     private val screenRepository: ScreenRepository,
+    private val json: Json,
 ) {
     private val prefs: SharedPreferences = context.getSharedPreferences(
         "banking_form_state",
@@ -126,6 +131,73 @@ class BankingFormStateRepository @Inject constructor(
      */
     fun clearFormData(formId: String) {
         prefs.edit { remove("form_${formId}_data") }
+    }
+
+    /**
+     * Save the entire form status map and order to persistence
+     */
+    fun saveFormStatusState(statusMap: Map<String, FormStatusDetail>, order: List<String>?) {
+        val statusJson = json.encodeToString(statusMap)
+        val orderJson = json.encodeToString(order ?: emptyList<String>())
+        prefs.edit {
+            putString("full_form_status_map", statusJson)
+            putString("form_order", orderJson)
+        }
+    }
+
+    /**
+     * Load the form order from persistence
+     */
+    fun getFormOrder(): List<String> {
+        val jsonString = prefs.getString("form_order", null) ?: return emptyList()
+        return try {
+            json.decodeFromString<List<String>>(jsonString)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * Save the entire form status map to persistence
+     */
+    fun saveFormStatusMap(statusMap: Map<String, FormStatusDetail>) {
+        val jsonString = json.encodeToString(statusMap)
+        prefs.edit {
+            putString("full_form_status_map", jsonString)
+        }
+    }
+
+    /**
+     * Load the entire form status map from persistence
+     */
+    fun getFormStatusMap(): Map<String, FormStatusDetail>? {
+        val jsonString = prefs.getString("full_form_status_map", null) ?: return null
+        return try {
+            json.decodeFromString<Map<String, FormStatusDetail>>(jsonString)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Resets specific forms based on a list
+     */
+    fun resetForms(formIdsToReset: List<String>) {
+        prefs.edit {
+            formIdsToReset.forEach { id ->
+                remove("form_${id}_completed")
+                remove("form_${id}_data")
+            }
+            // Also update the full map if it exists
+            getFormStatusMap()?.toMutableMap()?.let { map ->
+                formIdsToReset.forEach { id ->
+                    map[id]?.let { detail ->
+                        map[id] = detail.copy(status = "notfilled", formData = null)
+                    }
+                }
+                saveFormStatusMap(map)
+            }
+        }
     }
 }
 
