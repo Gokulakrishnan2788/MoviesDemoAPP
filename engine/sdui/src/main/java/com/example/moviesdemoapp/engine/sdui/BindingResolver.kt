@@ -55,14 +55,19 @@ class BindingResolver(private val stringResolver: StringResolver) {
             }
         }
 
-        // Step 3: TEMPLATE — interpolate against (apiData + api-resolved + string-resolved)
+        // Step 3: TEMPLATE — interpolate against (apiData + api-resolved + string-resolved + FormDataStorage)
         val baseForTemplate: Map<String, String> = apiData + resolved
+        val regex = "\\{\\{(.+?)\\}\\}".toRegex()
+
         bindings.forEach { (bindingKey, item) ->
             if (item.source == "template") {
                 val tmpl = item.template ?: return@forEach
-                var result = tmpl
-                baseForTemplate.forEach { (k, v) -> result = result.replace("{{$k}}", v) }
-                resolved[bindingKey] = result
+                resolved[bindingKey] = regex.replace(tmpl) { matchResult ->
+                    val key = matchResult.groupValues[1]
+                    baseForTemplate[key] 
+                        ?: FormDataStorage.formDataStoreAndValidation[key] 
+                        ?: ""
+                }
             }
         }
 
@@ -90,6 +95,15 @@ class BindingResolver(private val stringResolver: StringResolver) {
             when (item.source) {
                 "string" -> stringResolver.resolve(item.key)
                 "form" -> FormDataStorage.readAndSetValue(screenName, key)
+                "template" -> {
+                    val tmpl = item.template ?: return key
+                    val regex = "\\{\\{(.+?)\\}\\}".toRegex()
+                    regex.replace(tmpl) { matchResult ->
+                        val k = matchResult.groupValues[1]
+                        // Try cache first (API/String values), then live Form data
+                        resolvedCache[k] ?: FormDataStorage.readAndSetValue(screenName, k)
+                    }
+                }
                 else     -> key
             }
         } catch (e: Exception) {

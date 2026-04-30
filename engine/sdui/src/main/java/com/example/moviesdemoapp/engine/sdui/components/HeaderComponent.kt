@@ -27,8 +27,8 @@ internal fun RenderHeader(
     onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     resolver: TemplateResolver,
 ) {
-    val title     = node.titleTemplate?.let { resolver.resolve(it, data) } ?: node.props["title"] ?: ""
-    val subtitle  = node.subtitleTemplate?.let { resolver.resolve(it, data) } ?: node.props["subtitle"]
+    val title     = node.titleTemplate?.let { resolver.resolve(it, data, "") } ?: node.props["title"] ?: ""
+    val subtitle  = node.subtitleTemplate?.let { resolver.resolve(it, data, "") } ?: node.props["subtitle"]
     val hasSearch = node.action?.type == "search"
     val padH      = node.style?.padding?.dp ?: DesignTokens.SpacingMd
     val padTop    = node.style?.paddingTop?.dp ?: DesignTokens.SpacingSm

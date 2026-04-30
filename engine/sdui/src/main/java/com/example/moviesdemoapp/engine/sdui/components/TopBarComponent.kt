@@ -36,8 +36,8 @@ internal fun RenderTopBar(
     onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     resolver: TemplateResolver,
 ) {
-    val title    = node.props["title"] ?: node.titleTemplate?.let { resolver.resolve(it, data) } ?: ""
-    val subtitle = node.props["subtitle"] ?: node.subtitleTemplate?.let { resolver.resolve(it, data) }
+    val title    = node.props["title"] ?: node.titleTemplate?.let { resolver.resolve(it, data, "") } ?: ""
+    val subtitle = node.props["subtitle"] ?: node.subtitleTemplate?.let { resolver.resolve(it, data, "") }
     val hasBack   = node.props["leadingIcon"] == "back"
     val hasSearch = node.props["trailingIcon"] == "search"
     val padH      = node.style?.padding?.dp ?: DesignTokens.SpacingMd

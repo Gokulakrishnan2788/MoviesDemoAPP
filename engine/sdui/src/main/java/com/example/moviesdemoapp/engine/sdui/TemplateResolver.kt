@@ -12,17 +12,20 @@ import javax.inject.Singleton
 class TemplateResolver @Inject constructor() {
 
     /**
-     * Replace all `{{key}}` occurrences in [template] with values from [data].
-     * Keys absent from [data] resolve to an empty string (never crash).
+     * Replace all `{{key}}` occurrences in [template] with values from [data]
+     * or [FormDataStorage.formDataStoreAndValidation].
+     * Keys absent from both resolve to an empty string (never crash).
      */
-    fun resolve(template: String, data: Map<String, String>): String {
-        var result = template
-        data.forEach { (key, value) -> result = result.replace("{{$key}}", value) }
-        return result
+    fun resolve(template: String, data: Map<String, String>, savedKey:String?): String {
+        val regex = "\\{\\{(.+?)\\}\\}".toRegex()
+        return regex.replace(template) { matchResult ->
+            val key = matchResult.groupValues[1]
+            data[key] ?: FormDataStorage.formDataStoreAndValidation[key] ?: savedKey ?: ""
+        }
     }
 
-    fun resolveKey(screenName:String, template: String, data: Map<String, String>): String {
-        return FormDataStorage.formData?.get(screenName)?: resolve(template, data)
+    fun resolveKey(screenName:String, template: String, data: Map<String, String>, savedKey:String?): String {
+        return FormDataStorage.formData?.get(screenName)?: resolve(template, data, savedKey)
     }
 
     /** Return the value for [key] in [data], or null if absent. */

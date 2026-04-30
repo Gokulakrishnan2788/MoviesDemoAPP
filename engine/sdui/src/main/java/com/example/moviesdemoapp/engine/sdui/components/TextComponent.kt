@@ -19,7 +19,7 @@ internal fun RenderText(
     data: Map<String, String>,
     resolver: TemplateResolver,
 ) {
-    val text = node.template?.let { resolver.resolve(it, data) }
+    val text = node.template?.let { resolver.resolve(it, data, "") }
         ?: node.dataBinding?.let { data[it] }
         ?: node.text
         ?: node.props["text"] ?: ""

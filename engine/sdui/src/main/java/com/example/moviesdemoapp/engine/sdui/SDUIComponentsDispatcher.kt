@@ -118,7 +118,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         val inMemoryValue = FormDataStorage.readAndSetValue(screenName, key)
         if (inMemoryValue.isNotEmpty()) return inMemoryValue
         
-        return key?.let { sduiViewModel.getFieldData(it) } ?: ""
+        return key?.let { sduiViewModel.getFieldData(it) }?.replace("$$","$") ?: ""
     }
     private fun validateForm(screenName: String?) = FormDataStorage.validateForm(screenName, sduiViewModel)
 
@@ -516,9 +516,9 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
     ) {
         val title = node.props["title"]
-            ?: node.titleTemplate?.let { resolver.resolve(it, data) } ?: ""
+            ?: node.titleTemplate?.let { resolver.resolve(it, data, sduiViewModel.getFieldData(it)) } ?: ""
         val subtitle = node.props["subtitle"]
-            ?: node.subtitleTemplate?.let { resolver.resolve(it, data) }
+            ?: node.subtitleTemplate?.let { resolver.resolve(it, data, sduiViewModel.getFieldData(it)) }
         val hasBack = node.props["leadingIcon"] == "back"
         val hasSearch = node.props["trailingIcon"] == "search"
         val padH = node.style?.padding?.dp ?: DesignTokens.SpacingMd
@@ -610,19 +610,6 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     }
 
 
-    fun resolveValue(template: String, formState: SnapshotStateMap<String, Any>): String {
-        try {
-            val regex = "\\{\\{(.+?)}}".toRegex()
-            val match = regex.find(template)
-
-            val key = match?.groupValues?.get(1) ?: return ""
-
-            return formState.getValue(key).toString() ?: ""
-        } catch (e: Exception) {
-            return ""
-        }
-    }
-
     @Composable
     private fun RenderSummeryRow(
         node: ComponentNode,
@@ -631,7 +618,6 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
-        val formState = remember { mutableStateMapOf<String, Any>() }
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
         val pad = node.style?.padding?.dp ?: 0.dp
         val spacing = node.style?.spacing?.dp ?: DesignTokens.SpacingSm
@@ -640,8 +626,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
         if (pad > 0.dp) mod = mod.padding(pad)
         if (node.action != null) mod = mod.clickable { node.action?.dispatch(activityScreenName, data, onAction, node) }
-        val value = formDataStoreAndValidation[node.valueTemplate?.replace("{{", "")?.replace("}}", "")] ?: resolveValue(node.valueTemplate?: "", formState)
-
+        var value = node.valueTemplate?.let { resolver.resolve(it, data, sduiViewModel.getFieldData(it)) } ?: ""
+        if(value.startsWith("$$")) value = value.replace("$$","$")
         Row(
             modifier = mod,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1080,7 +1066,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
     @Composable
     private fun RenderText(node: ComponentNode, data: Map<String, String>) {
-        val text = node.template?.let { resolver.resolve(it, data) }
+        val text = node.template?.let { resolver.resolve(it, data, sduiViewModel.getFieldData(it)) }
             ?: node.dataBinding?.let { data[it] }
             ?: node.text
             ?: node.props["text"]
@@ -1108,12 +1094,12 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         data: Map<String, String>,
         onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
     ) {
-        var title = node.titleTemplate?.let { resolver.resolve(it, data) }
+        var title = node.titleTemplate?.let { resolver.resolve(it, data, sduiViewModel.getFieldData(it)) }
             ?: node.props["title"] ?: ""
         if (title.isEmpty() && !node.titleBinding?.isNullOrEmpty()!!) {
             title = bindingResolver.resolve(activityScreenName,node.titleBinding)
         }
-        var subtitle: String? = node.subtitleTemplate?.let { resolver.resolve(it, data) }
+        var subtitle: String? = node.subtitleTemplate?.let { resolver.resolve(it, data, sduiViewModel.getFieldData(it)) }
             ?: node.props["subtitle"]
         if (subtitle.isNullOrEmpty() && !node.subtitleBinding.isNullOrEmpty()) {
             subtitle = bindingResolver.resolve(activityScreenName,node.subtitleBinding)

@@ -35,6 +35,29 @@ class SDUIViewModel(context: Context): ViewModel() {
     }
 
     fun getFieldData(key: String): String {
-        return prefs.getString("field_$key", "") ?: ""
+        if(key.contains(",")){
+            val regex = "\\{\\{(.+?)\\}\\}".toRegex()
+            return regex.replace(key) { matchResult ->
+                val key = matchResult.groupValues[1]
+                prefs.getString("field_$key", "") ?: ""
+            }
+        }
+        if (key.contains("{{") && key.contains("}}") && !key.endsWith("}}")) {
+            val regex = "\\{\\{(.+?)\\}\\}".toRegex()
+            // .replace replaces the MATCHES, but keeps everything else as is
+            return regex.replace(key) { matchResult ->
+                val placeholderKey = matchResult.groupValues[1]
+                // Look up the value from SharedPreferences
+                prefs.getString("field_$placeholderKey", "") ?: ""
+            }
+        }
+        else {
+            var initialChar = ""
+            if(key.startsWith("$")){
+                initialChar = key.first().toString()
+            }
+            return initialChar + prefs.getString("field_${key.replace("$", "").replace("{{","").replace("}}", "")}", "")?.replace("$$","$") ?: ""
+        }
+
     }
 }

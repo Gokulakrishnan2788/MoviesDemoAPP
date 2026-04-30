@@ -19,7 +19,7 @@ internal fun RenderButton(
     onAction: (String, Map<String, String>, ActionModel?) -> Unit,
     resolver: TemplateResolver,
 ) {
-    val label = node.template?.let { resolver.resolve(it, data) } ?: node.props["label"] ?: ""
+    val label = node.template?.let { resolver.resolve(it, data, "") } ?: node.props["label"] ?: ""
 
     Box(
         modifier = Modifier
