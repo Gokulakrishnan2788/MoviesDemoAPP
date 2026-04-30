@@ -35,9 +35,9 @@ data class CheckFormStatus(
 
 @Serializable
 data class FormStatusDetail(
-    val status: String,
-    val formData: Map<String, String>? = null,
-    val formNeedTobeDeleteAfterSubmit: List<String>? = emptyList()
+    var status: String,
+    var formData: Map<String, String>? = null,
+    var formNeedTobeDeleteAfterSubmit: List<String>? = emptyList()
 )
 
 

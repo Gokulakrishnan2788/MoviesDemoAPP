@@ -57,7 +57,7 @@ fun SDUIRenderer(
     error: String?,
     dataMap: Map<String, String> = emptyMap(),
     listData: Map<String, List<Map<String, String>>> = emptyMap(),
-    onAction: (String, Map<String, String>, action: ActionModel?) -> Unit,
+    onAction: (String, String, Map<String, String>, action: ActionModel?) -> Unit,
 ) {
     val context = LocalContext.current
     FormDataStorage.formStatus = screenModel?.formStatus
@@ -133,7 +133,7 @@ class SDUIRenderEngine(
         screenModel: ScreenModel,
         data: Map<String, String> = emptyMap(),
         listData: Map<String, List<Map<String, String>>> = emptyMap(),
-        onAction: (actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit = { _, _ , _-> },
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit = { _, _ , _, _ -> },
     ) {
         val base = Modifier
             .fillMaxSize()
@@ -155,7 +155,7 @@ class SDUIRenderEngine(
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>> = emptyMap(),
-        onAction: (actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit = { _, _ ,_-> },
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit = { _, _ ,_, _-> },
     ) {
         // Visibility is evaluated once here — applies to BOTH custom and built-in components.
         // Keeping it here prevents custom components from bypassing JSON visibility rules.

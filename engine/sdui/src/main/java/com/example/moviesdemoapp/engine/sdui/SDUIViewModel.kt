@@ -25,8 +25,16 @@ class SDUIViewModel(context: Context): ViewModel() {
     }
 
     fun checkFormCompleted(formId: String):String? {
-       return prefs.getString("form_${formId}_data", null)?.let {
-            return it
+       return prefs.getString("form_${formId}_data", null)
+    }
+
+    fun saveFieldData(key: String, value: String) {
+        prefs.edit {
+            putString("field_$key", value)
         }
+    }
+
+    fun getFieldData(key: String): String {
+        return prefs.getString("field_$key", "") ?: ""
     }
 }

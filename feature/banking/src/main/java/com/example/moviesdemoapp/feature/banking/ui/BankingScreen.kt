@@ -69,8 +69,13 @@ fun BankingScreen(
         error = state.error,
         dataMap = state.dataMap,
         listData = state.listData,
-        onAction = { actionId, params, node ->
-            if (actionId.equals("navigate", ignoreCase = true) && params.containsKey("route")) {
+        onAction = { currentActionId, actionId, params, node ->
+            if ((actionId.equals("navigate", ignoreCase = true) || actionId.equals("navigation", ignoreCase = true)) && params.containsKey("route")) {
+                val formStatus = viewModel.getFormStatus()
+                val formStatusData = formStatus[currentActionId]
+                formStatusData?.status = "completed"
+                formStatus[currentActionId] = formStatusData ?: return@SDUIRenderer
+                viewModel.saveFormStatus(formStatus)
                 onFormComplete(params["route"] ?: "")
             }
             viewModel.handleIntent(BankingPageIntent.OnAction(actionId, params, node))
@@ -133,8 +138,13 @@ fun BankingIncrementScreen(
             error = state.error,
             dataMap = state.dataMap,
             listData = state.listData,
-            onAction = { actionId, params, node ->
-                if (actionId == "navigate" && params.containsKey("route")) {
+            onAction = { currentFormId, actionId, params, node ->
+                if ((actionId == "navigate" || actionId == "navigation") && params.containsKey("route")) {
+                    val formStatus = viewModel.getFormStatus()
+                    val formStatusData = formStatus[currentFormId]
+                    formStatusData?.status = "completed"
+                    formStatus[currentFormId] = formStatusData ?: return@SDUIRenderer
+                    viewModel.saveFormStatus(formStatus)
                     onFormComplete(params["route"] ?: "")
                 }
                 viewModel.handleIntent(BankingPageIntent.OnAction(actionId, params, node))

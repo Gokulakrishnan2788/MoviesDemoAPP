@@ -14,7 +14,7 @@ import javax.inject.Singleton
  * @param onAction  (actionId, params) callback when the component is tapped
  */
 typealias ComponentFactory =
-    @Composable (node: ComponentNode, data: Map<String, String>,  onAction: (actionId: String, params: Map<String, String>, action: ActionModel) -> Unit) -> Unit
+    @Composable (node: ComponentNode, data: Map<String, String>,  onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel) -> Unit) -> Unit
 
 /**
  * Singleton registry mapping SDUI type strings to custom [ComponentFactory] composables.

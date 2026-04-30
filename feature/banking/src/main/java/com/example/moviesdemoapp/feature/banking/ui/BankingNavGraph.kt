@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.engine.navigation.Routes
+import com.example.moviesdemoapp.feature.banking.ui.BankingIncrementScreen
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageEffect
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageIntent
 import kotlinx.coroutines.flow.collectLatest
@@ -67,13 +68,23 @@ fun NavGraphBuilder.bankingGraph(
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING_ADDRESS, effect.route))
+                        viewModel.handleIntent(
+                            BankingPageIntent.MarkFormCompleted(
+                                Routes.BANKING_ADDRESS,
+                                effect.route
+                            )
+                        )
                         navController.navigate(effect.route)
                     }
                 }
             }
 
-            BankingIncrementScreen(navController, viewModel, pageDetail = Routes.BANKING_ADDRESS) { _ -> }
+            BankingIncrementScreen(
+                navController,
+                viewModel,
+                pageDetail = Routes.BANKING_ADDRESS
+            ) { _ ->
+            }
         }
 
         composable(route = Routes.BANKING_FINENCIAL_DETAIL) { entry: NavBackStackEntry ->
@@ -82,13 +93,22 @@ fun NavGraphBuilder.bankingGraph(
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING_FINENCIAL_DETAIL, effect.route))
+                        viewModel.handleIntent(
+                            BankingPageIntent.MarkFormCompleted(
+                                Routes.BANKING_FINENCIAL_DETAIL,
+                                effect.route
+                            )
+                        )
                         navController.navigate(effect.route)
                     }
                 }
             }
 
-            BankingIncrementScreen(navController, viewModel, pageDetail = Routes.BANKING_FINENCIAL_DETAIL) { _ -> }
+            BankingIncrementScreen(
+                navController,
+                viewModel,
+                pageDetail = Routes.BANKING_FINENCIAL_DETAIL
+            ) { _ -> }
         }
 
         composable(route = Routes.BANKING_REVIEW_SUBMIT) { entry: NavBackStackEntry ->
@@ -97,14 +117,19 @@ fun NavGraphBuilder.bankingGraph(
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        viewModel.handleIntent(BankingPageIntent.MarkFormCompleted(Routes.BANKING_REVIEW_SUBMIT, effect.route))
+                        viewModel.handleIntent(
+                            BankingPageIntent.MarkFormCompleted(
+                                Routes.BANKING_REVIEW_SUBMIT,
+                                effect.route
+                            )
+                        )
                         navController.navigate(effect.route)
                     }
                 }
             }
 
             val loadingStatus = viewModel.loadingStatus.collectAsStateWithLifecycle()
-            if(loadingStatus.value){
+            if (loadingStatus.value) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -116,7 +141,17 @@ fun NavGraphBuilder.bankingGraph(
                     )
                 }
             } else {
-                BankingIncrementScreen(navController, viewModel, pageDetail = Routes.BANKING_REVIEW_SUBMIT) { _ -> }
+                BankingIncrementScreen(
+                    navController,
+                    viewModel,
+                    pageDetail = Routes.BANKING_REVIEW_SUBMIT
+                ) { route ->
+                    val formStatus = viewModel.getFormStatus()
+                    val formStatusData = formStatus[route]
+                    formStatusData?.status = "completed"
+                    formStatus[route] = formStatusData ?: return@BankingIncrementScreen
+                    viewModel.saveFormStatus(formStatus)
+                }
             }
 
 

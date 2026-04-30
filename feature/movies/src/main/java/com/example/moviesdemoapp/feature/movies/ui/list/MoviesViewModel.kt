@@ -52,7 +52,8 @@ class MoviesViewModel @Inject constructor(
 
     private fun handleAction(actionId: String, params: Map<String, String>) {
         when (actionId) {
-            "navigate" -> params["route"]?.let { setEffect(MoviesEffect.Navigate(it)) }
+            "navigate"  -> params["route"]?.let { setEffect(MoviesEffect.Navigate(it)) }
+            "navigation"  -> params["route"]?.let { setEffect(MoviesEffect.Navigate(it)) }
             "search"   -> { /* Phase 3 */ }
             "reorder"  -> {
                 val binding = params["binding"] ?: return

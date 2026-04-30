@@ -11,8 +11,17 @@ object FormDataStorage {
     fun clearFormData() = formDataStoreAndValidation.clear()
     fun getCurrentFormData(): Map<String, String> = formDataStoreAndValidation
     fun readAndSetValue(screenName: String?, key: String?): String {
-        return formDataStoreAndValidation[key] ?: formData?.get(key)
-        ?: formStatus?.get(screenName)?.formData?.get(key) ?: ""
+        if(key?.contains(",") == true){
+            var value = ""
+            key.replace("{{", "").replace("}}", "").split(",").forEach { subKey ->
+                value += formDataStoreAndValidation[key] ?: formData?.get(key)
+                        ?: formStatus?.get(screenName)?.formData?.get(key) ?: ""
+            }
+            return value
+        } else {
+            return formDataStoreAndValidation[key] ?: formData?.get(key)
+            ?: formStatus?.get(screenName)?.formData?.get(key) ?: ""
+        }
     }
 
     fun readAndSetValue(key: String?): String = readAndSetValue(null, key)
@@ -30,9 +39,7 @@ object FormDataStorage {
     }
 
     fun updateFormData(screenName: String, key: String, value: String) {
-        formStatus?.get(screenName)?.let {
-            formDataStoreAndValidation[key] = value
-        }
+        formDataStoreAndValidation[key] = value
     }
 
     fun getFormJsonData(screenName: String): String {

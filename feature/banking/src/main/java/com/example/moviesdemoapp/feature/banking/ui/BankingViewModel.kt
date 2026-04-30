@@ -6,6 +6,7 @@ import com.example.moviesdemoapp.core.data.remote.DataSourceExecutor
 import com.example.moviesdemoapp.core.domain.BaseViewModel
 import com.example.moviesdemoapp.core.network.BankingApi
 import com.example.moviesdemoapp.core.network.model.ActionModel
+import com.example.moviesdemoapp.core.network.model.FormStatusDetail
 import com.example.moviesdemoapp.engine.navigation.Routes
 import com.example.moviesdemoapp.engine.sdui.FormDataStorage
 import com.example.moviesdemoapp.feature.banking.data.BankingFormStateRepository
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import java.util.Collections.emptyMap
 import javax.inject.Inject
 
 
@@ -39,6 +41,14 @@ class BankingViewModel @Inject constructor(
 
     init {
         handleIntent(BankingPageIntent.LoadPersonalDetailMainPage)
+    }
+
+    fun getFormStatus(): MutableMap<String, FormStatusDetail>{
+       return formStateRepository.getFormStatusMap()?.toMutableMap() ?: emptyMap()
+    }
+
+    fun saveFormStatus(data: MutableMap<String, FormStatusDetail>) {
+       return formStateRepository.saveFormStatusMap(data)
     }
 
     override suspend fun reduce(intent: BankingPageIntent) {

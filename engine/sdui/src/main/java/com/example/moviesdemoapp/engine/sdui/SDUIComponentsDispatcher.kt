@@ -100,22 +100,12 @@ import kotlin.math.roundToInt
 
 /**
  * Routes each SDUI node type to its dedicated component file in the components/ folder.
- *
- * Visibility is NOT checked here — it is checked once in [SDUIRenderEngine.RenderNode]
- * before this dispatcher is called, so the rule applies equally to custom and built-in
- * components.
- *
- * Adding a new built-in component:
- *   1. Create a new file inside components/ (e.g. RatingComponent.kt) with an
- *      internal @Composable fun RenderRating(...).
- *   2. Add one line in the when block below.
- *
- * Adding a feature-specific custom component:
- *   → Use [SduiComponentProvider] + Hilt @IntoSet in the feature module instead.
- *      See MoviesComponentModule.kt for the template.
  */
 @Singleton
-class SDUIComponentsDispatcher @Inject constructor(private val resolver: TemplateResolver, private val analyticsEngine: AnalyticsEngine, private val  bindingResolver :BindingResolver, private val context: Context) {
+class SDUIComponentsDispatcher @Inject constructor(private val resolver: TemplateResolver,
+                                                   private val analyticsEngine: AnalyticsEngine,
+                                                   private val  bindingResolver :BindingResolver,
+                                                   private val context: Context) {
 
 
     private val sduiViewModel = SDUIViewModel(context)
@@ -124,7 +114,12 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         resolver.isVisible(node, data)
     private var activityScreenName:String? = null
     private val formDataStoreAndValidation = FormDataStorage.formDataStoreAndValidation
-    fun readAndSetValue(screenName: String?, key: String?) = FormDataStorage.readAndSetValue(screenName,key)
+    fun readAndSetValue(screenName: String?, key: String?) : String {
+        val inMemoryValue = FormDataStorage.readAndSetValue(screenName, key)
+        if (inMemoryValue.isNotEmpty()) return inMemoryValue
+        
+        return key?.let { sduiViewModel.getFieldData(it) } ?: ""
+    }
     private fun validateForm(screenName: String?) = FormDataStorage.validateForm(screenName, sduiViewModel)
 
     @SuppressLint("ConfigurationScreenWidthHeight")
@@ -187,12 +182,17 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         this.activityScreenName = screenName
         // Visibility check
         if (!resolver.isVisible(node, data)) return
+
+        // Wrap the 4-param onAction into a 3-param one for NodeRenderer
+        val wrappedOnAction: (String, Map<String, String>, ActionModel?) -> Unit = { type, params, action ->
+            onAction(screenName ?: "", type, params, action)
+        }
 
         when (node.type) {
             "topBar"         -> RenderTopBar(node, data, onAction)
@@ -215,8 +215,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             "stepperField"   -> RenderStepperField(node, data, onAction)
             "currencyField"  -> RenderCurrencyField(node, data, onAction)
             "toggle"         -> RenderToggleField(node, data, onAction)
-            "list"           -> RenderList(node, data, listData, onAction, renderNode)
-            "generatedList"  -> RenderGeneratedList(node, data, listData, onAction, renderNode)
+            "list"           -> RenderList(node, data, listData, wrappedOnAction, renderNode)
+            "generatedList"  -> RenderGeneratedList(node, data, listData, wrappedOnAction, renderNode)
             else -> Box(Modifier.padding(DesignTokens.SpacingMd)) {
                 Text("[unknown: ${node.type}]", color = DesignTokens.Accent)
             }
@@ -228,23 +228,21 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderCurrencyField(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
     ){
-        val formState = remember {mutableStateMapOf<String, String>() }
-        val min = component.validation?.min as? Int ?: 0
-        var rawValue by remember {
-            mutableStateOf(formState.getOrDefault(component.dataBinding, "").replace("$", ""))
-        }
-
-        val formattedValue = formatCurrency(rawValue)
-
-        val isRequired = component.validation?.required == true
-
-        LaunchedEffect(Unit) {
-            if(isRequired &&  (formDataStoreAndValidation[component.dataBinding] == null || formDataStoreAndValidation[component.dataBinding]?.isEmpty() == true)){
-                formDataStoreAndValidation[component.dataBinding ?: ""] = readAndSetValue( activityScreenName,component.dataBinding)
+        val bindingKey = component.dataBinding ?: ""
+        
+        LaunchedEffect(bindingKey) {
+            if (formDataStoreAndValidation[bindingKey].isNullOrEmpty()) {
+                val savedValue = readAndSetValue(activityScreenName, bindingKey)
+                formDataStoreAndValidation[bindingKey] = savedValue
             }
         }
+
+        val rawValue = formDataStoreAndValidation[bindingKey]?.replace("$", "") ?: ""
+        val formattedValue = formatCurrency(rawValue)
+        val isRequired = component.validation?.required == true
+        val min = component.validation?.min as? Int ?: 0
         val numericValue = rawValue.toLongOrNull() ?: 0
 
         val isError = when {
@@ -256,56 +254,41 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(vertical = 8.dp)
                 .semantics {
                     contentDescription =
                         (component.screenAccessibility?.label ?: component.label).toString()
                 }
         ) {
-
-            // 🔤 Label
             Text(
                 text = component.label ?: "",
                 fontSize = 14.sp,
                 modifier = Modifier.padding(bottom = 6.dp)
             )
 
-            // 💰 Currency TextField
             OutlinedTextField(
                 value = formattedValue,
                 onValueChange = { input ->
-
                     val clean = input.replace("[^0-9]".toRegex(), "")
-
-                    rawValue = clean
-                    component.dataBinding?.let {
-                        formState[it] = clean
-                        if (component.validation?.required == true) {
-                            formDataStoreAndValidation[component.dataBinding?: ""] = "$$clean"
-                        }
+                    formDataStoreAndValidation[bindingKey] = clean
+                    sduiViewModel.saveFieldData(bindingKey, clean)
+                    activityScreenName?.let { screenName ->
+                        FormDataStorage.updateFormData(screenName, bindingKey, clean)
                     }
-
                 },
-                placeholder = {
-                    Text(component.placeholder ?: "")
-                },
-                leadingIcon = {
-                    Text(component.currencySymbol ?: "")
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
-                ),
+                placeholder = { Text(component.placeholder ?: "") },
+                leadingIcon = { Text(component.currencySymbol ?: "") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = isError,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // ❗ Error Message
             if (isError) {
                 val errorText = when {
                     isRequired && rawValue.isEmpty() -> "This field is required"
                     numericValue < min -> "Minimum value is $min"
                     else -> ""
                 }
-
                 Text(
                     text = errorText,
                     color = Color.Red,
@@ -325,30 +308,22 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         }
     }
 
-    class ToggleFormState {
-
-        private val data = mutableStateMapOf<String, Any>()
-
-        fun setValue(key: String, value: Any) {
-            data[key] = value
-        }
-
-        fun getBoolean(key: String): Boolean {
-            return data[key] as? Boolean ?: false
-        }
-    }
-
     @Composable
     private fun RenderToggleField(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
     ){
-        val formState = remember { ToggleFormState() }
-
-        var checked by remember {
-            mutableStateOf(formState.getBoolean(component.dataBinding ?: ""))
+        val bindingKey = component.dataBinding ?: ""
+        
+        LaunchedEffect(bindingKey) {
+            if (formDataStoreAndValidation[bindingKey].isNullOrEmpty()) {
+                val savedValue = readAndSetValue(activityScreenName, bindingKey)
+                formDataStoreAndValidation[bindingKey] = savedValue
+            }
         }
+
+        val checked = formDataStoreAndValidation[bindingKey]?.toBoolean() ?: false
 
         Row(
             modifier = Modifier
@@ -361,34 +336,21 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
-            // 🔤 Label
             Text(
                 text = component.label ?: "",
                 fontSize = 16.sp
             )
 
-            // 🔘 Switch
             Switch(
                 checked = checked,
                 onCheckedChange = {
-                    checked = it
-                    formState.setValue(component.dataBinding ?: "", it)
+                    formDataStoreAndValidation[bindingKey] = it.toString()
+                    sduiViewModel.saveFieldData(bindingKey, it.toString())
+                    activityScreenName?.let { screenName ->
+                        FormDataStorage.updateFormData(screenName, bindingKey, it.toString())
+                    }
                 }
             )
-        }
-    }
-
-    class FormState {
-
-        private val data = mutableStateMapOf<String, Int>()
-
-        fun setValue(key: String, value: Int) {
-            data[key] = value
-        }
-
-        fun getValue(key: String, default: Int): Int {
-            return data[key] ?: default
         }
     }
 
@@ -396,20 +358,21 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderStepperField(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
     ){
-        val formState = remember { FormState() }
-
-        var value by remember {
-            mutableIntStateOf(
-                formState.getValue(component.dataBinding ?: "", component.minValue?: 1)
-            )
-        }
-
+        val bindingKey = component.dataBinding ?: ""
         val min = component.minValue ?: 1
         val max = component.maxValue ?: 1
         val step = component.step ?: 1
 
+        LaunchedEffect(bindingKey) {
+            if (formDataStoreAndValidation[bindingKey].isNullOrEmpty()) {
+                val savedValue = readAndSetValue(activityScreenName, bindingKey)
+                formDataStoreAndValidation[bindingKey] = savedValue.ifEmpty { min.toString() }
+            }
+        }
+
+        val value = formDataStoreAndValidation[bindingKey]?.toIntOrNull() ?: min
         val height = (component.style?.height as? Int ?: 40).dp
 
         fun formatValue(v: Int): String {
@@ -421,20 +384,18 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(vertical = 8.dp)
                 .semantics {
                     contentDescription =
                         (component.screenAccessibility?.label ?: component.label).toString()
                 }
         ) {
-
-            // 🔤 Label
             Text(
                 text = component.label ?: "",
                 fontSize = 14.sp,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // 🔢 Stepper Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -443,31 +404,35 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-
-                // ➖ Decrease
                 IconButton(
                     onClick = {
                         if (value - step >= min) {
-                            value -= step
-                            formState.setValue(component.dataBinding ?: "", value)
+                            val newValue = value - step
+                            formDataStoreAndValidation[bindingKey] = newValue.toString()
+                            sduiViewModel.saveFieldData(bindingKey, newValue.toString())
+                            activityScreenName?.let { screenName ->
+                                FormDataStorage.updateFormData(screenName, bindingKey, newValue.toString())
+                            }
                         }
                     }
                 ) {
                     Text("-", fontSize = 20.sp)
                 }
 
-                // 📊 Value Display
                 Text(
                     text = formatValue(value),
                     fontSize = 16.sp
                 )
 
-                // ➕ Increase
                 IconButton(
                     onClick = {
                         if (value + step <= max) {
-                            value += step
-                            formState.setValue(component.dataBinding ?: "", value)
+                            val newValue = value + step
+                            formDataStoreAndValidation[bindingKey] = newValue.toString()
+                            sduiViewModel.saveFieldData(bindingKey, newValue.toString())
+                            activityScreenName?.let { screenName ->
+                                FormDataStorage.updateFormData(screenName, bindingKey, newValue.toString())
+                            }
                         }
                     }
                 ) {
@@ -481,61 +446,57 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderSlider(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
     ){
-        val formState = remember {mutableStateMapOf<String, Float>() }
+        val bindingKey = component.dataBinding ?: ""
         val min = component.minValue?.toFloat() ?: 0.0f
         val max = component.maxValue?.toFloat() ?: 0.0f
         val step = component.step?.toFloat() ?: 0.0f
 
-        var sliderValue by remember {
-            mutableStateOf(
-                formState[component.dataBinding]
-                    .takeIf { it != 0f } ?: min
-            )
+        LaunchedEffect(bindingKey) {
+            if (formDataStoreAndValidation[bindingKey].isNullOrEmpty()) {
+                val savedValue = readAndSetValue(activityScreenName, bindingKey)
+                formDataStoreAndValidation[bindingKey] = savedValue.ifEmpty { min.toString() }
+            }
         }
 
-        // Calculate steps (Compose expects steps count, not value)
-        val steps = ((max - min) / step).toInt() - 1
+        val sliderValue = formDataStoreAndValidation[bindingKey]?.toFloatOrNull() ?: min
+        val steps = if (step > 0) ((max - min) / step).toInt() - 1 else 0
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(vertical = 8.dp)
                 .semantics {
                     contentDescription =
                         (component.screenAccessibility?.label ?: component.label).toString()
                 }
         ) {
-
-            // 🔤 Label
             Text(
                 text = component.label ?: "",
                 fontSize = 14.sp,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // 📊 Current Value Display
             Text(
                 text = "₹${sliderValue.toInt()}",
                 fontSize = 16.sp,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // 🎚️ Slider
             Slider(
                 value = sliderValue,
                 onValueChange = {
-                    sliderValue = it
-                    component.dataBinding?.let { key ->
-                        formState[key] =it
+                    formDataStoreAndValidation[bindingKey] = it.toString()
+                    sduiViewModel.saveFieldData(bindingKey, it.toString())
+                    activityScreenName?.let { screenName ->
+                        FormDataStorage.updateFormData(screenName, bindingKey, it.toString())
                     }
-
                 },
                 valueRange = min..max,
                 steps = steps
             )
 
-            // 📏 Min / Max Labels
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -552,7 +513,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderTopBar(
         node: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
     ) {
         val title = node.props["title"]
             ?: node.titleTemplate?.let { resolver.resolve(it, data) } ?: ""
@@ -578,7 +539,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
-                                .clickable { node.action?.dispatch(data, onAction, node) },
+                                .clickable { node.action?.dispatch(activityScreenName, data, onAction, node) },
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -600,7 +561,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 )
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
                     if (hasSearch) {
-                        IconButton(onClick = { node.action?.dispatch(data, onAction, node) }) {
+                        IconButton(onClick = { node.action?.dispatch(activityScreenName, data, onAction, node) }) {
                             Icon(Icons.Default.Search, contentDescription = "Search", tint = DesignTokens.PrimaryText)
                         }
                     }
@@ -627,7 +588,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
@@ -641,7 +602,10 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             modifier = mod,
             verticalArrangement = if (spacing > 0.dp) Arrangement.spacedBy(spacing) else Arrangement.Top,
         ) {
-            node.children.forEach { renderNode(it, data, listData, onAction) }
+            val internalOnAction: (String, Map<String, String>, ActionModel?) -> Unit = { type, params, action ->
+                onAction(activityScreenName ?: "", type, params, action)
+            }
+            node.children.forEach { renderNode(it, data, listData, internalOnAction) }
         }
     }
 
@@ -664,7 +628,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val formState = remember { mutableStateMapOf<String, Any>() }
@@ -675,7 +639,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         var mod: Modifier = Modifier.fillMaxWidth()
         if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
         if (pad > 0.dp) mod = mod.padding(pad)
-        if (node.action != null) mod = mod.clickable { node.action?.dispatch(data, onAction, node) }
+        if (node.action != null) mod = mod.clickable { node.action?.dispatch(activityScreenName, data, onAction, node) }
         val value = formDataStoreAndValidation[node.valueTemplate?.replace("{{", "")?.replace("}}", "")] ?: resolveValue(node.valueTemplate?: "", formState)
 
         Row(
@@ -707,7 +671,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
@@ -717,8 +681,11 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         var mod: Modifier = Modifier.fillMaxWidth()
         if (bg != null) mod = mod.background(bg, RoundedCornerShape(radius))
         if (pad > 0.dp) mod = mod.padding(pad)
-        if (node.action != null) mod = mod.clickable { node.action?.dispatch(data, onAction, node) }
+        if (node.action != null) mod = mod.clickable { node.action?.dispatch(activityScreenName, data, onAction, node) }
         Row(modifier = mod, horizontalArrangement = Arrangement.spacedBy(spacing)) {
+            val internalOnAction: (String, Map<String, String>, ActionModel?) -> Unit = { type, params, action ->
+                onAction(activityScreenName ?: "", type, params, action)
+            }
             node.children.forEach {
                 if (it.type.equals("button", ignoreCase = true) && it.style?.weight != null) {
                     RenderButton(
@@ -727,7 +694,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                         )
                     )
                 } else {
-                    renderNode(it, data, listData, onAction)
+                    renderNode(it, data, listData, internalOnAction)
                 }
             }
         }
@@ -738,7 +705,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
         renderNode: NodeRenderer
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) } ?: DesignTokens.CardBackground
@@ -747,15 +714,18 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         var mod = Modifier
             .fillMaxWidth()
             .padding(horizontal = DesignTokens.SpacingMd, vertical = DesignTokens.SpacingSm)
-        if (node.action != null) mod = mod.clickable { node.action?.dispatch(data, onAction, node) }
+        if (node.action != null) mod = mod.clickable { node.action?.dispatch(activityScreenName, data, onAction, node) }
         Card(
             modifier = mod,
             shape = RoundedCornerShape(radius),
             colors = CardDefaults.cardColors(containerColor = bg),
         ) {
             Column(modifier = Modifier.padding(pad)) {
+                val internalOnAction: (String, Map<String, String>, ActionModel?) -> Unit = { type, params, action ->
+                    onAction(activityScreenName ?: "", type, params, action)
+                }
                 node.children.forEach {
-                    renderNode(it, data, listData, onAction)
+                    renderNode(it, data, listData, internalOnAction)
                 }
             }
         }
@@ -769,30 +739,20 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
     @Composable
     private fun RenderSwitchField(component: ComponentNode, data: Map<String, String>) {
-        val formState = remember { mutableStateMapOf<String, String>() }
-        var expanded by remember { mutableStateOf(false) }
-
-        val selectedValue = formState[component.dataBinding]
-
-        val selectedTitle: String? = component.options
-            ?.find { it.value == selectedValue }
-            ?.titleBinding ?: component.placeholder
-
-        val cornerRadius = (component.style?.cornerRadius?.toInt() ?: 8).dp
-        val color = (component.style?.foregroundColor ?: component.style?.textColor)
-            ?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
-        val fontSize = component.style?.fontSize?.sp ?: DesignTokens.TextMd
-        val fontWeight = component.style?.fontWeight.toFontWeight()
-        val maxLines = component.style?.lineLimit ?: component.style?.maxLines ?: Int.MAX_VALUE
-        val pad = component.style?.padding?.dp ?: 0.dp
-        LaunchedEffect(Unit) {
-            if(component.validation?.required == true &&  (formDataStoreAndValidation[component.dataBinding] == null || formDataStoreAndValidation[component.dataBinding]?.isEmpty() == true)){
-                formDataStoreAndValidation[component.dataBinding ?: ""] = readAndSetValue( activityScreenName,component.dataBinding)
+        val bindingKey = component.dataBinding ?: ""
+        
+        LaunchedEffect(bindingKey) {
+            if (formDataStoreAndValidation[bindingKey].isNullOrEmpty()) {
+                val savedValue = readAndSetValue(activityScreenName, bindingKey)
+                formDataStoreAndValidation[bindingKey] = savedValue
             }
         }
-        Column(modifier = Modifier.fillMaxWidth()) {
 
-            // 🔤 Label
+        val selectedValue = formDataStoreAndValidation[bindingKey] ?: ""
+        val cornerRadius = (component.style?.cornerRadius?.toInt() ?: 8).dp
+        val fontSize = component.style?.fontSize?.sp ?: DesignTokens.TextMd
+
+        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
             Text(
                 text = component.label ?: "",
                 fontSize = 14.sp,
@@ -805,31 +765,19 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                     .background(Color.Gray.copy(alpha = 0.2f))
                     .padding(4.dp)
             ) {
-
                 component.options?.forEach { option ->
-
                     val isSelected = option.value == selectedValue
-
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(cornerRadius))
-                            .background(
-                                if (isSelected) Color(0xFF4CAF50) else Color.Transparent
-                            )
+                            .background(if (isSelected) Color(0xFF4CAF50) else Color.Transparent)
                             .clickable {
-                                component.dataBinding?.let {
-                                    formState[it] = option.value
-                                    if (component.validation?.required == true) {
-                                        formDataStoreAndValidation[component.dataBinding ?: ""] =
-                                            option.value
-
-                                        activityScreenName?.let { screenName ->
-                                            FormDataStorage.updateFormData(screenName ?: "", component.dataBinding ?: "", option.value)
-                                        }
-                                    }
+                                formDataStoreAndValidation[bindingKey] = option.value
+                                sduiViewModel.saveFieldData(bindingKey, option.value)
+                                activityScreenName?.let { screenName ->
+                                    FormDataStorage.updateFormData(screenName, bindingKey, option.value)
                                 }
-
                             }
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
@@ -843,10 +791,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 }
             }
 
-            // ⚠️ Validation
-            val isError = component.validation?.required == true &&
-                    formState[component.dataBinding].isNullOrEmpty()
-
+            val isError = component.validation?.required == true && selectedValue.isEmpty()
             if (isError) {
                 Text(
                     text = "This field is required",
@@ -860,59 +805,46 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
     @Composable
     private fun RenderDropDownField(component: ComponentNode, data: Map<String, String>) {
-        val formState = remember { mutableStateMapOf<String, String>() }
+        val bindingKey = component.dataBinding ?: ""
         var expanded by remember { mutableStateOf(false) }
 
-        val selectedValue = formState[component.dataBinding]
+        LaunchedEffect(bindingKey) {
+            if (formDataStoreAndValidation[bindingKey].isNullOrEmpty()) {
+                val savedValue = readAndSetValue(activityScreenName, bindingKey)
+                formDataStoreAndValidation[bindingKey] = savedValue
+            }
+        }
 
+        val selectedValue = formDataStoreAndValidation[bindingKey] ?: ""
         val selectedTitle: String = component.options
             ?.find { it.value == selectedValue }
             ?.titleBinding ?: component.placeholder ?: ""
 
-        val color = (component.style?.foregroundColor ?: component.style?.textColor)
-            ?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
         val fontSize = component.style?.fontSize?.sp ?: DesignTokens.TextMd
-        val fontWeight = component.style?.fontWeight.toFontWeight()
-        val maxLines = component.style?.lineLimit ?: component.style?.maxLines ?: Int.MAX_VALUE
-        val pad = component.style?.padding?.dp ?: 0.dp
         val cornerRadius = component.style?.cornerRadius?.dp ?: 0.dp
-
-        val isError = component.validation?.required == true &&
-                selectedValue.isNullOrEmpty()
-        LaunchedEffect(Unit) {
-            if (component.validation?.required == true &&  (formDataStoreAndValidation[component.dataBinding] == null || formDataStoreAndValidation[component.dataBinding]?.isEmpty() == true)) {
-                formDataStoreAndValidation[component.dataBinding ?: ""] = readAndSetValue( activityScreenName,component.dataBinding)
-            }
-        }
-
+        val isError = component.validation?.required == true && selectedValue.isEmpty()
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(vertical = 8.dp)
                 .semantics {
                     contentDescription = component.screenAccessibility?.label ?: ""
                 }
         ) {
-
-            // 🔤 Label
             Text(
-                text = component.label ?:"",
+                text = component.label ?: "",
                 fontSize = fontSize,
                 modifier = Modifier.padding(bottom = 6.dp)
             )
 
-            // 📦 Dropdown Field
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded }) {
+            Box(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }) {
                 OutlinedTextField(
                     value = selectedTitle,
                     onValueChange = {},
                     readOnly = true,
                     isError = isError,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { expanded = !expanded },
+                    modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
                     textStyle = TextStyle(fontSize = fontSize),
                     shape = RoundedCornerShape(cornerRadius),
                     trailingIcon = {
@@ -930,18 +862,12 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 ) {
                     component.options?.forEach { option ->
                         DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = option.titleBinding,
-                                    fontSize = fontSize
-                                )
-                            },
+                            text = { Text(text = option.titleBinding, fontSize = fontSize) },
                             onClick = {
-                                component.dataBinding?.let {
-                                    formState[it] = option.value
-                                }
-                                if(component.validation?.required == true){
-                                    formDataStoreAndValidation[component.dataBinding ?: ""] = option.value
+                                formDataStoreAndValidation[bindingKey] = option.value
+                                sduiViewModel.saveFieldData(bindingKey, option.value)
+                                activityScreenName?.let { screenName ->
+                                    FormDataStorage.updateFormData(screenName, bindingKey, option.value)
                                 }
                                 expanded = false
                             }
@@ -950,7 +876,6 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 }
             }
 
-            // ❗ Validation Error
             if (isError) {
                 Text(
                     text = "This field is required",
@@ -962,138 +887,58 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         }
     }
 
-    /*    @Composable
-        private fun RenderDropDownField(component: ComponentNode, data: Map<String, String>) {
-            val formState = remember { mutableStateMapOf<String, String>() }
-            var expanded by remember { mutableStateOf(false) }
-
-            val selectedValue = formState[component.dataBinding]
-
-            val selectedTitle: String? = component.options
-                ?.find { it.value == selectedValue }
-                ?.title ?: component.placeholder
-
-            val color = (component.style?.foregroundColor ?: component.style?.textColor)
-                ?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
-            val fontSize = component.style?.fontSize?.sp ?: DesignTokens.TextMd
-            val fontWeight = component.style?.fontWeight.toFontWeight()
-            val maxLines = component.style?.lineLimit ?: component.style?.maxLines ?: Int.MAX_VALUE
-            val pad = component.style?.padding?.dp ?: 0.dp
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .background(color = color = colorFromToken("#1E1E2E"))) {
-
-                // 🔤 Label
-                component.label?.let {
-                    Text(
-                        text = it,
-                        fontSize = fontSize,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-                }
-
-                // 📦 Dropdown Box
-                Box {
-                    (selectedTitle ?: component.options?.get(0)?.title)?.let {
-                        OutlinedTextField(
-                            value = it,
-                            onValueChange = {},
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { expanded = true },
-                            readOnly = true,
-                            textStyle = TextStyle(fontSize = fontSize),
-                            trailingIcon = {
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                            }
-                        )
-                    }
-
-                    DropdownMenu(
-                        modifier = Modifier.clickable{
-                            expanded  = !expanded
-                        },
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-
-                        component.options?.forEach { option ->
-
-                            DropdownMenuItem(
-                                text = { Text(option.title) },
-                                onClick = {
-                                    component.dataBinding?.let {
-                                        formState[it] = option.value
-                                    }
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        }*/
-
     @Composable
     private fun RenderDateField(node: ComponentNode, data: Map<String, String>) {
+        val bindingKey = node.dataBinding ?: ""
+        
+        LaunchedEffect(bindingKey) {
+            if (formDataStoreAndValidation[bindingKey].isNullOrEmpty()) {
+                val savedValue = readAndSetValue(activityScreenName, bindingKey)
+                formDataStoreAndValidation[bindingKey] = savedValue
+            }
+        }
+
         val text = node.label ?: ""
         val placeholder = node.placeholder ?: ""
-        val color = (node.style?.foregroundColor ?: node.style?.textColor)
-            ?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
         val fontSize = node.style?.fontSize?.sp ?: DesignTokens.TextMd
         val fontWeight = node.style?.fontWeight.toFontWeight()
-        val maxLines = node.style?.lineLimit ?: node.style?.maxLines ?: Int.MAX_VALUE
-        val pad = node.style?.padding?.dp ?: 0.dp
-        var changedText: String? by remember { mutableStateOf(null) }
-        Column {
+        
+        val value = formDataStoreAndValidation[bindingKey] ?: ""
+
+        Column(modifier = Modifier.padding(vertical = 8.dp)) {
             Text(
                 text = text,
-                color = color,
-                fontSize = fontSize,
-                fontWeight = fontWeight,
-                maxLines = maxLines,
-                overflow = TextOverflow.Ellipsis,
-                modifier = if (pad > 0.dp) Modifier.padding(pad) else Modifier,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(bottom = 6.dp)
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = changedText ?: placeholder,
-                    color = color,
+                    text = value.ifEmpty { placeholder },
                     fontSize = fontSize,
                     fontWeight = fontWeight,
-                    maxLines = maxLines,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = if (pad > 0.dp) Modifier.padding(pad) else Modifier,
+                    modifier = Modifier.weight(1f)
                 )
                 var isClicked by remember { mutableStateOf(false) }
-                IconButton(onClick = {
-                    isClicked  =!isClicked
-                }) {
-                    Icon(Icons.Default.CalendarMonth, contentDescription = "back", tint = DesignTokens.PrimaryText)
+                IconButton(onClick = { isClicked = !isClicked }) {
+                    Icon(Icons.Default.CalendarMonth, contentDescription = "calendar", tint = DesignTokens.PrimaryText)
                 }
 
                 if (isClicked) {
                     DatePickerModal(onDateSelected = { millis ->
                         millis?.let {
-                            val formatter =
-                                SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
-                            val dateString: String? = formatter.format(java.util.Date(millis))
-                            dateString?.let {
-                                changedText = dateString
-                                activityScreenName?.let { screenName ->
-                                    node.dataBinding?.let { it1 -> FormDataStorage.updateFormData(screenName ?: "", it1, changedText ?: "") }
-                                }
+                            val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                            val dateString = formatter.format(java.util.Date(millis))
+                            formDataStoreAndValidation[bindingKey] = dateString
+                            sduiViewModel.saveFieldData(bindingKey, dateString)
+                            activityScreenName?.let { screenName ->
+                                FormDataStorage.updateFormData(screenName, bindingKey, dateString)
                             }
                         }
-                        isClicked  = false
-                    }, onDismiss = {
-                        isClicked  = false
-                    })
+                        isClicked = false
+                    }, onDismiss = { isClicked = false })
                 }
             }
         }
-
-
     }
 
 
@@ -1131,27 +976,20 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 
     @Composable
     private fun RenderEditText(node: ComponentNode, data: Map<String, String>) {
-        val formState = remember { mutableStateMapOf<String, String>() }
-        val value = formState[node.dataBinding] ?: ""
-        val text = node.label ?: ""
-        val placeholder = node.placeholder ?: ""
-        val color = (node.style?.foregroundColor ?: node.style?.textColor)
-            ?.let { colorFromToken(it) } ?: DesignTokens.PrimaryText
-        val fontSize = node.style?.fontSize?.sp ?: DesignTokens.TextMd
-        val fontWeight = node.style?.fontWeight.toFontWeight()
-        val maxLines = node.style?.lineLimit ?: node.style?.maxLines ?: Int.MAX_VALUE
-        val pad = node.style?.padding?.dp ?: 0.dp
-
-        val cornerRadius = (node.style?.cornerRadius as? Int ?: 8).dp
-
-        val isRequired = node.validation?.required == true
-        val minLength = node.validation?.minLength as? Int ?: 0
-        LaunchedEffect(Unit) {
-            if(isRequired &&  (formDataStoreAndValidation[node.dataBinding] == null || formDataStoreAndValidation[node.dataBinding]?.isEmpty() == true)){
-                formDataStoreAndValidation[node.dataBinding ?: ""] = readAndSetValue( activityScreenName,node.dataBinding)
+        val bindingKey = node.dataBinding ?: ""
+        
+        LaunchedEffect(bindingKey) {
+            if (formDataStoreAndValidation[bindingKey].isNullOrEmpty()) {
+                val savedValue = readAndSetValue(activityScreenName, bindingKey)
+                formDataStoreAndValidation[bindingKey] = savedValue
             }
         }
 
+        val value = formDataStoreAndValidation[bindingKey] ?: ""
+        val fontSize = node.style?.fontSize?.sp ?: DesignTokens.TextMd
+        val cornerRadius = (node.style?.cornerRadius as? Int ?: 8).dp
+        val isRequired = node.validation?.required == true
+        val minLength = node.validation?.minLength as? Int ?: 0
         val isInputTypeValid = isInputTypeValid(value, node.inputType)
 
         val isError = when {
@@ -1164,37 +1002,28 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(vertical = 8.dp)
                 .semantics {
                     contentDescription = node.screenAccessibility?.label ?: ""
                 }
         ) {
-
-            // 🔤 Label
             Text(
                 text = node.label ?: "",
                 fontSize = fontSize,
                 modifier = Modifier.padding(bottom = 6.dp)
             )
 
-            // ✏️ TextField
             OutlinedTextField(
                 value = value,
-                onValueChange = { data->
-                    node.dataBinding?.let { key->
-                        formState[key] =  data
-                        formDataStoreAndValidation[node.dataBinding ?: ""] = data
-                        activityScreenName?.let { screenName ->
-                            FormDataStorage.updateFormData(screenName ?: "", key, data)
-                        }
+                onValueChange = { data ->
+                    formDataStoreAndValidation[bindingKey] = data
+                    sduiViewModel.saveFieldData(bindingKey, data)
+                    activityScreenName?.let { screenName ->
+                        FormDataStorage.updateFormData(screenName, bindingKey, data)
                     }
-
                 },
-                placeholder = {
-                    Text(node.placeholder ?: "")
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = getKeyboardType(node.inputType)
-                ),
+                placeholder = { Text(node.placeholder ?: "") },
+                keyboardOptions = KeyboardOptions(keyboardType = getKeyboardType(node.inputType)),
                 visualTransformation = if (node.inputType?.lowercase() == "password") {
                     PasswordVisualTransformation()
                 } else {
@@ -1206,7 +1035,6 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 shape = RoundedCornerShape(cornerRadius)
             )
 
-            // ❗ Error Message
             if (isError) {
                 val errorText = when {
                     isRequired && value.isEmpty() -> "This field is required"
@@ -1214,7 +1042,6 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                     !isInputTypeValid -> "Invalid ${node.inputType ?: "format"}"
                     else -> ""
                 }
-
                 Text(
                     text = errorText,
                     color = Color.Red,
@@ -1279,7 +1106,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderHeader(
         node: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
     ) {
         var title = node.titleTemplate?.let { resolver.resolve(it, data) }
             ?: node.props["title"] ?: ""
@@ -1304,7 +1131,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if(isleadingIcon){
-                IconButton(onClick = { node.action?.dispatch(data, onAction, node) }) {
+                IconButton(onClick = { node.action?.dispatch(activityScreenName, data, onAction, node) }) {
                     Icon(Icons.Default.Backspace, contentDescription = "back", tint = DesignTokens.PrimaryText)
                 }
             }
@@ -1313,7 +1140,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                 subtitle?.let { Text(text = it, color = DesignTokens.SecondaryText, fontSize = DesignTokens.TextMd) }
             }
             if (hasSearch) {
-                IconButton(onClick = { node.action?.dispatch(data, onAction, node) }) {
+                IconButton(onClick = { node.action?.dispatch(activityScreenName, data, onAction, node) }) {
                     Icon(Icons.Default.Search, contentDescription = "Search", tint = DesignTokens.PrimaryText)
                 }
             }
@@ -1354,7 +1181,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderButton(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
         modifier: Modifier
     ) {
         val cornerRadius = (component.style?.cornerRadius as? Int ?: 8).dp
@@ -1373,7 +1200,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         Button(
             onClick = {
                 if(component.titleBinding?.equals("Back", ignoreCase = true) == true) {
-                    component.action?.dispatch(data, onAction, component)
+                    component.action?.dispatch(activityScreenName, data, onAction, component)
                 } else {
                     if(validateForm(activityScreenName ?: "")){
                         activityScreenName?.let { eventName ->
@@ -1389,7 +1216,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                             }
 
                         }
-                        component.action?.dispatch(data, onAction, component)
+                        component.action?.dispatch(activityScreenName, data, onAction, component)
                     } else {
                         Toast.makeText(
                             context,
@@ -1422,7 +1249,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderButton(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
     ) {
         val height = (component.style?.height as? Int ?: 48).dp
         val cornerRadius = (component.style?.cornerRadius as? Int ?: 8).dp
@@ -1441,7 +1268,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         Button(
             onClick = {
                 if(bindingResolver.resolve( activityScreenName,component.titleBinding?: "").equals("Back", ignoreCase = true)) {
-                    component.action?.dispatch(data, onAction, component)
+                    component.action?.dispatch(activityScreenName, data, onAction, component)
                 } else {
                     if(validateForm(activityScreenName?: "")){
                         activityScreenName?.let { eventName ->
@@ -1457,9 +1284,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                             }
 
                         }
-
-
-                        component.action?.dispatch(data, onAction, component)
+                        component.action?.dispatch(activityScreenName, data, onAction, component)
                     } else {
                         Toast.makeText(
                             context,
@@ -1645,8 +1470,9 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
  * and invoke [onAction] with (type, params).
  */
 private fun ActionModel.dispatch(
+    currentScreen: String?,
     data: Map<String, String>,
-    onAction: (String, Map<String, String>, action: ActionModel?) -> Unit,
+    onAction: (String, String, Map<String, String>, action: ActionModel?) -> Unit,
     node:ComponentNode
 ) {
     val resolvedRoute = routeTemplate?.let { tpl ->
@@ -1662,7 +1488,7 @@ private fun ActionModel.dispatch(
     destination?.let { des->
         params["route"] = des
     }
-    onAction(type, params, node.action)
+    onAction(currentScreen ?: "", type, params, this)
 }
 
 private fun String?.toFontWeight(): FontWeight = when (this) {

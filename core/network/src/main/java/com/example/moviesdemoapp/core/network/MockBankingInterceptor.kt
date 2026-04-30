@@ -26,7 +26,7 @@ class MockBankingInterceptor(context: Context) : Interceptor {
           ],
           "formStatus": {
             "personal_details": {
-              "status": "filled"
+              "status": "notfilled"
             },
             "address_details": {
               "status": "notfilled",
