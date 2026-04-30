@@ -235,7 +235,7 @@
                   "requestBodyBinding": "form",
                   "onSuccess": {
                     "type": "navigation",
-                    "destination": "application_success"
+                    "destination": "success_page"
                   },
                   "onFailure": {
                     "type": "toast",

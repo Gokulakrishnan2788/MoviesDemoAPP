@@ -37,6 +37,8 @@ class BankingViewModel @Inject constructor(
 
     private val _loadingStatus = MutableStateFlow(false)
     val loadingStatus: StateFlow<Boolean> = _loadingStatus
+    private val _isFormSucecss = MutableStateFlow(false)
+    val formSuccess: StateFlow<Boolean> = _isFormSucecss
     override fun initialState() = BankingPageState()
 
     init {
@@ -154,11 +156,14 @@ class BankingViewModel @Inject constructor(
                                                         }
                                                         finalMap["activity"]?.let { activityName ->
                                                             try {
-                                                                val activityClass = Class.forName(activityName)
-                                                                setEffect(BankingPageEffect.StartActivityAndFinish(activityClass))
+                                                                // Instead of immediate finish, load success screen
+                                                                setState { copy(isSuccess = true, pendingActivityName = activityName) }
+                                                                loadScreen("success_page")
                                                                 _loadingStatus.value = false
+                                                                _isFormSucecss.value = true
                                                             } catch (_: Exception) {
                                                                 // Handle class not found
+                                                                _isFormSucecss.value = false
                                                                 _loadingStatus.value = false
                                                             }
                                                         }
@@ -173,8 +178,8 @@ class BankingViewModel @Inject constructor(
                                         println("API error: ${it.message}")
                                         _loadingStatus.value = false
                                         try {
-                                            val activityClass = Class.forName("com.example.moviesdemoapp.app.DeepLinkActivity")
-                                            setEffect(BankingPageEffect.StartActivityAndFinish(activityClass))
+                                            setState { copy(isSuccess = true, pendingActivityName = "com.example.moviesdemoapp.app.DeepLinkActivity") }
+                                            loadScreen("success_page")
                                         } catch (_: Exception) {
                                             // Handle class not found
                                             _loadingStatus.value = false
@@ -193,8 +198,8 @@ class BankingViewModel @Inject constructor(
                                         val responseMap: Map<String, String> = gson.fromJson(response.toString(), object : TypeToken<Map<String, String>>() {}.type)
                                         responseMap["activity"]?.let { activityName ->
                                             try {
-                                                val activityClass = Class.forName(activityName)
-                                                setEffect(BankingPageEffect.StartActivityAndFinish(activityClass))
+                                                setState { copy(isSuccess = true, pendingActivityName = activityName) }
+                                                loadScreen("success_page")
                                                 _loadingStatus.value = false
                                             } catch (_: Exception) {
                                                 // Handle class not found
@@ -208,6 +213,16 @@ class BankingViewModel @Inject constructor(
                                 }
                             }
                         }
+                    }
+                }
+            }
+            "finishFlow" -> {
+                state.value.pendingActivityName?.let { activityName ->
+                    try {
+                        val activityClass = Class.forName(activityName)
+                        setEffect(BankingPageEffect.StartActivityAndFinish(activityClass))
+                    } catch (_: Exception) {
+                        // Handle error
                     }
                 }
             }

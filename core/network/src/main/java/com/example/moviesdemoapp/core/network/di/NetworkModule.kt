@@ -60,8 +60,7 @@ object NetworkModule {
     fun provideBankingApi(okHttpClient: OkHttpClient, json: Json): BankingApi {
         val contentType = "application/json".toMediaType()
         return Retrofit.Builder()
-           // .baseUrl("https://bd2e759f-9a31-4529-ba92-b69d005fa5bc.mock.pstmn.io/")
-            .baseUrl("https://69466fa7-28bb-4c53-9918-e87fecc47f47.mock.pstmn.io/")
+           .baseUrl("https://bdaa2f6f-d9c7-489b-b583-d41fb840470e.mock.pstmn.io/")
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()

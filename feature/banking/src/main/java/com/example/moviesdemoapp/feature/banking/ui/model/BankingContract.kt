@@ -19,6 +19,8 @@ data class BankingPageState(
     val isForm2Completed: Boolean = false,
     val isForm3Completed: Boolean = false,
     val isForm4Completed: Boolean = false,
+    val isSuccess: Boolean = false,
+    val pendingActivityName: String? = null,
 ) : UiState
 
 sealed interface BankingPageIntent : UiIntent {

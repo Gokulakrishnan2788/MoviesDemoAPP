@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -27,6 +28,12 @@ fun NavGraphBuilder.bankingGraph(
 ) {
     navigation(startDestination = "banking_entry", route = "banking_graph") {
 
+        composable("success_page"){  entry: NavBackStackEntry ->
+            SuccessScreen(navController) {
+
+            }
+
+        }
         composable("banking_entry") { entry: NavBackStackEntry ->
             val formStatusViewModel: FormStatusViewModel = hiltViewModel(entry)
             val formDetail by formStatusViewModel._formId.collectAsStateWithLifecycle()
@@ -141,20 +148,26 @@ fun NavGraphBuilder.bankingGraph(
                     )
                 }
             } else {
-                BankingIncrementScreen(
-                    navController,
-                    viewModel,
-                    pageDetail = Routes.BANKING_REVIEW_SUBMIT
-                ) { route ->
-                    val formStatus = viewModel.getFormStatus()
-                    val formStatusData = formStatus[route]
-                    formStatusData?.status = "completed"
-                    formStatus[route] = formStatusData ?: return@BankingIncrementScreen
-                    viewModel.saveFormStatus(formStatus)
+                if(viewModel.formSuccess.collectAsStateWithLifecycle().value){
+                    LaunchedEffect(Unit){
+                        navController.navigate("success_page") {
+                            popUpTo(Routes.BANKING_REVIEW_SUBMIT) { inclusive = true }
+                        }
+                    }
+                } else {
+                    BankingIncrementScreen(
+                        navController,
+                        viewModel,
+                        pageDetail = Routes.BANKING_REVIEW_SUBMIT
+                    ) { route ->
+                        val formStatus = viewModel.getFormStatus()
+                        val formStatusData = formStatus[route]
+                        formStatusData?.status = "completed"
+                        formStatus[route] = formStatusData ?: return@BankingIncrementScreen
+                        viewModel.saveFormStatus(formStatus)
+                    }
                 }
             }
-
-
         }
     }
 }

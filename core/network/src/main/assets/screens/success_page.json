@@ -1,0 +1,48 @@
+{
+  "screenId": "success_page",
+  "title": "Success",
+  "type": "scroll",
+  "children": [
+    {
+      "id": "rootColumn",
+      "type": "column",
+      "style": {
+        "padding": 20,
+        "spacing": 24,
+        "backgroundColor": "screenBackground"
+      },
+      "children": [
+        {
+          "id": "header",
+          "type": "header",
+          "titleBinding": "Form Submitted",
+          "style": {
+            "foregroundColor": "primaryText"
+          }
+        },
+        {
+          "id": "successMessage",
+          "type": "text",
+          "text": "Your form has been successfully filled and submitted. You can now proceed to the next step.",
+          "style": {
+            "fontSize": 16,
+            "foregroundColor": "secondaryText"
+          }
+        },
+        {
+          "id": "finishButton",
+          "type": "button",
+          "titleBinding": "Proceed",
+          "variant": "primary",
+          "action": {
+            "type": "finishFlow"
+          },
+          "style": {
+            "height": 48,
+            "cornerRadius": 8
+          }
+        }
+      ]
+    }
+  ]
+}
