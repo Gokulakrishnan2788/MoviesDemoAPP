@@ -29,7 +29,7 @@ fun SeriesDetailScreen(
         isLoading = state.isLoading,
         error = state.error,
         dataMap = state.data,
-        onAction = { _, actionId, _, _ ->
+        onAction = { _, actionId, _, _, _ ->
             when (actionId) {
                 "back" -> viewModel.handleIntent(SeriesDetailIntent.NavigateBack)
             }

@@ -156,6 +156,7 @@ data class ActionModel(
     val method: String? = null,
     val subAction: SubActionModel? = null,
     val destination: String? = null,
+    val backClicked: Boolean? = null,
     val routeTemplate: String? = null,
     val params: Map<String, String> = emptyMap(),
 )

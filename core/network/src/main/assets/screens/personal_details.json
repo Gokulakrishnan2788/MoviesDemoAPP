@@ -199,6 +199,7 @@
               "variant": "secondary",
               "action": {
                 "type": "navigation",
+                "backClicked": true,
                 "destination": "previous"
               },
               "style": {

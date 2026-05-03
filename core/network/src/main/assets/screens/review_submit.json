@@ -200,6 +200,7 @@
               "variant": "secondary",
               "action": {
                 "type": "navigation",
+                "backClicked": true,
                 "destination": "personal_details"
               },
               "style": {

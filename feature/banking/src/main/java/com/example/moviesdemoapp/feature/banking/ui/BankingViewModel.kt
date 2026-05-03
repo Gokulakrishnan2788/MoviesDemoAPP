@@ -131,8 +131,8 @@ class BankingViewModel @Inject constructor(
                                             val requestParam = dynamicReq.keys.map { key-> Pair(key, FormDataStorage.readAndSetValue(key)) }
                                             val requestDataParam = requestParam.toMap()
 
-                                            val endPoint = params["endpoint"]?: action.endpoint
-                                            val method = params["method"]?: action.method
+                                            val endPoint = params["endpoint"]?: action?.endpoint
+                                            val method = params["method"]?: action?.method
                                             when(method){
                                                 "get" -> {
                                                     runCatching {
@@ -156,9 +156,9 @@ class BankingViewModel @Inject constructor(
                                                         }
                                                         finalMap["activity"]?.let { activityName ->
                                                             try {
-                                                                // Instead of immediate finish, load success screen
+                                                                // Trigger navigation event to success screen
                                                                 setState { copy(isSuccess = true, pendingActivityName = activityName) }
-                                                                loadScreen("success_page")
+                                                                setEffect(BankingPageEffect.Navigate("success_page"))
                                                                 _loadingStatus.value = false
                                                                 _isFormSucecss.value = true
                                                             } catch (_: Exception) {
@@ -179,7 +179,7 @@ class BankingViewModel @Inject constructor(
                                         _loadingStatus.value = false
                                         try {
                                             setState { copy(isSuccess = true, pendingActivityName = "com.example.moviesdemoapp.app.DeepLinkActivity") }
-                                            loadScreen("success_page")
+                                            setEffect(BankingPageEffect.Navigate("success_page"))
                                         } catch (_: Exception) {
                                             // Handle class not found
                                             _loadingStatus.value = false
@@ -190,7 +190,7 @@ class BankingViewModel @Inject constructor(
                                 "post" -> {
                                     runCatching {
                                         val response = bankingApi.post(
-                                            endPoint = action.subAction?.subEndPoint ?: "",
+                                            endPoint = action?.subAction?.subEndPoint ?: "",
                                             body = json.parseToJsonElement("{}")
                                         )
                                         
@@ -199,7 +199,7 @@ class BankingViewModel @Inject constructor(
                                         responseMap["activity"]?.let { activityName ->
                                             try {
                                                 setState { copy(isSuccess = true, pendingActivityName = activityName) }
-                                                loadScreen("success_page")
+                                                setEffect(BankingPageEffect.Navigate("success_page"))
                                                 _loadingStatus.value = false
                                             } catch (_: Exception) {
                                                 // Handle class not found

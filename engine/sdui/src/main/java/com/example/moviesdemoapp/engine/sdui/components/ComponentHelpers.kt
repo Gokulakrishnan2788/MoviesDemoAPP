@@ -10,7 +10,7 @@ import com.example.moviesdemoapp.core.network.model.ComponentNode
  * Must be invoked from a @Composable context.
  */
 typealias NodeRenderer =
-    @Composable (node: ComponentNode, data: Map<String, String>, listData: Map<String, List<Map<String, String>>>, onAction: (String, Map<String, String>, ActionModel?) -> Unit) -> Unit
+    @Composable (node: ComponentNode, data: Map<String, String>, listData: Map<String, List<Map<String, String>>>, onAction: (String, Map<String, String>, ActionModel?, Boolean) -> Unit) -> Unit
 
 /**
  * Resolves route template, builds the params map, and fires [onAction].
@@ -18,7 +18,7 @@ typealias NodeRenderer =
  */
 internal fun ActionModel.dispatch(
     data: Map<String, String>,
-    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?, Boolean) -> Unit,
 ) {
     val resolvedRoute = routeTemplate?.let { tpl ->
         var r = tpl
@@ -29,7 +29,7 @@ internal fun ActionModel.dispatch(
         resolvedRoute?.let { put("route", it) }
         putAll(this@dispatch.params)
     }
-    onAction(type, params, this)
+    onAction(type, params, this, false)
 }
 
 /** Maps a JSON fontWeight string to a Compose [FontWeight]. */

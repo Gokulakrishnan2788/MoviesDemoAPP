@@ -30,7 +30,7 @@ fun MoviesScreen(
         error = state.error,
         dataMap = state.dataMap,
         listData = state.listData,
-        onAction = { _, actionId, params, action ->
+        onAction = { _, actionId, params, action, _ ->
             viewModel.handleIntent(MoviesIntent.OnAction(actionId, params))
         },
     )

@@ -56,7 +56,6 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -182,7 +181,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?, isBackClickAction: Boolean) -> Unit,
         renderNode: NodeRenderer,
     ) {
         this.activityScreenName = screenName
@@ -190,8 +189,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         if (!resolver.isVisible(node, data)) return
 
         // Wrap the 4-param onAction into a 3-param one for NodeRenderer
-        val wrappedOnAction: (String, Map<String, String>, ActionModel?) -> Unit = { type, params, action ->
-            onAction(screenName ?: "", type, params, action)
+        val wrappedOnAction: (String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit = { type, params, action, isBackClick ->
+            onAction(screenName ?: "", type, params, action, isBackClick)
         }
 
         when (node.type) {
@@ -228,7 +227,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderCurrencyField(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit,
     ){
         val bindingKey = component.dataBinding ?: ""
         
@@ -312,7 +311,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderToggleField(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit,
     ){
         val bindingKey = component.dataBinding ?: ""
         
@@ -358,7 +357,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderStepperField(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit,
     ){
         val bindingKey = component.dataBinding ?: ""
         val min = component.minValue ?: 1
@@ -446,7 +445,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderSlider(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit,
     ){
         val bindingKey = component.dataBinding ?: ""
         val min = component.minValue?.toFloat() ?: 0.0f
@@ -513,7 +512,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderTopBar(
         node: ComponentNode,
         data: Map<String, String>,
-        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?, isBackClickAction: Boolean) -> Unit,
     ) {
         val title = node.props["title"]
             ?: node.titleTemplate?.let { resolver.resolve(it, data, sduiViewModel.getFieldData(it)) } ?: ""
@@ -588,7 +587,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?, isBackClickAction: Boolean) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
@@ -602,8 +601,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             modifier = mod,
             verticalArrangement = if (spacing > 0.dp) Arrangement.spacedBy(spacing) else Arrangement.Top,
         ) {
-            val internalOnAction: (String, Map<String, String>, ActionModel?) -> Unit = { type, params, action ->
-                onAction(activityScreenName ?: "", type, params, action)
+            val internalOnAction: (String, Map<String, String>, ActionModel?, Boolean) -> Unit = { type, params, action, isBackClickAction ->
+                onAction(activityScreenName ?: "", type, params, action, isBackClickAction)
             }
             node.children.forEach { renderNode(it, data, listData, internalOnAction) }
         }
@@ -615,7 +614,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?, isBackClickAction: Boolean) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
@@ -657,7 +656,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?, isBackClickAction: Boolean) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) }
@@ -669,8 +668,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         if (pad > 0.dp) mod = mod.padding(pad)
         if (node.action != null) mod = mod.clickable { node.action?.dispatch(activityScreenName, data, onAction, node) }
         Row(modifier = mod, horizontalArrangement = Arrangement.spacedBy(spacing)) {
-            val internalOnAction: (String, Map<String, String>, ActionModel?) -> Unit = { type, params, action ->
-                onAction(activityScreenName ?: "", type, params, action)
+            val internalOnAction: (String, Map<String, String>, ActionModel?, Boolean) -> Unit = { type, params, action, isBackAction ->
+                onAction(activityScreenName ?: "", type, params, action, isBackAction)
             }
             node.children.forEach {
                 if (it.type.equals("button", ignoreCase = true) && it.style?.weight != null) {
@@ -691,7 +690,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?, isBackClickAction: Boolean) -> Unit,
         renderNode: NodeRenderer
     ) {
         val bg = node.style?.backgroundColor?.let { colorFromToken(it) } ?: DesignTokens.CardBackground
@@ -707,8 +706,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
             colors = CardDefaults.cardColors(containerColor = bg),
         ) {
             Column(modifier = Modifier.padding(pad)) {
-                val internalOnAction: (String, Map<String, String>, ActionModel?) -> Unit = { type, params, action ->
-                    onAction(activityScreenName ?: "", type, params, action)
+                val internalOnAction: (String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit = { type, params, action, isBackClicked ->
+                    onAction(activityScreenName ?: "", type, params, action, isBackClicked)
                 }
                 node.children.forEach {
                     renderNode(it, data, listData, internalOnAction)
@@ -1092,7 +1091,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderHeader(
         node: ComponentNode,
         data: Map<String, String>,
-        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?) -> Unit,
+        onAction: (currentScreen: String, actionId: String, params: Map<String, String>, action: ActionModel?, isBackClickAction: Boolean) -> Unit,
     ) {
         var title = node.titleTemplate?.let { resolver.resolve(it, data, sduiViewModel.getFieldData(it)) }
             ?: node.props["title"] ?: ""
@@ -1167,7 +1166,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderButton(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit,
         modifier: Modifier
     ) {
         val cornerRadius = (component.style?.cornerRadius as? Int ?: 8).dp
@@ -1235,7 +1234,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
     private fun RenderButton(
         component: ComponentNode,
         data: Map<String, String>,
-        onAction: (String, String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit,
     ) {
         val height = (component.style?.height as? Int ?: 48).dp
         val cornerRadius = (component.style?.cornerRadius as? Int ?: 8).dp
@@ -1316,7 +1315,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val binding = node.listDataBinding ?: return
@@ -1396,7 +1395,8 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
                                                         "from" to draggingIndex.toString(),
                                                         "to" to to.toString(),
                                                     ),
-                                                    null
+                                                    null,
+                                                    false
                                                 )
                                             }
                                         }
@@ -1433,7 +1433,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
         node: ComponentNode,
         data: Map<String, String>,
         listData: Map<String, List<Map<String, String>>>,
-        onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+        onAction: (String, Map<String, String>, ActionModel?, isBackClickAction: Boolean) -> Unit,
         renderNode: NodeRenderer,
     ) {
         val count = node.countBinding?.let { data[it]?.toIntOrNull() } ?: 0
@@ -1458,7 +1458,7 @@ class SDUIComponentsDispatcher @Inject constructor(private val resolver: Templat
 private fun ActionModel.dispatch(
     currentScreen: String?,
     data: Map<String, String>,
-    onAction: (String, String, Map<String, String>, action: ActionModel?) -> Unit,
+    onAction: (String, String, Map<String, String>, action: ActionModel?, isBackClickAction: Boolean) -> Unit,
     node:ComponentNode
 ) {
     val resolvedRoute = routeTemplate?.let { tpl ->
@@ -1474,7 +1474,8 @@ private fun ActionModel.dispatch(
     destination?.let { des->
         params["route"] = des
     }
-    onAction(currentScreen ?: "", type, params, this)
+    val isBacKButtonClicked = node.action?.destination.equals("back", ignoreCase = true) || node.action?.destination.equals("previous", ignoreCase = true) || node.action?.backClicked == true
+    onAction(currentScreen ?: "", type, params, this, isBacKButtonClicked)
 }
 
 private fun String?.toFontWeight(): FontWeight = when (this) {

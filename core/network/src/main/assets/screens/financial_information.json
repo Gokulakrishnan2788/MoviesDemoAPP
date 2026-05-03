@@ -181,6 +181,7 @@
               "variant": "secondary",
               "action": {
                 "type": "navigation",
+                "backClicked": true,
                 "destination": "address_details",
                 "saveForm": true
               },

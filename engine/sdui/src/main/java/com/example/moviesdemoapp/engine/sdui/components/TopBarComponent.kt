@@ -33,7 +33,7 @@ import com.example.moviesdemoapp.engine.sdui.TemplateResolver
 internal fun RenderTopBar(
     node: ComponentNode,
     data: Map<String, String>,
-    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?, Boolean) -> Unit,
     resolver: TemplateResolver,
 ) {
     val title    = node.props["title"] ?: node.titleTemplate?.let { resolver.resolve(it, data, "") } ?: ""

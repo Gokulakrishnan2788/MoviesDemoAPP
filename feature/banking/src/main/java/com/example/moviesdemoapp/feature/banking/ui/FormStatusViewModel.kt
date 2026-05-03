@@ -44,11 +44,12 @@ class FormStatusViewModel @Inject constructor(
             var currentStatus = bankingFormStateRepository.getFormStatusMap() ?: emptyMap()
             var currentOrder = bankingFormStateRepository.getFormOrder()
 
+/*            var currentStatus = emptyMap<String, FormStatusDetail>()
+            var currentOrder = emptyList<String>()*/
+            val screenModel = loadScreen("personal_details")
+            val checkFormStatus = screenModel?.checkFormStatus
             if (currentStatus.isEmpty() || currentOrder.isEmpty()) {
                 // 2. Fetch from API or ScreenModel if no local state
-                val screenModel = loadScreen("personal_details")
-                val checkFormStatus = screenModel?.checkFormStatus
-                
                 val fetchedData = if (checkFormStatus?.type == "api") {
                     try {
                         val response = when (checkFormStatus.requestType.lowercase()) {
@@ -69,14 +70,14 @@ class FormStatusViewModel @Inject constructor(
                         }
                         
                         val order = if (rawMap.containsKey("formOrder")) {
-                            gson.fromJson<List<String>>(gson.toJson(rawMap["formOrder"]), orderType)
+                            gson.fromJson(gson.toJson(rawMap["formOrder"]), orderType)
                         } else {
-                            screenModel?.formOrder ?: emptyList()
+                            screenModel.formOrder ?: emptyList()
                         }
                         
                         Pair(status, order)
                     } catch (_: Exception) {
-                        Pair(screenModel?.formStatus ?: emptyMap(), screenModel?.formOrder ?: emptyList())
+                        Pair(screenModel.formStatus ?: emptyMap(), screenModel.formOrder ?: emptyList())
                     }
                 } else {
                     Pair(screenModel?.formStatus ?: emptyMap(), screenModel?.formOrder ?: emptyList())
@@ -87,6 +88,26 @@ class FormStatusViewModel @Inject constructor(
                 
                 if (currentStatus.isNotEmpty()) {
                     bankingFormStateRepository.saveFormStatusState(currentStatus, currentOrder)
+                }
+            }
+
+            if(currentOrder.isNotEmpty()){
+                try {
+                    val response = when (checkFormStatus?.requestType?.lowercase()) {
+                        "post" -> bankingApi.post(checkFormStatus.endPoint, json.parseToJsonElement("{}"))
+                        else -> bankingApi.get(checkFormStatus?.endPoint?:"")
+                    }
+                    val responseString = response.toString()
+                    val orderType = object : TypeToken<List<String>>() {}.type
+                    val rawMap = gson.fromJson<Map<String, Any>>(responseString, object : TypeToken<Map<String, Any>>() {}.type)
+
+                    currentOrder = if (rawMap.containsKey("formOrder")) {
+                        gson.fromJson(gson.toJson(rawMap["formOrder"]), orderType)
+                    } else {
+                        screenModel?.formOrder ?: emptyList()
+                    }
+
+                } catch (_: Exception) {
                 }
             }
 

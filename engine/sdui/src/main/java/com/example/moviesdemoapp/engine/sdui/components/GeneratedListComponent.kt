@@ -14,7 +14,7 @@ internal fun RenderGeneratedList(
     node: ComponentNode,
     data: Map<String, String>,
     listData: Map<String, List<Map<String, String>>>,
-    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?, Boolean) -> Unit,
     renderNode: NodeRenderer,
 ) {
     val count   = node.countBinding?.let { data[it]?.toIntOrNull() } ?: 0

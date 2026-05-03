@@ -38,7 +38,7 @@ internal fun RenderList(
     node: ComponentNode,
     data: Map<String, String>,
     listData: Map<String, List<Map<String, String>>>,
-    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?, Boolean) -> Unit,
     renderNode: NodeRenderer,
 ) {
     val binding = node.listDataBinding ?: return
@@ -111,7 +111,8 @@ internal fun RenderList(
                                                     "from"    to draggingIndex.toString(),
                                                     "to"      to to.toString(),
                                                 ),
-                                                node.action
+                                                node.action,
+                                                false
                                             )
                                         }
                                     }

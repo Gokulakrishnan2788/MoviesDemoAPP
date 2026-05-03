@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -18,7 +18,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import com.example.moviesdemoapp.core.ui.DesignTokens
 import com.example.moviesdemoapp.engine.navigation.Routes
-import com.example.moviesdemoapp.feature.banking.ui.BankingIncrementScreen
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageEffect
 import com.example.moviesdemoapp.feature.banking.ui.model.BankingPageIntent
 import kotlinx.coroutines.flow.collectLatest
@@ -28,12 +27,21 @@ fun NavGraphBuilder.bankingGraph(
 ) {
     navigation(startDestination = "banking_entry", route = "banking_graph") {
 
-        composable("success_page"){  entry: NavBackStackEntry ->
-            SuccessScreen(navController) {
+        composable("success_page") { entry ->
+            val parentEntry = remember(entry) { navController.getBackStackEntry("banking_graph") }
+            val viewModel: BankingViewModel = hiltViewModel(parentEntry)
 
+            LaunchedEffect(Unit) {
+                viewModel.handleIntent(BankingPageIntent.LoadOtherMainPage("success_page"))
             }
 
+            BankingIncrementScreen(
+                navController,
+                viewModel,
+                pageDetail = "success_page"
+            ) { _ -> }
         }
+
         composable("banking_entry") { entry: NavBackStackEntry ->
             val formStatusViewModel: FormStatusViewModel = hiltViewModel(entry)
             val formDetail by formStatusViewModel._formId.collectAsStateWithLifecycle()
@@ -54,12 +62,17 @@ fun NavGraphBuilder.bankingGraph(
         }
 
         composable(route = Routes.BANKING) { entry: NavBackStackEntry ->
-            val viewModel: BankingViewModel = hiltViewModel(entry)
+            val parentEntry = remember(entry) { navController.getBackStackEntry("banking_graph") }
+            val viewModel: BankingViewModel = hiltViewModel(parentEntry)
 
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        navController.navigate(effect.route)
+                        navController.navigate(effect.route) {
+                            if (effect.route == "success_page") {
+                                popUpTo("banking_graph") { inclusive = false }
+                            }
+                        }
                     }
                 }
             }
@@ -70,18 +83,17 @@ fun NavGraphBuilder.bankingGraph(
         }
 
         composable(route = Routes.BANKING_ADDRESS) { entry: NavBackStackEntry ->
-            val viewModel: BankingViewModel = hiltViewModel(entry)
+            val parentEntry = remember(entry) { navController.getBackStackEntry("banking_graph") }
+            val viewModel: BankingViewModel = hiltViewModel(parentEntry)
 
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        viewModel.handleIntent(
-                            BankingPageIntent.MarkFormCompleted(
-                                Routes.BANKING_ADDRESS,
-                                effect.route
-                            )
-                        )
-                        navController.navigate(effect.route)
+                        navController.navigate(effect.route) {
+                            if (effect.route == "success_page") {
+                                popUpTo("banking_graph") { inclusive = false }
+                            }
+                        }
                     }
                 }
             }
@@ -95,18 +107,17 @@ fun NavGraphBuilder.bankingGraph(
         }
 
         composable(route = Routes.BANKING_FINENCIAL_DETAIL) { entry: NavBackStackEntry ->
-            val viewModel: BankingViewModel = hiltViewModel(entry)
+            val parentEntry = remember(entry) { navController.getBackStackEntry("banking_graph") }
+            val viewModel: BankingViewModel = hiltViewModel(parentEntry)
 
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        viewModel.handleIntent(
-                            BankingPageIntent.MarkFormCompleted(
-                                Routes.BANKING_FINENCIAL_DETAIL,
-                                effect.route
-                            )
-                        )
-                        navController.navigate(effect.route)
+                        navController.navigate(effect.route) {
+                            if (effect.route == "success_page") {
+                                popUpTo("banking_graph") { inclusive = false }
+                            }
+                        }
                     }
                 }
             }
@@ -119,24 +130,23 @@ fun NavGraphBuilder.bankingGraph(
         }
 
         composable(route = Routes.BANKING_REVIEW_SUBMIT) { entry: NavBackStackEntry ->
-            val viewModel: BankingViewModel = hiltViewModel(entry)
+            val parentEntry = remember(entry) { navController.getBackStackEntry("banking_graph") }
+            val viewModel: BankingViewModel = hiltViewModel(parentEntry)
 
             LaunchedEffect(Unit) {
                 viewModel.effect.collectLatest { effect ->
                     if (effect is BankingPageEffect.Navigate) {
-                        viewModel.handleIntent(
-                            BankingPageIntent.MarkFormCompleted(
-                                Routes.BANKING_REVIEW_SUBMIT,
-                                effect.route
-                            )
-                        )
-                        navController.navigate(effect.route)
+                        navController.navigate(effect.route) {
+                            if (effect.route == "success_page") {
+                                popUpTo("banking_graph") { inclusive = false }
+                            }
+                        }
                     }
                 }
             }
 
-            val loadingStatus = viewModel.loadingStatus.collectAsStateWithLifecycle()
-            if (loadingStatus.value) {
+            val loadingStatus by viewModel.loadingStatus.collectAsStateWithLifecycle()
+            if (loadingStatus) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -148,24 +158,12 @@ fun NavGraphBuilder.bankingGraph(
                     )
                 }
             } else {
-                if(viewModel.formSuccess.collectAsStateWithLifecycle().value){
-                    LaunchedEffect(Unit){
-                        navController.navigate("success_page") {
-                            popUpTo(Routes.BANKING_REVIEW_SUBMIT) { inclusive = true }
-                        }
-                    }
-                } else {
-                    BankingIncrementScreen(
-                        navController,
-                        viewModel,
-                        pageDetail = Routes.BANKING_REVIEW_SUBMIT
-                    ) { route ->
-                        val formStatus = viewModel.getFormStatus()
-                        val formStatusData = formStatus[route]
-                        formStatusData?.status = "completed"
-                        formStatus[route] = formStatusData ?: return@BankingIncrementScreen
-                        viewModel.saveFormStatus(formStatus)
-                    }
+                BankingIncrementScreen(
+                    navController,
+                    viewModel,
+                    pageDetail = Routes.BANKING_REVIEW_SUBMIT
+                ) { route ->
+                    // Completion callback
                 }
             }
         }

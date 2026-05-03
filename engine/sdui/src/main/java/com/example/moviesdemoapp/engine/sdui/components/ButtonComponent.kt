@@ -16,7 +16,7 @@ import com.example.moviesdemoapp.engine.sdui.applyAccessibility
 internal fun RenderButton(
     node: ComponentNode,
     data: Map<String, String>,
-    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?, Boolean) -> Unit,
     resolver: TemplateResolver,
 ) {
     val label = node.template?.let { resolver.resolve(it, data, "") } ?: node.props["label"] ?: ""

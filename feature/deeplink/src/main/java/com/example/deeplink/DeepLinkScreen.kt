@@ -38,7 +38,7 @@ fun DeepLinkScreen(navController: NavController = rememberNavController(),
         error = state.error,
         dataMap = state.dataMap,
         listData = state.listData,
-        onAction = { currentActionId, actionId, params, _ ->
+        onAction = { currentActionId, actionId, params, _,_ ->
             viewModel.handleIntent(DeepLinkPageIntent.OnAction(actionId, params))
         },
     )

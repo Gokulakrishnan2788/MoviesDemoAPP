@@ -69,8 +69,8 @@ fun BankingScreen(
         error = state.error,
         dataMap = state.dataMap,
         listData = state.listData,
-        onAction = { currentActionId, actionId, params, node ->
-            if ((actionId.equals("navigate", ignoreCase = true) || actionId.equals("navigation", ignoreCase = true)) && params.containsKey("route")) {
+        onAction = { currentActionId, actionId, params, node, isBackClick ->
+            if (!isBackClick && ((actionId.equals("navigate", ignoreCase = true) || actionId.equals("navigation", ignoreCase = true)) && params.containsKey("route"))) {
                 val formStatus = viewModel.getFormStatus()
                 val formStatusData = formStatus[currentActionId]
                 formStatusData?.status = "completed"
@@ -138,8 +138,8 @@ fun BankingIncrementScreen(
             error = state.error,
             dataMap = state.dataMap,
             listData = state.listData,
-            onAction = { currentFormId, actionId, params, node ->
-                if ((actionId == "navigate" || actionId == "navigation") && params.containsKey("route")) {
+            onAction = { currentFormId, actionId, params, node , isBackClick->
+                if (!isBackClick && ((actionId == "navigate" || actionId == "navigation") && params.containsKey("route"))) {
                     val formStatus = viewModel.getFormStatus()
                     val formStatusData = formStatus[currentFormId]
                     formStatusData?.status = "completed"

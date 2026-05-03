@@ -21,7 +21,7 @@ internal fun RenderRow(
     node: ComponentNode,
     data: Map<String, String>,
     listData: Map<String, List<Map<String, String>>>,
-    onAction: (String, Map<String, String>, ActionModel?) -> Unit,
+    onAction: (String, Map<String, String>, ActionModel?, Boolean) -> Unit,
     renderNode: NodeRenderer,
 ) {
     val bg      = node.style?.backgroundColor?.let { colorFromToken(it) }
